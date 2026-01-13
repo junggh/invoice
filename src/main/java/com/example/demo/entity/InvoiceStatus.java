@@ -1,6 +1,6 @@
 package com.example.demo.entity;
 
-public enum Status {
+public enum InvoiceStatus {
     DRAFT,
     IN_REVIEW,
     UNPAID,

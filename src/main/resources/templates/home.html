@@ -128,7 +128,7 @@
 <body>
 
 <div class="container">
-    <form action="/" method="POST"> <div class="header">
+    <form action="/api/invoices" method="POST"> <div class="header">
         <h1>New Invoice</h1>
         <span style="color: #888;"># INV-AUTO</span>
     </div>
@@ -165,8 +165,10 @@
                     <label for="status">Status</label>
                     <select id="status" name="status">
                         <option value="DRAFT">Draft (임시저장)</option>
-                        <option value="OVERDUE">OVERDUE (연체)</option>
+                        <option value="IN_REVIEW">IN REVIEW (검토중)</option>
+                        <option value="UNPAID">UNPAID (미납)</option>
                         <option value="PAID">Paid (완납)</option>
+                        <option value="OVERDUE">OVERDUE (연체)</option>
                     </select>
                 </div>
 

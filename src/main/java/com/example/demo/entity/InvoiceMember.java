@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Getter @Setter
-public class DemoMember {
+public class InvoiceMember {
 
     @Id // 기본키 (PK)
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto Increment
@@ -24,7 +24,7 @@ public class DemoMember {
     private String billTo; // 청구 주소
 
     @Enumerated(EnumType.STRING)
-    private Status status; // 상태 (Draft, Paid 등)
+    private InvoiceStatus status; // 상태 (Draft, Paid 등)
 
     private BigDecimal total; // 총 금액
 
