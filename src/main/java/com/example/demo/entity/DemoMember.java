@@ -10,11 +10,27 @@ import java.math.BigDecimal;
 @Getter @Setter
 public class DemoMember {
 
-    @Id // 프라이빗 키 지정
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // ID 자동 증가
+    @Id // 기본키 (PK)
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto Increment
     private Long id;
 
-    private String username;
-    private String email;
-    private String password;
+    @Column(nullable = false, unique = true)
+    private String invoiceNumber; // 예: INV-00001
+
+    private String contact; // 고객 이름 (예: June Young)
+
+    private String phoneNumber; // 전화번호
+
+    private String billTo; // 청구 주소
+
+    @Enumerated(EnumType.STRING)
+    private Status status; // 상태 (Draft, Paid 등)
+
+    private BigDecimal total; // 총 금액
+
+    private BigDecimal balanceDue; // 남은 금액
+
+    private LocalDate date; // 발행일
+
+    private LocalDate dueDate; // 납부 기한
 }
