@@ -1,0 +1,118 @@
+:root {
+    --primary-color: #00A3FF; /* 스크린샷의 파란색 버튼 컬러 */
+    --border-color: #E0E0E0;
+    --text-color: #333;
+    --bg-color: #F5F7FA;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-color);
+    margin: 0;
+    padding: 40px;
+    color: var(--text-color);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 20px;
+}
+
+h1 { margin: 0; font-size: 24px; }
+
+/* 폼 그리드 레이아웃 */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2단 레이아웃 */
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+input, select, textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 15px;
+    transition: border-color 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+textarea { resize: vertical; height: 80px; }
+
+/* 품목 테이블 스타일 */
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.items-table th, .items-table td {
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px;
+    text-align: left;
+}
+
+.items-table th { background-color: #f9f9f9; color: #555; font-size: 14px; }
+.text-right { text-align: right !important; }
+.width-sm { width: 100px; }
+
+/* 하단 버튼 영역 */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 40px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+}
+
+.btn-secondary {
+    background-color: white;
+    border: 1px solid var(--border-color);
+    color: #555;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover { opacity: 0.9; }

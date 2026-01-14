@@ -5,21 +5,27 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter @Setter
-public class InvoiceMember {
+public class Invoice {
 
-    @Id // 기본키 (PK)
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto Increment
+    @Id // PK
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true)
     private String invoiceNumber; // 예: INV-00001
 
-    private String contact; // 고객 이름 (예: June Young)
+    private String reference; // 참조 번호
 
-    private String phoneNumber; // 전화번호
+    private String contact; // 고객 (거래처)
+
+    private String currency; // 통화 단위
+
+    private String salesPerson; // 담당 사원
 
     private String billTo; // 청구 주소
 
@@ -33,4 +39,7 @@ public class InvoiceMember {
     private LocalDate date; // 발행일
 
     private LocalDate dueDate; // 납부 기한
+
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InvoiceItem> items = new ArrayList<>();
 }

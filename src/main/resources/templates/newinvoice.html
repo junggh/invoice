@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Invoice</title>
+    <link rel="stylesheet" href="/css/newinvoicestyle.css">
+</head>
+<body>
+    <div class="container">
+        <form action="/api/invoices" method="POST"> <div class="header">
+            <h1>New Invoice</h1>
+            <span style="color: #888;" th:text="'# ' + ${nextInvoiceNum}"></span>
+        </div>
+            <h3 style="margin-top:0;">Invoice Details</h3>
+            <div class="form-grid">
+                <div class="section-left">
+                    <div class="form-group">
+                        <label for="contact">Contact Name</label>
+                        <input type="text" id="contact" name="contact" required>
+                    </div>
+
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0px;">
+                        <div class="form-group">
+                            <label for="currency">Currency</label>
+                            <input type="text" id="currency" name="currency" placeholder="KRW">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="salesPerson">Salesperson</label>
+                            <input type="text" id="salesPerson" name="salesPerson">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="billTo">Billing Address</label>
+                        <input type="text" id="billTo" name="billTo" placeholder="City">
+                    </div>
+                </div>
+
+                <div class="section-right">
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0px">
+                        <div class="form-group">
+                            <label for="invoiceNumber">Invoice #</label>
+                            <input type="text" id="invoiceNumber" name="invoiceNumber" th:value="${nextInvoiceNum}" readonly style="background-color: #f0f0f0;">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reference">Reference</label>
+                            <input type="number" id="reference" name="reference">
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" name="status">
+                            <option value="DRAFT">Draft (임시저장)</option>
+                            <option value="IN_REVIEW">IN REVIEW (검토중)</option>
+                            <option value="UNPAID">UNPAID (미납)</option>
+                            <option value="PAID">Paid (완납)</option>
+                            <option value="OVERDUE">OVERDUE (연체)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-grid" style="margin-bottom: 0; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label for="date">Issued Date</label>
+                            <input type="date" id="date" name="date">
+                        </div>
+                        <div class="form-group">
+                            <label for="dueDate">Due Date</label>
+                            <input type="date" id="dueDate" name="dueDate">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Items</h3>
+            <button type="button" class="btn btn-secondary" onclick="addItem()" style="padding: 5px 10px; font-size: 16px;">+</button>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Description</th>
+                        <th class="width-sm text-right">Price</th>
+                        <th class="width-sm text-right">Quantity</th>
+                        <th class="width-sm text-right">Discount</th>
+                        <th class="width-sm text-right">Amount</th>
+                        <th style="width: 20px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="invoiceItems">
+                    <tr class="item-row">
+                        <td><input type="text" name="items[0].product" style="width: 95%;"></td>
+                        <td><input type="text" name="items[0].description" placeholder="product description" style="width: 95%;"></td>
+                        <td><input type="number" name="items[0].price" placeholder="0" class="text-right calc-input" style="width: 95%;"></td>
+                        <td><input type="number" name="items[0].quantity" placeholder="0" class="text-right calc-input" style="width: 95%;"></td>
+                        <td><input type="number" name="items[0].discount" placeholder="0" class="text-right calc-input" style="width: 95%;"></td>
+                        <td class="text-right row-amount" style="vertical-align: middle;"> 0.00</td>
+                        <td class="delete-cell"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                <div style="width: 250px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Subtotal</span>
+                        <span id="subtotal" style="font-weight: bold;">0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
+                        <span>Tax (10%)</span>
+                        <span id="tax">0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-top: 2px solid #333; padding-top: 10px; font-size: 18px; font-weight: bold;">
+                        <span>Total Amount</span>
+                        <input type="hidden" name="total" id="hiddenTotal" value="0"> <span id="totalAmount" style="color: var(--primary-color);">0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Invoice</button>
+            </div>
+
+        </form>
+    </div>
+    <script src="/js/newinvoicescript.js"></script>
+</body>
+</html>

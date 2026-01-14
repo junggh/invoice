@@ -1,0 +1,25 @@
+package com.example.demo.entity;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import java.math.BigDecimal;
+
+@Entity
+@Getter @Setter
+public class InvoiceItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String product;     // 상품명
+    private String description; // 설명
+    private Integer quantity;   // 수량 (Qty)
+    private BigDecimal price;   // 단가
+    private BigDecimal discount;// 할인
+
+    // [중요] 어떤 인보이스에 속한 상품인지 연결 (Foreign Key)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invoice_id") // DB에 invoice_id 컬럼이 생김
+    private Invoice invoice;
+}

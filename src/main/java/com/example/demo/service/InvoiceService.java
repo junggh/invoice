@@ -1,8 +1,9 @@
 package com.example.demo.service;
 
-import com.example.demo.entity.InvoiceMember;
+import com.example.demo.entity.Invoice;
+import com.example.demo.entity.InvoiceItem;
 import com.example.demo.entity.InvoiceStatus;
-import com.example.demo.repository.InvoiceRepo;
+import com.example.demo.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +14,7 @@ import java.util.List;
 @Transactional(readOnly = true) // 기본적으로는 조회만 하도록 설정 (성능 최적화)
 public class InvoiceService {
 
-    private final InvoiceRepo invoiceRepository;
+    private final InvoiceRepository invoiceRepository;
 
     /**
      * 인보이스 생성 (저장)
@@ -21,7 +22,7 @@ public class InvoiceService {
      * - 잔액(Balance Due) 자동 설정 포함
      */
     @Transactional // 쓰기 작업이 있으므로 읽기전용 해제
-    public Long createInvoice(InvoiceMember invoice) {
+    public Long createInvoice(Invoice invoice) {
 
         // 1. 송장 번호 자동 생성 로직 (INV-00001 패턴)
         String nextInvoiceNumber = generateNextInvoiceNumber();
@@ -36,8 +37,12 @@ public class InvoiceService {
             invoice.setBalanceDue(invoice.getTotal());
         }
 
+        for (InvoiceItem item : invoice.getItems()) {
+            item.setInvoice(invoice);
+        }
+
         // 3. DB에 저장
-        InvoiceMember savedInvoice = invoiceRepository.save(invoice);
+        Invoice savedInvoice = invoiceRepository.save(invoice);
         return savedInvoice.getId();
     }
 
@@ -45,7 +50,7 @@ public class InvoiceService {
      * 송장 번호 생성기 (내부 메서드)
      * 마지막 번호를 조회해서 +1을 수행함
      */
-    private String generateNextInvoiceNumber() {
+    public String generateNextInvoiceNumber() {
         // DB에서 가장 마지막 송장을 가져옴
         return invoiceRepository.findTopByOrderByIdDesc()
                 .map(lastInvoice -> {
@@ -59,17 +64,13 @@ public class InvoiceService {
                 .orElse("INV-00001"); // 데이터가 하나도 없으면 1번부터 시작
     }
 
-    /**
-     * 전체 조회 (Overview 화면용)
-     */
-    public List<InvoiceMember> getAllInvoices() {
+    //전체 조회
+    public List<Invoice> getAllInvoices() {
         return invoiceRepository.findAll();
     }
 
-    /**
-     * 상세 조회 (개별 클릭 시)
-     */
-    public InvoiceMember getInvoice(Long id) {
+    //상세 조회
+    public Invoice getInvoice(Long id) {
         return invoiceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 인보이스가 없습니다. id=" + id));
     }
