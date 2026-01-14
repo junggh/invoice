@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice Dashboard</title>
+  <style>
+    :root {
+      --primary-color: #00A3FF;
+      --text-color: #333;
+      --bg-color: #F5F7FA;
+      --border-color: #E0E0E0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      margin: 0;
+      padding: 40px;
+      color: var(--text-color);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 20px;
+      min-height: 600px;
+    }
+
+    h1 { margin-top: 0; margin-bottom: 20px; }
+
+    /* --- 탭 스타일 --- */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 30px;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .tabs li {
+      margin-right: 25px;
+    }
+
+    .tabs a {
+      text-decoration: none;
+      color: #666;
+      font-weight: 500;
+      padding-bottom: 10px;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    /* 선택된 탭 강조 */
+    .tabs a.active {
+      color: var(--primary-color);
+      border-bottom: 2px solid var(--primary-color);
+    }
+
+    /* --- 요약 지표 (Total, Balance Due 등) --- */
+    .summary-metrics {
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .metric-item label { display: block; color: #888; font-size: 14px; margin-bottom: 5px; }
+    .metric-item span { font-size: 24px; font-weight: bold; }
+    .text-red { color: #FF4D4F; }
+
+    /* --- 툴바 (검색창 + 버튼들) --- */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    .search-bar input {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      width: 300px;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .btn-primary { background-color: var(--primary-color); color: white; }
+    .btn-icon { background: white; border: 1px solid var(--border-color); color: #666; padding: 8px 10px; }
+
+    /* --- 테이블 스타일 --- */
+    .invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .invoice-table th, .invoice-table td {
+      text-align: left;
+      padding: 15px 10px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+    }
+
+    .invoice-table th { color: #888; font-weight: 600; }
+    .invoice-link { color: var(--primary-color); text-decoration: none; font-weight: 500; }
+
+    /* 상태 뱃지 (선택사항) */
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-PAID { background-color: #E6FFFB; color: #00A3FF; }
+    .status-UNPAID { background-color: #FFF7E6; color: #FA8C16; }
+    .status-OVERDUE { background-color: #FFF1F0; color: #FF4D4F; }
+    .status-DRAFT { background-color: #F0F0F0; color: #666; }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Invoice</h1>
+
+  <ul class="tabs">
+    <li><a th:href="@{/(status='Overview')}" th:classappend="${currentStatus == 'Overview'} ? 'active'">Overview</a></li>
+    <li><a th:href="@{/(status='DRAFT')}" th:classappend="${currentStatus == 'DRAFT'} ? 'active'">Draft</a></li>
+    <li><a th:href="@{/(status='IN_REVIEW')}" th:classappend="${currentStatus == 'IN_REVIEW'} ? 'active'">In Review</a></li>
+    <li><a th:href="@{/(status='UNPAID')}" th:classappend="${currentStatus == 'UNPAID'} ? 'active'">Unpaid</a></li>
+    <li><a th:href="@{/(status='PAID')}" th:classappend="${currentStatus == 'PAID'} ? 'active'">Paid</a></li>
+    <li><a th:href="@{/(status='OVERDUE')}" th:classappend="${currentStatus == 'OVERDUE'} ? 'active'">Overdue</a></li>
+  </ul>
+
+  <div class="summary-metrics">
+    <div class="metric-item">
+      <label>Total</label>
+      <span>148.90</span>
+    </div>
+    <div class="metric-item">
+      <label>Balance Due</label>
+      <span>148.90</span>
+    </div>
+    <div class="metric-item">
+      <label class="text-red">Overdue</label>
+      <span class="text-red">123.00</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-bar">
+      <input type="text" placeholder="Search by name, invoice #...">
+    </div>
+    <div class="action-buttons">
+      <a href="/invoices/new" class="btn btn-primary">New</a> <button class="btn btn-primary">Send receipt</button>
+      <button class="btn btn-icon">🗑</button>
+      <button class="btn btn-icon">🖨</button>
+      <button class="btn btn-icon">📥</button>
+    </div>
+  </div>
+
+  <table class="invoice-table">
+    <thead>
+    <tr>
+      <th style="width: 30px;"><input type="checkbox"></th>
+      <th>Date</th>
+      <th>Invoice #</th>
+      <th>Contact</th>
+      <th>Bill To</th>
+      <th>Status</th>
+      <th>Total</th>
+      <th>Balance due</th>
+      <th>Due Date</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:if="${invoices.isEmpty()}">
+      <td colspan="10" style="text-align: center; padding: 30px;">No invoices found.</td>
+    </tr>
+
+    <tr th:each="inv : ${invoices}">
+      <td><input type="checkbox"></td>
+      <td th:text="${inv.date}">2025-07-29</td>
+      <td>
+        <a href="#" class="invoice-link" th:text="${inv.invoiceNumber}">INV-00001</a>
+      </td>
+      <td th:text="${inv.contact}">June Young</td>
+      <td th:text="${inv.billTo}">Seoul</td>
+
+      <td>
+        <span th:text="${inv.status}" th:class="'status-badge status-' + ${inv.status}">PAID</span>
+      </td>
+
+      <td th:text="${inv.total}">13</td>
+      <td th:text="${inv.balanceDue}">0</td>
+      <td th:text="${inv.dueDate}">2025-08-07</td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>

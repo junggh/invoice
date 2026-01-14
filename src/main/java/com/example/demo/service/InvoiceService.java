@@ -46,6 +46,22 @@ public class InvoiceService {
         return savedInvoice.getId();
     }
 
+    public List<Invoice> getInvoices(String statusCondition) {
+        // 1. 상태가 없거나 'Overview'이면 전체 조회
+        if (statusCondition == null || statusCondition.isEmpty() || statusCondition.equals("Overview")) {
+            return invoiceRepository.findAll();
+        }
+
+        // 2. 그 외에는 해당 상태(Enum)로 조회
+        try {
+            InvoiceStatus status = InvoiceStatus.valueOf(statusCondition);
+            return invoiceRepository.findByStatus(status);
+        } catch (IllegalArgumentException e) {
+            // 이상한 문자가 들어오면 그냥 전체 조회
+            return invoiceRepository.findAll();
+        }
+    }
+
     /**
      * 송장 번호 생성기 (내부 메서드)
      * 마지막 번호를 조회해서 +1을 수행함
