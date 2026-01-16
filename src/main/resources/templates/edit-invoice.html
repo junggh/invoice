@@ -21,14 +21,14 @@
             <div class="form-grid">
                 <div class="section-left">
                     <div class="form-group">
-                        <label for="contact">Contact Name</label>
-                        <input type="text" id="contact" name="contact" th:value="${invoice.contact}" required>
+                        <label for="customerName">Contact Name</label>
+                        <input type="text" id="customerName" name="customerName" th:value="${invoice.customerName}" required>
                     </div>
 
                     <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0px;">
                         <div class="form-group">
-                            <label for="currency">Currency</label>
-                            <input type="text" id="currency" name="currency" placeholder="KRW" th:value="${invoice.currency}">
+                            <label for="customerCurrency">Currency</label>
+                            <input type="text" id="customerCurrency" name="customerCurrency" placeholder="KRW" th:value="${invoice.customerCurrency}">
                         </div>
 
                         <div class="form-group">
@@ -38,8 +38,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="billTo">Bill To</label>
-                        <input type="text" id="billTo" name="billTo" placeholder="City" th:value="${invoice.billTo}">
+                        <label for="customerBillTo">Bill To</label>
+                        <input type="text" id="customerBillTo" name="customerBillTo" placeholder="City" th:value="${invoice.customerBillTo}">
                     </div>
                 </div>
 

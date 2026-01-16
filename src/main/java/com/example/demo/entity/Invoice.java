@@ -21,13 +21,7 @@ public class Invoice {
 
     private String reference; // 참조 번호
 
-    private String contact; // 고객 (거래처)
-
-    private String currency; // 통화 단위
-
     private String salesPerson; // 담당 사원
-
-    private String billTo; // 청구 주소
 
     @Enumerated(EnumType.STRING)
     private InvoiceStatus status; // 상태 (Draft, Paid 등)
@@ -42,4 +36,16 @@ public class Invoice {
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InvoiceItem> items = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contact_id")
+    private Contact contact;
+
+    // 발행 당시 스냅샷
+    private String customerName;
+    private String customerCurrency;
+    private String customerBillTo;
+    private String customerCompanyName;
+    private String customerPhoneNumber;
+
 }

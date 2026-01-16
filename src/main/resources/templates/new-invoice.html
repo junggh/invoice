@@ -11,6 +11,9 @@
         <form action="/api/invoices" method="POST">
 
             <input type="hidden" id="hiddenStatus" name="status" value="DRAFT">
+            <input type="hidden" id="hiddenCompanyName" name="customerCompanyName" value="">
+            <input type="hidden" id="hiddenPhoneNumber" name="customerPhoneNumber" value="">
+            <input type="hidden" id="hiddenName" name="customerName">
 
             <div class="header">
                 <h1>New Invoice</h1>
@@ -20,14 +23,27 @@
             <div class="form-grid">
                 <div class="section-left">
                     <div class="form-group">
-                        <label for="contact">Contact Name</label>
-                        <input type="text" id="contact" name="contact" required>
+                        <label for="contactSelect">Contact Name</label>
+<!--                        <input type="text" id="customerName" name="customerName" required>-->
+                        <select id="contactSelect" name="contact.id" onchange="updateContactDetails(this)">
+                            <option value="">Select Client</option>
+                            <option th:each="c : ${contacts}"
+                                    th:value="${c.id}"
+                                    th:text="${c.name}"
+                                    th:data-name="${c.name}"
+                                    th:data-address="${c.billTo}"
+                                    th:data-currency="${c.currency}"
+                                    th:data-company="${c.companyName}"
+                                    th:data-phone="${c.phoneNumber}">
+                                Samsung Electronics
+                            </option>
+                        </select>
                     </div>
 
                     <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0px;">
                         <div class="form-group">
-                            <label for="currency">Currency</label>
-                            <input type="text" id="currency" name="currency" placeholder="KRW">
+                            <label for="customerCurrency">Currency</label>
+                            <input type="text" id="customerCurrency" name="customerCurrency" placeholder="KRW">
                         </div>
 
                         <div class="form-group">
@@ -37,8 +53,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="billTo">Bill To</label>
-                        <input type="text" id="billTo" name="billTo" placeholder="City">
+                        <label for="customerBillTo">Bill To</label>
+                        <input type="text" id="customerBillTo" name="customerBillTo" placeholder="City">
                     </div>
                 </div>
 
@@ -100,7 +116,12 @@
                         <td><input type="number" name="items[0].price" placeholder="0" class="text-right calc-input" style="width: 95%;" readonly></td>
                         <td><input type="number" name="items[0].quantity" placeholder="0" class="text-right calc-input" style="width: 95%;"></td>
                         <td><input type="number" name="items[0].discount" placeholder="0" class="text-right calc-input" style="width: 95%;"></td>
-                        <td><input type="number" name="items[0].amount" placeholder="0.00" class="text-right row-amount" style="vertical-align: middle;" readonly></td>
+                        <td class="text-right" style="vertical-align: middle;">
+                            <span class="amount-display">0.00</span>
+
+                            <input type="hidden" name="items[0].amount" class="row-amount" value="0.00">
+                        </td>
+<!--                        <td><input type="number" name="items[0].amount" placeholder="0.00" class="text-right row-amount" style="vertical-align: middle;" readonly></td>-->
                         <td class="delete-cell"></td>
                     </tr>
                 </tbody>
@@ -135,6 +156,6 @@
 
         </form>
     </div>
-    <script src="/js/newinvoicescript.js?v=4"></script>
+    <script src="/js/newinvoicescript.js?v=7"></script>
 </body>
 </html>

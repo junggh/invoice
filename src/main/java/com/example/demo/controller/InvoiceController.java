@@ -1,7 +1,9 @@
 package com.example.demo.controller;
 
+import com.example.demo.entity.Contact;
 import com.example.demo.entity.Invoice;
 import com.example.demo.entity.Product;
+import com.example.demo.repository.ContactRepository;
 import com.example.demo.repository.ProductRepository;
 import com.example.demo.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ public class InvoiceController {
 
     private final InvoiceService invoiceService;
     private final ProductRepository productRepository;
+    private final ContactRepository contactRepository;
 
     // 메인 화면
     @GetMapping("/invoices")
@@ -55,6 +58,8 @@ public class InvoiceController {
         model.addAttribute("nextInvoiceNum", nextNum);
         List<Product> products = productRepository.findAll();
         model.addAttribute("products", products);
+        List<Contact> contacts = contactRepository.findAll();
+        model.addAttribute("contacts", contacts);
         return "new-invoice";
     }
 

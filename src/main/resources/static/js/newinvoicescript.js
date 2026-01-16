@@ -31,6 +31,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (amountInput) {
             amountInput.value = '0.00';
         }
+        // 수정
+        const amountDisplay = newRow.querySelector('.amount-display');
+        if (amountDisplay) {
+            amountDisplay.textContent = '0.00';
+        }
 
         // 삭제 버튼 추가
         const deleteCell = newRow.lastElementChild;
@@ -60,9 +65,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const priceInput = row.querySelector('input[name$=".price"]');
         const qtyInput = row.querySelector('input[name$=".quantity"]');
         const discountInput = row.querySelector('input[name$=".discount"]');
-
-        // [수정] amount는 이제 readonly input입니다.
         const amountInput = row.querySelector('input[name$=".amount"]');
+        // [추가됨] 텍스트 표시용 span 찾기
+        const amountDisplay = row.querySelector('.amount-display');
 
         const price = parseFloat(priceInput.value) || 0;
         const qty = parseFloat(qtyInput.value) || 0;
@@ -71,9 +76,12 @@ document.addEventListener('DOMContentLoaded', function() {
         let amount = (price * qty) - discount;
         if (amount < 0) amount = 0; // 마이너스 방지 (선택사항)
 
-        // [수정] input 태그이므로 .value에 값을 넣습니다.
+        // input 태그이므로 .value에 값을 넣습니다.
         if (amountInput) {
             amountInput.value = amount.toFixed(2);
+        }
+        if (amountDisplay) {
+            amountDisplay.textContent = amount.toFixed(2); // 화면 표시용
         }
 
         // 전체 합계 재계산
@@ -120,10 +128,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const discountInput = row.querySelector('input[name$=".discount"]');
 
         if (selectElement.value === "") {
-            if (priceInput) priceInput.value = 0;
+            if (priceInput) priceInput.value = "";
             if (descInput) descInput.value = "";
-            if (quantityInput) quantityInput.value = 0;
-            if (discountInput) discountInput.value = 0;
+            if (quantityInput) quantityInput.value = "";
+            if (discountInput) discountInput.value = "";
 
             // 값이 0이 되었으니 합계(Amount)도 0으로 다시 계산
             window.calculateRow(row);
@@ -173,6 +181,48 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // ============================================================
+    // [추가] Contact 선택 시 세부 정보 자동 채우기
+    // ============================================================
+    window.updateContactDetails = function(selectElement) {
+        console.log("=== updateContactDetails 실행 ===");
+
+        // 1. 채워넣을 대상 DOM 요소 찾기
+        const nameInput = document.getElementById('hiddenName'); // hidden
+        const currencyInput = document.getElementById('customerCurrency');
+        const billToInput = document.getElementById('customerBillTo');
+        const companyInput = document.getElementById('hiddenCompanyName'); // hidden
+        const phoneInput = document.getElementById('hiddenPhoneNumber'); // hidden
+
+        // 2. 선택 취소(빈 값)일 경우 초기화
+        if (selectElement.value === "") {
+            if (nameInput) nameInput.value = "";
+            if (currencyInput) currencyInput.value = "";
+            if (billToInput) billToInput.value = "";
+            if (companyInput) companyInput.value = "";
+            if (phoneInput) phoneInput.value = "";
+            return;
+        }
+
+        // 3. 선택된 옵션에서 데이터 가져오기
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+
+        const name = selectedOption.getAttribute('data-name');
+        const currency = selectedOption.getAttribute('data-currency');
+        const address = selectedOption.getAttribute('data-address'); // billTo
+        const company = selectedOption.getAttribute('data-company');
+        const phone = selectedOption.getAttribute('data-phone');
+
+        // 4. 값 주입
+        if (nameInput) nameInput.value = name;
+        if (currencyInput) currencyInput.value = currency;
+        if (billToInput) billToInput.value = address;
+        if (companyInput) companyInput.value = company;
+        if (phoneInput) phoneInput.value = phone;
+
+        console.log(`Contact Updated: ${name}, ${company}`);
+    };
 
     // 페이지 로드 시 최초 1회 전체 계산
     window.calculateTotal();

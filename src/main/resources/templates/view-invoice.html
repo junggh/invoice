@@ -16,14 +16,14 @@
         <div class="form-grid">
             <div class="section-left">
                 <div class="form-group">
-                    <label for="contact">Contact Name</label>
-                    <input type="text" id="contact" name="contact" th:value="${invoice.contact}" readonly>
+                    <label for="customerName">Contact Name</label>
+                    <input type="text" id="customerName" name="customerName" th:value="${invoice.customerName}" readonly>
                 </div>
 
                 <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0px;">
                     <div class="form-group">
-                        <label for="currency">Currency</label>
-                        <input type="text" id="currency" name="currency" th:value="${invoice.currency}" readonly>
+                        <label for="customerCurrency">Currency</label>
+                        <input type="text" id="customerCurrency" name="customerCurrency" th:value="${invoice.customerCurrency}" readonly>
                     </div>
 
                     <div class="form-group">
@@ -33,8 +33,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="billTo">Bill To</label>
-                    <input type="text" id="billTo" name="billTo" th:value="${invoice.billTo}" readonly>
+                    <label for="customerBillTo">Bill To</label>
+                    <input type="text" id="customerBillTo" name="customerBillTo" th:value="${invoice.customerBillTo}" readonly>
                 </div>
             </div>
 
@@ -125,6 +125,6 @@
             <button type="button" th:onclick="|location.href='@{/invoices/{id}/edit(id=${invoice.id})}'|" class="btn btn-primary">Edit Invoice</button>
         </div>
     </div>
-    <script src="/js/newinvoicescript.js"></script>
+    <!--<script src="/js/newinvoicescript.js?v=4"></script>-->
 </body>
 </html>

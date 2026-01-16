@@ -29,15 +29,15 @@
         <div class="summary-metrics">
             <div class="metric-item">
                 <label>Total</label>
-                <span th:text="${#numbers.formatDecimal(totalAmount, 1, 2)}">00.00</span>
+                <span th:text="|A$${#numbers.formatDecimal(totalAmount, 1, 2)}|">A$00.00</span>
             </div>
             <div class="metric-item">
                 <label>Balance Due</label>
-                <span th:text="${#numbers.formatDecimal(totalBalance, 1, 2)}">00.00</span>
+                <span th:text="|A$${#numbers.formatDecimal(totalBalance, 1, 2)}|">A$00.00</span>
             </div>
             <div class="metric-item">
                 <label>Overdue</label>
-                <span class="text-red">00.00</span>
+                <span class="text-red">A$00.00</span>
             </div>
         </div>
 
@@ -79,8 +79,8 @@
                 <td>
                     <a th:href="@{/invoices/{id}(id=${inv.id})}" class="invoice-link" th:text="${inv.invoiceNumber}">INV-00001</a>
                 </td>
-                <td th:text="${inv.contact}">June Young</td>
-                <td th:text="${inv.billTo}">Seoul</td>
+                <td th:text="${inv.customerName}">June Young</td>
+                <td th:text="${inv.customerBillTo}">Seoul</td>
 
                 <td>
                     <span th:text="${inv.status}" th:class="'status-badge status-' + ${inv.status}">PAID</span>
