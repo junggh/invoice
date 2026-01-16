@@ -24,7 +24,7 @@ public class InvoiceService {
     @Transactional // 쓰기 작업이 있으므로 읽기전용 해제
     public Long createInvoice(Invoice invoice) {
 
-        // 1. 송장 번호 자동 생성 로직 (INV-00001 패턴)
+        // 송장 번호 자동 생성 (INV-0000#)
         String nextInvoiceNumber = generateNextInvoiceNumber();
         invoice.setInvoiceNumber(nextInvoiceNumber);
 

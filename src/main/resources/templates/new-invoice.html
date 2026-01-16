@@ -8,10 +8,14 @@
 </head>
 <body>
     <div class="container">
-        <form action="/api/invoices" method="POST"> <div class="header">
-            <h1>New Invoice</h1>
-            <span style="color: #888;" th:text="'# ' + ${nextInvoiceNum}"></span>
-        </div>
+        <form action="/api/invoices" method="POST">
+
+            <input type="hidden" id="hiddenStatus" name="status" value="DRAFT">
+
+            <div class="header">
+                <h1>New Invoice</h1>
+                <span style="color: #888;" th:text="'# ' + ${nextInvoiceNum}"></span>
+            </div>
             <h3 style="margin-top:0;">Invoice Details</h3>
             <div class="form-grid">
                 <div class="section-left">
@@ -33,7 +37,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="billTo">Billing Address</label>
+                        <label for="billTo">Bill To</label>
                         <input type="text" id="billTo" name="billTo" placeholder="City">
                     </div>
                 </div>
@@ -49,18 +53,6 @@
                             <label for="reference">Reference</label>
                             <input type="number" id="reference" name="reference">
                         </div>
-                    </div>
-
-
-                    <div class="form-group">
-                        <label for="status">Status</label>
-                        <select id="status" name="status">
-                            <option value="DRAFT">Draft (임시저장)</option>
-                            <option value="IN_REVIEW">IN REVIEW (검토중)</option>
-                            <option value="UNPAID">UNPAID (미납)</option>
-                            <option value="PAID">Paid (완납)</option>
-                            <option value="OVERDUE">OVERDUE (연체)</option>
-                        </select>
                     </div>
 
                     <div class="form-grid" style="margin-bottom: 0; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -92,12 +84,23 @@
                 </thead>
                 <tbody id="invoiceItems">
                     <tr class="item-row">
-                        <td><input type="text" name="items[0].product" style="width: 95%;"></td>
-                        <td><input type="text" name="items[0].description" placeholder="product description" style="width: 95%;"></td>
-                        <td><input type="number" name="items[0].price" placeholder="0" class="text-right calc-input" style="width: 95%;"></td>
+                        <td>
+                            <select name="items[0].product.id" class="product-select" onchange="updateItemDetails(this)" style="width: 95%;">
+                                <option value="">Select Product</option>
+                                <option th:each="prod : ${products}"
+                                        th:value="${prod.id}"
+                                        th:text="${prod.name}"
+                                        th:data-price="${prod.price}"
+                                        th:data-desc="${prod.description}">
+                                    Apple
+                                </option>
+                            </select>
+                        </td>
+                        <td><input type="text" name="items[0].description" placeholder="product description" style="width: 95%;" readonly></td>
+                        <td><input type="number" name="items[0].price" placeholder="0" class="text-right calc-input" style="width: 95%;" readonly></td>
                         <td><input type="number" name="items[0].quantity" placeholder="0" class="text-right calc-input" style="width: 95%;"></td>
                         <td><input type="number" name="items[0].discount" placeholder="0" class="text-right calc-input" style="width: 95%;"></td>
-                        <td class="text-right row-amount" style="vertical-align: middle;"> 0.00</td>
+                        <td><input type="number" name="items[0].amount" placeholder="0.00" class="text-right row-amount" style="vertical-align: middle;" readonly></td>
                         <td class="delete-cell"></td>
                     </tr>
                 </tbody>
@@ -121,12 +124,17 @@
             </div>
 
             <div class="actions">
-                <button type="button" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Create Invoice</button>
+                <button type="button" onclick="location.href='/invoices'" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary" onclick="setStatusAndSubmit('DRAFT')">
+                    Save as Draft
+                </button>
+                <button type="submit" class="btn btn-primary" onclick="setStatusAndSubmit('IN_REVIEW')">
+                    Save & Submit for Review
+                </button>
             </div>
 
         </form>
     </div>
-    <script src="/js/newinvoicescript.js"></script>
+    <script src="/js/newinvoicescript.js?v=4"></script>
 </body>
 </html>
