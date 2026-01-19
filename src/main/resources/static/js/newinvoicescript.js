@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     // 초기 인덱스 (이미 0번 행이 있으므로 1부터 시작)
-    let itemIndex = 1;
+    let itemIndex = (typeof window.itemIndex !== 'undefined') ? window.itemIndex : 1;
 
     // ============================================================
     // 1. 행 추가 함수
@@ -97,21 +97,23 @@ document.addEventListener('DOMContentLoaded', function() {
         // [수정] .row-amount 클래스를 가진 요소들은 모두 <input> 태그입니다.
         // 따라서 .textContent가 아니라 .value를 읽어야 합니다.
         document.querySelectorAll('.row-amount').forEach(input => {
-            subtotal += parseFloat(input.value) || 0;
+            // 소수점 오차 방지
+            let val = parseFloat(input.value) || 0;
+            subtotal += Math.round(val * 100);
         });
 
         const taxRate = 0.10;
-        const tax = subtotal * taxRate;
+        const tax = Math.round(subtotal * taxRate); // 세금도 반올림 처리
         const total = subtotal + tax;
 
         // 화면 하단 업데이트 (이것들은 span이므로 textContent 사용)
-        document.getElementById('subtotal').textContent = subtotal.toFixed(2);
-        document.getElementById('tax').textContent = tax.toFixed(2);
-        document.getElementById('totalAmount').textContent = total.toFixed(2);
+        document.getElementById('subtotal').textContent = (subtotal/100).toFixed(2);
+        document.getElementById('tax').textContent = (tax/100).toFixed(2);
+        document.getElementById('totalAmount').textContent = (total/100).toFixed(2);
 
         // 백엔드 전송용 hidden input 업데이트
         const hiddenTotal = document.getElementById('hiddenTotal');
-        if(hiddenTotal) hiddenTotal.value = total;
+        if(hiddenTotal) hiddenTotal.value = (total/100).toFixed(2);
     };
 
     // ============================================================

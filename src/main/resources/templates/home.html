@@ -29,11 +29,11 @@
         <div class="summary-metrics">
             <div class="metric-item">
                 <label>Total</label>
-                <span th:text="|A$${#numbers.formatDecimal(totalAmount, 1, 2)}|">A$00.00</span>
+                <span th:text="'A$' + ${#numbers.formatDecimal(totalAmount, 1, 2)}">A$00.00</span>
             </div>
             <div class="metric-item">
                 <label>Balance Due</label>
-                <span th:text="|A$${#numbers.formatDecimal(totalBalance, 1, 2)}|">A$00.00</span>
+                <span th:text="'A$' + ${#numbers.formatDecimal(totalBalance, 1, 2)}">A$00.00</span>
             </div>
             <div class="metric-item">
                 <label>Overdue</label>
@@ -61,6 +61,7 @@
                 <th>Date</th>
                 <th>Invoice #</th>
                 <th>Contact</th>
+                <th>Phone Number</th>
                 <th>Bill To</th>
                 <th>Status</th>
                 <th>Total</th>
@@ -77,17 +78,18 @@
                 <td><input type="checkbox"></td>
                 <td th:text="${inv.date}">2025-07-29</td>
                 <td>
-                    <a th:href="@{/invoices/{id}(id=${inv.id})}" class="invoice-link" th:text="${inv.invoiceNumber}">INV-00001</a>
+                    <a th:href="${#strings.toString(inv.status) == 'DRAFT'} ? @{/invoices/{id}/edit(id=${inv.id})} : @{/invoices/{id}(id=${inv.id})}" class="invoice-link" th:text="${inv.invoiceNumber}">INV-00001</a>
                 </td>
                 <td th:text="${inv.customerName}">June Young</td>
+                <td th:text="${inv.customerPhoneNumber}">010-0000-0000</td>
                 <td th:text="${inv.customerBillTo}">Seoul</td>
 
                 <td>
                     <span th:text="${inv.status}" th:class="'status-badge status-' + ${inv.status}">PAID</span>
                 </td>
 
-                <td th:text="${inv.total}">13</td>
-                <td th:text="${inv.balanceDue}">0</td>
+                <td th:text="'A$' + ${inv.total}">13</td>
+                <td th:text="'A$' + ${inv.balanceDue}">0</td>
                 <td th:text="${inv.dueDate}">2025-08-07</td>
             </tr>
             </tbody>

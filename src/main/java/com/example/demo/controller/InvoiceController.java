@@ -1,8 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.entity.Contact;
-import com.example.demo.entity.Invoice;
-import com.example.demo.entity.Product;
+import com.example.demo.entity.*;
 import com.example.demo.repository.ContactRepository;
 import com.example.demo.repository.ProductRepository;
 import com.example.demo.service.InvoiceService;
@@ -31,19 +29,10 @@ public class InvoiceController {
     public String home(@RequestParam(required = false) String status, Model model) {
         List<Invoice> invoices = invoiceService.getInvoices(status);
         model.addAttribute("invoices", invoices);
-        // 1. Total 합계 (null은 제외하고 0으로 처리)
-        BigDecimal totalAmount = invoices.stream()
-                .map(Invoice::getTotal)       // total 필드만 뽑기
-                .filter(Objects::nonNull)     // null인 데이터는 제외 (에러 방지!)
-                .reduce(BigDecimal.ZERO, BigDecimal::add); // 다 더하기
+        // Total, Balance Due 계산 전달
+        BigDecimal totalAmount = invoiceService.calculateTotalAmount(status);
+        BigDecimal totalBalance = invoiceService.calculateTotalBalance(status);
 
-        // 2. Balance Due 합계
-        BigDecimal totalBalance = invoices.stream()
-                .map(Invoice::getBalanceDue)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // 3. 계산된 결과를 모델에 담기
         model.addAttribute("totalAmount", totalAmount);
         model.addAttribute("totalBalance", totalBalance);
         // 현재 탭 활성화용
@@ -54,35 +43,50 @@ public class InvoiceController {
     // 새 인보이스 작성 화면
     @GetMapping("/invoices/new")
     public String createInvoiceForm(Model model) {
-        String nextNum = invoiceService.generateNextInvoiceNumber();
-        model.addAttribute("nextInvoiceNum", nextNum);
+        Invoice invoice = new Invoice();
+        invoice.setInvoiceNumber(invoiceService.generateNextInvoiceNumber());
+        invoice.setStatus(InvoiceStatus.DRAFT);
+        invoice.getItems().add(new InvoiceItem());
+        model.addAttribute("invoice", invoice);
+//        String nextNum = invoiceService.generateNextInvoiceNumber();
+//        model.addAttribute("nextInvoiceNum", nextNum);
         List<Product> products = productRepository.findAll();
         model.addAttribute("products", products);
         List<Contact> contacts = contactRepository.findAll();
         model.addAttribute("contacts", contacts);
         return "new-invoice";
     }
-
+    // 새 인보이스 Post
     @PostMapping("/api/invoices")
     public String createInvoice(Invoice invoice) {
         // HTML의 input name 속성과 Member 객체의 필드명이 같으면 자동으로 매핑
         invoiceService.createInvoice(invoice);
 
-        return "redirect:/invoices"; // 가입 성공 후 메인 페이지
+        return "redirect:/invoices";
     }
-
-    // 선택한 인보이스 확인
+    // 수정 불가 인보이스 확인
     @GetMapping("/invoices/{id}")
     public String viewInvoice(@PathVariable Long id, Model model) {
         Invoice invoice = invoiceService.getInvoice(id);
         model.addAttribute("invoice", invoice);
         return "view-invoice";
     }
-
+    // 수정 가능 인보이스 확인
     @GetMapping("/invoices/{id}/edit")
     public String editInvoice(@PathVariable Long id, Model model) {
         Invoice invoice = invoiceService.getInvoice(id);
         model.addAttribute("invoice", invoice);
+        List<Product> products = productRepository.findAll();
+        model.addAttribute("products", products);
+        List<Contact> contacts = contactRepository.findAll();
+        model.addAttribute("contacts", contacts);
         return "edit-invoice";
+    }
+    // 인보이스 수정 Post
+    @PostMapping("/api/invoices/update")
+    public String updateInvoice(Invoice invoice) {
+        invoiceService.updateInvoice(invoice);
+
+        return "redirect:/invoices";
     }
 }

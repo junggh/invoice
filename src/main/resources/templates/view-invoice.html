@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View</title>
+    <title>View Invoice</title>
     <link rel="stylesheet" href="/css/newinvoicestyle.css">
 </head>
 <body>
@@ -71,8 +71,6 @@
         </div>
 
         <h3>Items</h3>
-        <button type="button" class="btn btn-secondary" onclick="addItem()" style="padding: 5px 10px; font-size: 16px;">+
-        </button>
         <table class="items-table">
             <thead>
             <tr>
@@ -86,18 +84,26 @@
             </tr>
             </thead>
             <tbody id="invoiceItems">
-            <tr class="item-row">
-                <td><input type="text" name="items[0].product" style="width: 95%;"></td>
-                <td><input type="text" name="items[0].description" placeholder="product description" style="width: 95%;">
+            <tr th:each="item : ${invoice.items}" class="item-row">
+                <td>
+                    <input type="text" th:value="${item.product.name}" style="width: 95%;" readonly>
                 </td>
-                <td><input type="number" name="items[0].price" placeholder="0" class="text-right calc-input"
-                           style="width: 95%;"></td>
-                <td><input type="number" name="items[0].quantity" placeholder="0" class="text-right calc-input"
-                           style="width: 95%;"></td>
-                <td><input type="number" name="items[0].discount" placeholder="0" class="text-right calc-input"
-                           style="width: 95%;"></td>
-                <td class="text-right row-amount" style="vertical-align: middle;"> 0.00</td>
-                <td class="delete-cell"></td>
+                <td>
+                    <input type="text" th:value="${item.product.description}" style="width: 95%;" readonly>
+                </td>
+                <td>
+                    <input type="number" th:value="${item.product.price}" class="text-right" style="width: 95%;" readonly>
+                </td>
+                <td>
+                    <input type="number" th:value="${item.quantity}" class="text-right" style="width: 95%;" readonly>
+                </td>
+                <td>
+                    <input type="number" th:value="${item.discount}" class="text-right" style="width: 95%;" readonly>
+                </td>
+                <td class="text-right" style="vertical-align: middle;">
+                    <span th:text="${item.amount}">0.00</span>
+                </td>
+                <td></td>
             </tr>
             </tbody>
         </table>
@@ -114,17 +120,15 @@
                 </div>
                 <div style="display: flex; justify-content: space-between; border-top: 2px solid #333; padding-top: 10px; font-size: 18px; font-weight: bold;">
                     <span>Total Amount</span>
-                    <input type="hidden" name="total" id="hiddenTotal" value="0"> <span id="totalAmount"
-                                                                                        style="color: var(--primary-color);">0.00</span>
+                    <span style="color: var(--primary-color);" th:text="${invoice.total}">0.00</span>
                 </div>
             </div>
         </div>
 
         <div class="actions">
             <button type="button" onclick="location.href='/invoices'" class="btn btn-secondary">Cancel</button>
-            <button type="button" th:onclick="|location.href='@{/invoices/{id}/edit(id=${invoice.id})}'|" class="btn btn-primary">Edit Invoice</button>
+<!--            <button type="button" th:onclick="|location.href='@{/invoices/{id}/edit(id=${invoice.id})}'|" class="btn btn-primary">Edit Invoice</button>-->
         </div>
     </div>
-    <!--<script src="/js/newinvoicescript.js?v=4"></script>-->
 </body>
 </html>

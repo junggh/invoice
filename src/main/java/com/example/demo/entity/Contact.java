@@ -7,6 +7,7 @@ import lombok.Setter;
 @Entity
 @Getter @Setter
 public class Contact {
+
     @Id // PK
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
