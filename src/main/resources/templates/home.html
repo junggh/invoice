@@ -96,7 +96,7 @@
 
             <tr th:each="inv : ${invoices}">
                 <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${inv.id}"></td>
-                <td th:text="${#temporals.format(inv.date, 'dd/MM/yyyy')}">29/07/2025</td>
+                <td th:text="${#temporals.format(inv.issuedDate, 'dd/MM/yyyy')}">29/07/2025</td>
                 <td>
                     <a th:href="${#strings.toString(inv.status) == 'DRAFT'} ? @{/invoices/{id}/edit(id=${inv.id})} : @{/invoices/{id}(id=${inv.id})}" class="invoice-link" th:text="${inv.invoiceNumber}">INV-00001</a>
                 </td>

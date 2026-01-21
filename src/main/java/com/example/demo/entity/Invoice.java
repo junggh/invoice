@@ -30,7 +30,7 @@ public class Invoice {
 
     private BigDecimal balanceDue; // 남은 금액
 
-    private LocalDate date; // 발행일
+    private LocalDate issuedDate; // 발행일
 
     private LocalDate dueDate; // 납부 기한
 
