@@ -51,13 +51,33 @@
                 <!--<button class="btn btn-icon">🗑</button>
                 <button class="btn btn-icon">🖨</button>
                 <button class="btn btn-icon">📥</button>-->
+                <button type="button" class="btn btn-icon" onclick="approveSelected()"
+                        style="cursor: pointer; color: #007bff; border-color: #007bff; display: flex; align-items: center; justify-content: center;"
+                        title="Approve / Mark as Paid">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                        <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+                    </svg>
+                </button>
+                <button type="button" class="btn btn-icon" onclick="deleteSelected()"
+                        style="cursor: pointer; color: #FF4D4F; border-color: #FF4D4F; display: flex; align-items: center; justify-content: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                    </svg>
+                </button>
+                <button class="btn btn-icon">copy</button>
+                <button class="btn btn-icon">link</button>
+                <button class="btn btn-icon">1</button>
+                <button class="btn btn-icon">2</button>
+                <button class="btn btn-icon">3</button>
+                <button class="btn btn-icon">4</button>
             </div>
         </div>
 
         <table class="invoice-table">
             <thead>
             <tr>
-                <th style="width: 30px;"><input type="checkbox"></th>
+                <th style="width: 30px;"><input type="checkbox" onclick="toggleAll(this)"></th>
                 <th>Date</th>
                 <th>Invoice #</th>
                 <th>Contact</th>
@@ -75,8 +95,8 @@
             </tr>
 
             <tr th:each="inv : ${invoices}">
-                <td><input type="checkbox"></td>
-                <td th:text="${inv.date}">2025-07-29</td>
+                <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${inv.id}"></td>
+                <td th:text="${#temporals.format(inv.date, 'dd/MM/yyyy')}">29/07/2025</td>
                 <td>
                     <a th:href="${#strings.toString(inv.status) == 'DRAFT'} ? @{/invoices/{id}/edit(id=${inv.id})} : @{/invoices/{id}(id=${inv.id})}" class="invoice-link" th:text="${inv.invoiceNumber}">INV-00001</a>
                 </td>
@@ -90,10 +110,48 @@
 
                 <td th:text="'A$' + ${inv.total}">13</td>
                 <td th:text="'A$' + ${inv.balanceDue}">0</td>
-                <td th:text="${inv.dueDate}">2025-08-07</td>
+                <td th:text="${#temporals.format(inv.dueDate, 'dd/MM/yyyy')}">07/08/2025</td>
             </tr>
             </tbody>
         </table>
     </div>
+    <script>
+        // 전체 선택/해제 로직
+        function toggleAll(source) {
+            const checkboxes = document.querySelectorAll('.invoice-checkbox');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+        }
+
+        // 선택 삭제 로직
+        function deleteSelected() {
+            // 체크된 박스 찾기
+            const checkedBoxes = document.querySelectorAll('.invoice-checkbox:checked');
+
+            if (checkedBoxes.length === 0) {
+                alert("Please select invoices to delete.");
+                return;
+            }
+
+            if (!confirm("Are you sure you want to delete " + checkedBoxes.length + " invoices?")) {
+                return;
+            }
+
+            // 가상의 폼을 만들어서 POST 전송
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/api/invoices/delete';
+
+            checkedBoxes.forEach(cb => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids'; // 컨트롤러에서 받을 파라미터 이름
+                input.value = cb.value;
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
 </body>
 </html>

@@ -55,6 +55,10 @@ public class InvoiceService {
             }
         }
     }
+    @Transactional
+    public void deleteInvoices(List<Long> ids) {
+        invoiceRepository.deleteAllById(ids);
+    }
     // Status 별로 invoice 조회
     public List<Invoice> getInvoices(String statusCondition) {
         // 1. 상태가 없거나 'Overview'이면 전체 조회

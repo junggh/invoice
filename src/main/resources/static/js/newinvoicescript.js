@@ -4,9 +4,36 @@ document.addEventListener('DOMContentLoaded', function() {
     let itemIndex = (typeof window.itemIndex !== 'undefined') ? window.itemIndex : 1;
 
     // ============================================================
+    // [공통 함수] Product Select2 초기화 및 이벤트 연결
+    // ============================================================
+    window.initProductSelect2 = function(targetElement) {
+        if (typeof $ !== 'undefined') {
+            $(targetElement).select2({
+                placeholder: "Select Product",
+                allowClear: true,
+                width: '100%' // 테이블 셀 너비에 맞춤
+            }).on('change', function() {
+                // 값이 변경되면 계산 로직 호출
+                window.updateItemDetails(this);
+            });
+        }
+    };
+
+    // Contact Select2 초기화 코드
+    if (typeof $ !== 'undefined') {
+        $('#contactSelect').select2({ placeholder: "Select Client", allowClear: true, width: '100%' });
+        $('#contactSelect').on('change', function() { window.updateContactDetails(this); });
+
+        // [초기 로딩] 기존에 존재하는 모든 제품 select에 대해 Select2 적용
+        $('.product-select').each(function() {
+            window.initProductSelect2(this);
+        });
+    }
+
+    // ============================================================
     // 1. 행 추가 함수
     // ============================================================
-    window.addItem = function() {
+/*    window.addItem = function() {
         console.log("=== add 함수 실행 ===");
         const tbody = document.getElementById('invoiceItems');
         const firstRow = tbody.querySelector('.item-row');
@@ -39,10 +66,80 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 삭제 버튼 추가
         const deleteCell = newRow.lastElementChild;
-        deleteCell.innerHTML = `<button type="button" onclick="removeRow(this)" style="color:red; border:none; background:none; cursor:pointer;">&times;</button>`;
+        deleteCell.innerHTML = '<button type="button" onclick="removeRow(this)" style="color:red; border:none; background:none; cursor:pointer;">&times;</button>';
 
         // 테이블 추가
         tbody.appendChild(newRow);
+        itemIndex++;
+    };*/
+    window.addItem = function() {
+        console.log("=== add 함수 실행 ===");
+        const tbody = document.getElementById('invoiceItems');
+        const firstRow = tbody.querySelector('.item-row');
+
+        // 1. 행 복제
+        const newRow = firstRow.cloneNode(true);
+
+        // 2. [핵심 수정] 복제된 행에서 Select2 관련 잔여물 및 ID 충돌 해결
+
+        // (1) 시각적으로 생성된 Select2 컨테이너(껍데기) 제거
+        const select2Container = newRow.querySelector('.select2-container');
+        if (select2Container) {
+            select2Container.remove();
+        }
+
+        // (2) <select> 태그 및 내부 <option>의 Select2 흔적 지우기
+        const newSelect = newRow.querySelector('.product-select');
+        if (newSelect) {
+            // 값 초기화
+            newSelect.value = '';
+
+            // Select2가 붙인 클래스 제거
+            newSelect.classList.remove('select2-hidden-accessible');
+
+            // Select2가 붙인 속성 제거 (중요!)
+            newSelect.removeAttribute('data-select2-id');
+            newSelect.removeAttribute('tabindex');
+            newSelect.removeAttribute('aria-hidden');
+
+            // [가장 중요] 내부 option들에 붙은 data-select2-id도 모두 제거해야 충돌 방지됨
+            const options = newSelect.querySelectorAll('option');
+            options.forEach(opt => {
+                opt.removeAttribute('data-select2-id');
+                opt.selected = false; // 선택 상태 해제
+            });
+        }
+
+        // 3. Input 및 Select의 name 인덱스 업데이트
+        const inputs = newRow.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.tagName !== 'SELECT') { // select는 위에서 처리했으므로 제외
+                input.value = '';
+            }
+            if (input.name) {
+                input.name = input.name.replace(/\[\d+\]/, `[${itemIndex}]`);
+            }
+        });
+
+        // 4. 텍스트/표시 값 초기화
+        const amountDisplay = newRow.querySelector('.amount-display');
+        if (amountDisplay) amountDisplay.textContent = '0.00';
+
+        const amountInput = newRow.querySelector('.row-amount');
+        if (amountInput) amountInput.value = '0.00';
+
+        // 5. 삭제 버튼 추가
+        const deleteCell = newRow.lastElementChild;
+        deleteCell.innerHTML = '<button type="button" onclick="removeRow(this)" style="color:red; border:none; background:none; cursor:pointer;">&times;</button>';
+
+        // 6. DOM에 추가
+        tbody.appendChild(newRow);
+
+        // 7. Select2 재적용 (깨끗해진 select 태그에 새로 입히기)
+        if (newSelect) {
+            window.initProductSelect2(newSelect);
+        }
+
         itemIndex++;
     };
 
@@ -225,6 +322,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         console.log(`Contact Updated: ${name}, ${company}`);
     };
+
+    if (typeof $ !== 'undefined') {
+        $('#contactSelect').select2({placeholder: "Select Client", allowClear: true, width: '100%'});
+        // [중요] Select2에서 값이 변경될 때 기존 함수(updateContactDetails) 호출 연결
+        $('#contactSelect').on('change', function() {window.updateContactDetails(this);});
+    }
+    if (typeof $ !== 'undefined') {
+        $('#productSelect').select2({placeholder: "Select Product", allowClear: true, width: '100%'});
+        // [중요] Select2에서 값이 변경될 때 기존 함수(updateContactDetails) 호출 연결
+        $('#productSelect').on('change', function() {window.updateItemDetails(this);});
+    }
 
     // 페이지 로드 시 최초 1회 전체 계산
     window.calculateTotal();

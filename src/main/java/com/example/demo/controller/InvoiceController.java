@@ -89,4 +89,12 @@ public class InvoiceController {
 
         return "redirect:/invoices";
     }
+    // 인보이스 삭제 Post
+    @PostMapping("/api/invoices/delete")
+    public String deleteInvoices(@RequestParam List<Long> ids) {
+        if (ids != null && !ids.isEmpty()) {
+            invoiceService.deleteInvoices(ids);
+        }
+        return "redirect:/invoices"; // 삭제 후 목록 새로고침
+    }
 }

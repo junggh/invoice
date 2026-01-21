@@ -22,8 +22,8 @@
         <div class="form-grid">
             <div class="section-left">
                 <div class="form-group">
-                    <label for="contactSelect">Contact Name</label>
-                    <select id="contactSelect" name="contact.id" onchange="updateContactDetails(this)" required>
+                    <label for="contactSelect">Contact Name <span style="color:red">*</span></label>
+                    <select id="contactSelect" name="contact.id" required style="width: 100%;">
                         <option value="">Select Client</option>
                         <option th:each="c : ${contacts}"
                                 th:value="${c.id}"
@@ -108,7 +108,7 @@
             <tr th:each="item, stat : ${invoice.items}" class="item-row">
 
                 <td>
-                    <select th:name="|items[${stat.index}].product.id|" class="product-select" onchange="updateItemDetails(this)" style="width: 95%;" required>
+                    <select th:name="|items[${stat.index}].product.id|" class="product-select" style="width: 95%;" required>
                         <option value="">Select Product</option>
                         <option th:each="prod : ${products}"
                                 th:value="${prod.id}"
