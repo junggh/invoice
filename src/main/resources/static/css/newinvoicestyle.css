@@ -109,10 +109,59 @@ textarea { resize: vertical; height: 80px; }
     border: 1px solid var(--border-color);
     color: #555;
 }
+.btn-secondary:hover { filter: brightness(90%); }
+.btn-secondary:active { filter: brightness(80%); border-color: rgba(0,0,0,0.1); }
 
 .btn-primary {
     background-color: var(--primary-color);
     color: white;
+    border: 1px solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.btn-primary:hover { filter: brightness(90%); }
+.btn-primary:active { filter: brightness(80%); border-color: rgba(0,0,0,0.1); }
+
+/* --- Select2 높이 및 아이콘 위치 수정 (최종) --- */
+
+/* 1. 컨테이너: 높이 키우고 기준점(relative) 잡기 */
+.select2-container .select2-selection--single {
+    height: 42px !important;
+    display: flex !important;
+    align-items: center !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    position: relative !important; /* [중요] 자식 요소들의 절대 위치 기준점 */
 }
 
-.btn-primary:hover { opacity: 0.9; }
+/* 2. 텍스트 영역: 공간 확보 */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    display: block !important;      /* flex 무시하고 블록으로 처리 */
+    width: 100% !important;         /* 전체 너비 사용 */
+    line-height: 42px !important;   /* 수직 정렬 */
+    padding-left: 12px !important;
+    padding-right: 50px !important; /* [중요] X버튼과 화살표가 들어갈 공간 확보 */
+    color: #333 !important;
+}
+
+/* 3. 삭제(X) 버튼: 절대 위치로 강제 이동 */
+.select2-container--default .select2-selection--single .select2-selection__clear {
+    position: absolute !important;  /* 흐름에서 떼어내어 좌표로 배치 */
+    right: 35px !important;         /* 화살표 왼쪽 공간에 배치 */
+    top: 50% !important;
+    transform: translateY(-50%) !important; /* 정확한 수직 중앙 정렬 */
+    float: none !important;         /* 기존 float 속성 무력화 */
+    margin: 0 !important;
+    font-size: 18px !important;     /* 크기 조정 */
+    color: #999 !important;
+    cursor: pointer !important;
+    z-index: 10 !important;         /* 텍스트보다 위에 오도록 */
+}
+
+/* 4. 화살표(▼) 버튼: 절대 위치 고정 */
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 40px !important;
+    position: absolute !important;
+    top: 1px !important;
+    right: 1px !important;
+    width: 30px !important;
+}

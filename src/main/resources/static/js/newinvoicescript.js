@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const currencyInput = document.getElementById('customerCurrency');
         const billToInput = document.getElementById('customerBillTo');
         const companyInput = document.getElementById('hiddenCompanyName'); // hidden
-        const phoneInput = document.getElementById('hiddenPhoneNumber'); // hidden
+        const emailInput = document.getElementById('hiddenEmail'); // hidden
 
         // 2. 선택 취소(빈 값)일 경우 초기화
         if (selectElement.value === "") {
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (currencyInput) currencyInput.value = "";
             if (billToInput) billToInput.value = "";
             if (companyInput) companyInput.value = "";
-            if (phoneInput) phoneInput.value = "";
+            if (emailInput) emailInput.value = "";
             return;
         }
 
@@ -311,14 +311,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const currency = selectedOption.getAttribute('data-currency');
         const address = selectedOption.getAttribute('data-address'); // billTo
         const company = selectedOption.getAttribute('data-company');
-        const phone = selectedOption.getAttribute('data-phone');
+        const email = selectedOption.getAttribute('data-email');
 
         // 4. 값 주입
         if (nameInput) nameInput.value = name;
         if (currencyInput) currencyInput.value = currency;
         if (billToInput) billToInput.value = address;
         if (companyInput) companyInput.value = company;
-        if (phoneInput) phoneInput.value = phone;
+        if (emailInput) emailInput.value = email;
 
         console.log(`Contact Updated: ${name}, ${company}`);
     };

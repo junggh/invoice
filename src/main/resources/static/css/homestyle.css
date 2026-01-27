@@ -54,16 +54,49 @@ h1 { margin-top: 0; margin-bottom: 20px; }
 }
 
 /* --- 요약 지표 (Total, Balance Due 등) --- */
+/* 지표와 기간 선택 박스를 감싸는 부모 컨테이너 */
+.dashboard-header {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+/* 지표 3개 (Total, Balance Due, Overdue) 영역 */
 .summary-metrics {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-around; /* 지표 간 간격 균등 배치 */
     text-align: center;
-    margin-bottom: 30px;
+    flex-grow: 1; /* 남는 공간을 차지하여 넓게 펴짐 */
+
+    /* 기존의 margin-left/right: 150px, margin-bottom 제거 */
+    margin-left: 150px;
+    margin-right: 150px;
+}
+
+/* 기간 선택 셀렉트 박스 스타일 */
+.period-selector-wrapper {
+    position: absolute; /* 덮어씌워지는 느낌 (레이어 분리) */
+    right: 0;           /* 오른쪽 끝에 딱 붙임 */
+    top: 50%;
+    transform: translateY(-50%); /* 세로 중앙 정렬 보정 */
+}
+
+.period-select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: #555;
+    background-color: white;
+    font-size: 14px;
+    cursor: pointer;
 }
 
 .metric-item label { display: block; color: #888; font-size: 14px; margin-bottom: 5px; }
 .metric-item span { font-size: 24px; font-weight: bold; }
-.text-red { color: #FF4D4F; }
+.text-red { color: #FF4D4F !important;}
+.text-gray { color: rgba(0, 0, 0, 0.5); }
 
 /* --- 툴바 (검색창 + 버튼들) --- */
 .toolbar {
@@ -98,13 +131,59 @@ h1 { margin-top: 0; margin-bottom: 20px; }
     text-decoration: none;
     font-size: 14px;
 }
-.btn-primary { background-color: var(--primary-color); color: white; }
-.btn-icon { background: white; border: 1px solid var(--border-color); color: #666; padding: 8px 10px; }
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    border: 1px solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.btn-primary:hover { filter: brightness(90%); }
+.btn-primary:active { filter: brightness(80%); border-color: rgba(0,0,0,0.1); }
+
+/* --- 아이콘 버튼 공통 스타일 (통일 버전) --- */
+.btn-icon {
+    width: 37px;
+    height: 37px;
+    padding: 0;
+    background: white;
+    border: 1px solid var(--border-color);
+
+    color: var(--primary-color);
+    font-size: 18px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* 마우스 올렸을 때 모든 버튼이 Primary Color로 변경 */
+.btn-icon:hover {
+    border-color: var(--primary-color);   /* 테두리 색상 */
+    background-color: #f0f9ff;            /* 배경: 아주 연한 Primary 톤 */
+}
+
+/* 클릭(Active) 효과 */
+.btn-icon:active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-icon i {
+    line-height: 1 !important; /* 핵심: 21px -> 18px로 줄여줌 */
+    display: flex;             /* 아이콘 자체도 flex로 만들어서 */
+    align-items: center;       /* 내부 ::before 요소를 완벽하게 중앙 정렬 */
+    justify-content: center;
+}
 
 /* --- 테이블 스타일 --- */
 .invoice-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .invoice-table th, .invoice-table td {
@@ -112,7 +191,71 @@ h1 { margin-top: 0; margin-bottom: 20px; }
     padding: 15px 10px;
     border-bottom: 1px solid var(--border-color);
     font-size: 14px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .invoice-table th { color: #888; font-weight: 600; }
 .invoice-link { color: var(--primary-color); text-decoration: none; font-weight: 500; }
+.invoice-link:hover { filter: brightness(80%); }
+.invoice-link:active { filter: brightness(60%); border-color: rgba(0,0,0,0.1); }
+
+.text-right { text-align: right !important;}
+.text-left { text-align: left !important;}
+.text-center { text-align: center !important;}
+
+/* --- [추가] New 버튼 드롭다운 스타일 --- */
+
+/* 드롭다운 컨테이너 (버튼 감싸기) */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* 드롭다운 내용물 (기본 숨김) */
+.dropdown-content {
+    display: none;           /* 평소엔 안 보임 */
+    position: absolute;      /* 버튼 바로 아래에 배치 */
+    background-color: white;
+    min-width: 120px;        /* 메뉴 너비 */
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.15); /* 그림자 */
+    z-index: 10;             /* 테이블보다 위에 뜨도록 설정 */
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    top: 100%;               /* 버튼 바로 밑 */
+    left: 0;
+    margin-top: 0px;         /* 버튼과 살짝 띄우기 */
+    overflow: hidden;        /* 둥근 모서리 적용 */
+}
+
+/* 드롭다운 내부 링크 스타일 */
+.dropdown-content a {
+    color: var(--text-color);
+    padding: 10px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+/* 메뉴 항목 호버 효과 */
+.dropdown-content a:hover {
+    background-color: #f1f9ff; /* 연한 하늘색 배경 */
+    color: var(--primary-color);
+}
+
+/* [핵심] 마우스를 올렸을 때 메뉴 보이기 */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* 버튼 스타일 보정 (드롭다운 내 버튼이 기존 버튼과 똑같이 보이게) */
+.dropdown .dropbtn {
+    display: flex;
+    align-items: center;
+    height: 100%; /* 높이 맞춤 */
+}

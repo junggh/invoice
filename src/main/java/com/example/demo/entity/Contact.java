@@ -21,4 +21,6 @@ public class Contact {
     private String companyName; // 회사
 
     private String phoneNumber; // 연락처
+
+    private String email; // 이메일
 }

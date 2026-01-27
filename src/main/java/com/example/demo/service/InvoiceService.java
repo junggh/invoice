@@ -6,10 +6,15 @@ import com.example.demo.entity.InvoiceStatus;
 import com.example.demo.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -63,17 +68,66 @@ public class InvoiceService {
     public List<Invoice> getInvoices(String statusCondition) {
         // 1. 상태가 없거나 'Overview'이면 전체 조회
         if (statusCondition == null || statusCondition.isEmpty() || statusCondition.equals("Overview")) {
-            return invoiceRepository.findAll();
+            return invoiceRepository.findAllByOrderByIdAsc();
         }
 
         // 2. 그 외에는 해당 상태(Enum)로 조회
         try {
             InvoiceStatus status = InvoiceStatus.valueOf(statusCondition);
-            return invoiceRepository.findByStatus(status);
+            return invoiceRepository.findByStatusOrderByIdAsc(status);
         } catch (IllegalArgumentException e) {
             // 이상한 문자가 들어오면 그냥 전체 조회
-            return invoiceRepository.findAll();
+            return invoiceRepository.findAllByOrderByIdAsc();
         }
+    }
+    public Invoice copyInvoice(Long sourceId) {
+        // 1. 원본 조회
+        Invoice source = getInvoice(sourceId);
+
+        // 2. 새 객체 생성 및 기본 설정
+        Invoice newInvoice = new Invoice();
+        newInvoice.setInvoiceNumber(generateNextInvoiceNumber()); // 번호 새로 발급
+        newInvoice.setStatus(InvoiceStatus.DRAFT); // 상태는 DRAFT
+        newInvoice.setIssuedDate(LocalDate.now()); // 날짜는 오늘
+
+        // 3. 고객 및 메타 데이터 복사 (원본의 스냅샷 데이터를 그대로 복사)
+        newInvoice.setContact(source.getContact());
+        newInvoice.setCustomerName(source.getCustomerName());
+        newInvoice.setCustomerEmail(source.getCustomerEmail());
+        newInvoice.setCustomerCompanyName(source.getCustomerCompanyName());
+        newInvoice.setCustomerBillTo(source.getCustomerBillTo());
+        newInvoice.setCustomerCurrency(source.getCustomerCurrency());
+        newInvoice.setSalesPerson(source.getSalesPerson());
+        newInvoice.setReference(source.getReference());
+
+        // 4. 아이템 깊은 복사 (Deep Copy)
+        // InvoiceItem에는 description, price 필드가 없으므로, product, quantity, discount, amount만 복사합니다.
+        List<InvoiceItem> newItems = new ArrayList<>();
+        for (InvoiceItem sourceItem : source.getItems()) {
+            InvoiceItem newItem = new InvoiceItem();
+
+            // [중요] ID는 복사하지 않음 (null이어야 새로 생성됨)
+
+            // 상품 연결
+            newItem.setProduct(sourceItem.getProduct());
+
+            // 수량, 할인, 확정금액 복사
+            newItem.setQuantity(sourceItem.getQuantity());
+            newItem.setDiscount(sourceItem.getDiscount());
+            newItem.setAmount(sourceItem.getAmount());
+
+            // [중요] 양방향 연관관계 설정 (이게 없으면 저장이 안 되거나 FK가 null이 될 수 있음)
+            newItem.setInvoice(newInvoice);
+
+            newItems.add(newItem);
+        }
+        newInvoice.setItems(newItems);
+
+        // 5. 합계 복사
+        newInvoice.setTotal(source.getTotal());
+        newInvoice.setBalanceDue(source.getTotal()); // 새 인보이스이므로 잔액은 총액과 같음
+
+        return newInvoice; // 아직 DB에 저장되지 않은 상태의 객체 반환 (Controller에서 화면으로 전달됨)
     }
     // 다음 INV-0000# 생성기
     public String generateNextInvoiceNumber() {
@@ -96,14 +150,36 @@ public class InvoiceService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 인보이스가 없습니다. id=" + id));
     }
 
-    public BigDecimal calculateTotalAmount(String statusCondition) {
-        InvoiceStatus status = parseStatus(statusCondition);
-        return invoiceRepository.sumTotalByStatus(status);
+//    public BigDecimal calculateTotalAmount(String statusCondition) {
+//        InvoiceStatus status = parseStatus(statusCondition);
+//        return invoiceRepository.sumTotalByStatus(status);
+//    }
+//
+//    public BigDecimal calculateTotalBalance(String statusCondition) {
+//        InvoiceStatus status = parseStatus(statusCondition);
+//        return invoiceRepository.sumBalanceDueByStatus(status);
+//    }
+    // 기간별 대시보드 지표 계산
+    public BigDecimal calculateGlobalTotal(int days) {
+    LocalDate startDate = LocalDate.now().minusDays(days);
+    // 집계에 포함할 상태들 (Draft, In Review 제외)
+    List<InvoiceStatus> targetStatuses = List.of(InvoiceStatus.UNPAID, InvoiceStatus.PAID, InvoiceStatus.OVERDUE);
+
+    return invoiceRepository.sumTotalByDateAndStatus(startDate, targetStatuses);
+}
+
+    // 기간별 Balance Due 합계
+    public BigDecimal calculateGlobalBalance(int days) {
+        LocalDate startDate = LocalDate.now().minusDays(days);
+        List<InvoiceStatus> targetStatuses = List.of(InvoiceStatus.UNPAID, InvoiceStatus.PAID, InvoiceStatus.OVERDUE);
+
+        return invoiceRepository.sumBalanceByDateAndStatus(startDate, targetStatuses);
     }
 
-    public BigDecimal calculateTotalBalance(String statusCondition) {
-        InvoiceStatus status = parseStatus(statusCondition);
-        return invoiceRepository.sumBalanceDueByStatus(status);
+    // 기간별 Overdue 금액 합계
+    public BigDecimal calculateGlobalOverdue(int days) {
+        LocalDate startDate = LocalDate.now().minusDays(days);
+        return invoiceRepository.sumOverdueBalanceByDate(startDate);
     }
 
     // (내부 헬퍼) 문자열 -> Enum 변환 로직 공통화
@@ -116,5 +192,21 @@ public class InvoiceService {
         } catch (IllegalArgumentException e) {
             return null; // 잘못된 값이면 전체 조회로 처리
         }
+    }
+    // 매일 자정 혹은 서버를 시작할 때 due date를 넘은 invoice들의 status 변경
+    @Scheduled(cron = "0 0 0 * * *") // 1. 매일 자정에 실행
+    @EventListener(ApplicationReadyEvent.class) // 2. 서버 실행 직후(준비 완료 시) 실행
+    @Transactional
+    public void updateOverdueInvoices() {
+        LocalDate today = LocalDate.now();
+        List<Invoice> overdueInvoices = invoiceRepository.findByStatusAndDueDateBefore(InvoiceStatus.UNPAID, today);
+
+        if (overdueInvoices.isEmpty()) return;
+
+        for (Invoice invoice : overdueInvoices) {
+            invoice.setStatus(InvoiceStatus.OVERDUE);
+        }
+
+        System.out.println("✅ [시스템 시작/스케줄러] 연체 상태 업데이트 완료: " + overdueInvoices.size() + "건");
     }
 }

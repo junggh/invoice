@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Template</title>
+    <link rel="stylesheet" href="/css/newinvoicestyle.css">
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>View Template</h1>
+        <span style="color: #888;" th:text="'# ' + ${invoice.templateNumber}"></span>
+    </div>
+
+    <h3 style="margin-top:0;">Template Details</h3>
+    <div class="form-grid">
+        <div class="section-left">
+            <div class="form-group">
+                <label>Contact Name</label>
+                <input type="text" th:value="${invoice.contact.name} + (${invoice.contact.companyName != null} ? ' (' + ${invoice.contact.companyName} + ')' : '')" readonly>
+            </div>
+
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0px;">
+                <div class="form-group">
+                    <label>Currency</label>
+                    <input type="text" th:value="${invoice.contact.currency}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Bill To</label>
+                    <input type="text" th:value="${invoice.contact.billTo}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Salesperson</label>
+                    <input type="text" th:value="${invoice.salesPerson}" readonly>
+                </div>
+            </div>
+
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label>Frequency</label>
+                    <input type="text" th:value="${invoice.frequency}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Interval</label>
+                    <input type="number" th:value="${invoice.frequencyInterval}" readonly>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
+                    <label style="display: flex; align-items: center; justify-content: center; height: 38px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 0 10px; font-size: 14px; color: #333;">
+                        <input type="checkbox" th:checked="${invoice.autoSend}" disabled
+                               style="margin-right: 8px; width: 16px; height: 16px;">
+                        Auto Send
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-right">
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0px">
+                <div class="form-group">
+                    <label>Invoice #</label>
+                    <input type="text" th:value="${invoice.templateNumber}" readonly style="background-color: #f0f0f0;">
+                </div>
+                <div class="form-group">
+                    <label>Reference</label>
+                    <input type="number" th:value="${invoice.reference}" readonly>
+                </div>
+            </div>
+
+            <div class="form-grid" style="margin-bottom: 0; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="text" th:value="${#temporals.format(invoice.startDate, 'dd / MM / yyyy')}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Due Date Days</label>
+                    <input type="number" th:value="${invoice.dueDateDays}" readonly>
+                </div>
+            </div>
+
+            <div class="form-grid" style="margin-bottom: 0; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="text" th:value="${invoice.endDate != null ? #temporals.format(invoice.endDate, 'dd / MM / yyyy') : '-'}" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>Items</h3>
+    <table class="items-table">
+        <thead>
+        <tr>
+            <th>Product</th>
+            <th>Description</th>
+            <th class="width-sm text-right">Price</th>
+            <th class="width-sm text-right">Quantity</th>
+            <th class="width-sm text-right">Discount</th>
+            <th class="width-sm text-right">Amount</th>
+            <th style="width: 20px;"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${invoice.items}" class="item-row">
+            <td>
+                <input type="text" th:value="${item.product.name}" style="width: 95%;" readonly>
+            </td>
+            <td>
+                <input type="text" th:value="${item.product.description}" style="width: 95%;" readonly>
+            </td>
+            <td>
+                <input type="number" th:value="${item.product.price}" class="text-right" style="width: 95%;" readonly>
+            </td>
+            <td>
+                <input type="number" th:value="${item.quantity}" class="text-right" style="width: 95%;" readonly>
+            </td>
+            <td>
+                <input type="number" th:value="${item.discount}" class="text-right" style="width: 95%;" readonly>
+            </td>
+            <td class="text-right" style="vertical-align: middle;">
+                <span th:text="${item.amount}">0.00</span>
+            </td>
+            <td></td> </tr>
+        </tbody>
+    </table>
+
+    <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <div style="width: 250px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span>Subtotal</span>
+                <span id="subtotal" style="font-weight: bold;"
+                      th:text="${subtotal != null ? #numbers.formatDecimal(subtotal, 1, 2) : '0.00'}">0.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
+                <span>Tax (10%)</span>
+                <span id="tax"
+                      th:text="${tax != null ? #numbers.formatDecimal(tax, 1, 2) : '0.00'}">0.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-top: 2px solid #333; padding-top: 10px; font-size: 18px; font-weight: bold;">
+                <span>Total Amount</span>
+                <span style="color: var(--primary-color);"
+                      th:text="${invoice.total != null ? #numbers.formatDecimal(invoice.total, 1, 2) : '0.00'}">0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button type="button" onclick="location.href='/invoices?status=Recurring'" class="btn btn-secondary">Close</button>
+
+        <button th:if="${#strings.toString(invoice.status) == 'ACTIVE'}" type="button" class="btn btn-secondary" style="margin-left: auto;">Pause Subscription</button>
+    </div>
+</div>
+</body>
+</html>

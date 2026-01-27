@@ -7,19 +7,19 @@ import java.math.BigDecimal;
 
 @Entity
 @Getter @Setter
-public class InvoiceItem {
+public class RecurringInvoiceItem {
 
-    @Id // PK
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Integer quantity;    // 수량
-    private BigDecimal discount; // 할인
-    private BigDecimal amount;   // 확정 가격
-    // Foreign Key
+    private Integer quantity;
+    private BigDecimal discount;
+    private BigDecimal amount;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id") // DB에 invoice_id 컬럼이 생김
-    private Invoice invoice;
+    @JoinColumn(name = "recurring_invoice_id")
+    private RecurringInvoice recurringInvoice;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")

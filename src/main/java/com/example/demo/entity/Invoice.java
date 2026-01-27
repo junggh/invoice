@@ -46,6 +46,6 @@ public class Invoice {
     private String customerCurrency;
     private String customerBillTo;
     private String customerCompanyName;
-    private String customerPhoneNumber;
+    private String customerEmail;
 
 }

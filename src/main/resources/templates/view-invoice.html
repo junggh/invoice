@@ -17,24 +17,25 @@
             <div class="section-left">
                 <div class="form-group">
                     <label for="customerName">Contact Name</label>
-                    <input type="text" id="customerName" name="customerName" th:value="${invoice.customerName}" readonly>
+                    <input type="text" id="customerName" name="customerName" th:value="${invoice.customerName} + (${invoice.customerCompanyName != null} ? ' (' + ${invoice.customerCompanyName} + ')' : '')" readonly>
                 </div>
 
-                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0px;">
+
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0px;">
                     <div class="form-group">
                         <label for="customerCurrency">Currency</label>
                         <input type="text" id="customerCurrency" name="customerCurrency" th:value="${invoice.customerCurrency}" readonly>
                     </div>
 
                     <div class="form-group">
+                        <label for="customerBillTo">Bill To</label>
+                        <input type="text" id="customerBillTo" name="customerBillTo" th:value="${invoice.customerBillTo}" readonly>
+                    </div>
+
+                    <div class="form-group">
                         <label for="salesPerson">Salesperson</label>
                         <input type="text" id="salesPerson" name="salesPerson" th:value="${invoice.salesPerson}" readonly>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="customerBillTo">Bill To</label>
-                    <input type="text" id="customerBillTo" name="customerBillTo" th:value="${invoice.customerBillTo}" readonly>
                 </div>
             </div>
 
@@ -60,11 +61,11 @@
                 <div class="form-grid" style="margin-bottom: 0; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-group">
                         <label for="issuedDate">Issued Date</label>
-                        <input type="text" id="issuedDate" name="issuedDate" th:value="${invoice.issuedDate}" readonly>
+                        <input type="text" id="issuedDate" name="issuedDate" th:value="${#temporals.format(invoice.issuedDate, 'dd / MM / yyyy')}" readonly>
                     </div>
                     <div class="form-group">
                         <label for="dueDate">Due Date</label>
-                        <input type="text" id="dueDate" name="dueDate" th:value="${invoice.dueDate}" readonly>
+                        <input type="text" id="dueDate" name="dueDate" th:value="${#temporals.format(invoice.dueDate, 'dd / MM / yyyy')}" readonly>
                     </div>
                 </div>
             </div>
@@ -112,20 +113,29 @@
             <div style="width: 250px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                     <span>Subtotal</span>
-                    <span id="subtotal" style="font-weight: bold;">0.00</span>
+                    <span id="subtotal" style="font-weight: bold;"
+                          th:text="${subtotal != null ? #numbers.formatDecimal(subtotal, 1, 2) : '0.00'}">0.00</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
                     <span>Tax (10%)</span>
-                    <span id="tax">0.00</span>
+                    <span id="tax"
+                          th:text="${tax != null ? #numbers.formatDecimal(tax, 1, 2) : '0.00'}">0.00</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; border-top: 2px solid #333; padding-top: 10px; font-size: 18px; font-weight: bold;">
                     <span>Total Amount</span>
-                    <span style="color: var(--primary-color);" th:text="${invoice.total}">0.00</span>
+                    <span style="color: var(--primary-color);"
+                          th:text="${invoice.total != null ? #numbers.formatDecimal(invoice.total, 1, 2) : '0.00'}">0.00</span>
                 </div>
             </div>
         </div>
 
         <div class="actions">
+            <div th:if="${#strings.toString(invoice.status) == 'UNPAID' or #strings.toString(invoice.status) == 'OVERDUE'}"
+                 style="margin-right: auto; display: flex; gap: 12px;">
+                <button type="button" class="btn btn-secondary">Create payment link</button>
+                <button type="button" class="btn btn-secondary">Record partial payment</button>
+            </div>
+
             <button type="button" onclick="location.href='/invoices'" class="btn btn-secondary">Cancel</button>
 <!--            <button type="button" th:onclick="|location.href='@{/invoices/{id}/edit(id=${invoice.id})}'|" class="btn btn-primary">Edit Invoice</button>-->
         </div>
