@@ -27,7 +27,7 @@
                         <option value="">Select Client</option>
                         <option th:each="c : ${contacts}"
                                 th:value="${c.id}"
-                                th:text="${c.name} + (${c.companyName != null} ? ' (' + ${c.companyName} + ')' : '')"
+                                th:text="${c.companyName != null ? c.companyName + ' (' + c.name + ')' : c.name}"
                                 th:selected="${invoice.contact != null and c.id == invoice.contact.id}"
                                 th:data-name="${c.name}"
                                 th:data-address="${c.billTo}"

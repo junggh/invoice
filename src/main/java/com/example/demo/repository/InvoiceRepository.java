@@ -13,6 +13,7 @@ import java.util.Optional;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
     Optional<Invoice> findTopByOrderByIdDesc();
+    Optional<Invoice> findTopByInvoiceNumberStartingWithOrderByInvoiceNumberDesc(String prefix);
     List<Invoice> findByStatusOrderByIdAsc(InvoiceStatus status);
     List<Invoice> findAllByOrderByIdAsc();
     List<Invoice> findByStatusAndDueDateBefore(InvoiceStatus status, LocalDate date);

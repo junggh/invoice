@@ -13,6 +13,7 @@ public interface RecurringInvoiceRepository extends JpaRepository<RecurringInvoi
     List<RecurringInvoice> findByStatusAndNextInvoiceDateLessThanEqual(RecurringStatus status, LocalDate date);
     // 가장 최근에 생성된 템플릿 조회 (번호 생성용)
     Optional<RecurringInvoice> findTopByOrderByIdDesc();
+    Optional<RecurringInvoice> findTopByTemplateNumberStartingWithOrderByTemplateNumberDesc(String prefix);
 
     List<RecurringInvoice> findAllByOrderByIdAsc();
 }

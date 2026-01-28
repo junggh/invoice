@@ -151,12 +151,12 @@
             </tr>
 
             <tr th:if="${currentStatus != 'Recurring'}" th:each="inv : ${invoices}" class="invoice-item" th:data-company="${inv.customerCompanyName}">
-                <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${inv.id}"></td>
+                <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${inv.id}" th:data-status="${inv.status}"></td>
                 <td th:text="${#temporals.format(inv.issuedDate, 'dd/MM/yyyy')}">29/07/2025</td>
                 <td>
                     <a th:href="${#strings.toString(inv.status) == 'DRAFT'} ? @{/invoices/{id}/edit(id=${inv.id})} : @{/invoices/{id}(id=${inv.id})}" class="invoice-link search-invoice-num" th:text="${inv.invoiceNumber}">INV-00001</a>
                 </td>
-                <td class="search-contact-name" th:text="${inv.customerCompanyName}+ ' (' + ${inv.customerName} + ')'">June Young</td>
+                <td class="search-contact-name" th:text="${inv.customerCompanyName != null ? inv.customerCompanyName + ' (' + inv.customerName + ')' : inv.customerName}">>June Young</td>
                 <td th:text="${inv.customerEmail}">abc@gmail.com</td>
                 <td th:text="${inv.customerBillTo}">Seoul</td>
 
@@ -175,7 +175,7 @@
             </tr>
 
             <tr th:if="${currentStatus == 'Recurring'}" th:each="tpl : ${recurringInvoices}" class="invoice-item" th:data-company="${tpl.contact != null ? tpl.contact.companyName : ''}">
-                <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${tpl.id}"></td>
+                <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${tpl.id}" th:data-status="${tpl.status}"></td>
 
                 <td>
                     <span th:text="${tpl.frequencyInterval}">1</span>
@@ -186,7 +186,7 @@
                     <a th:href="${#strings.toString(tpl.status) == 'DRAFT'} ? @{/invoices/recurring/{id}/edit(id=${tpl.id})} : @{/invoices/recurring/{id}(id=${tpl.id})}" class="invoice-link search-invoice-num" th:text="${tpl.templateNumber}">INVT-001</a>
                 </td>
 
-                <td class="search-contact-name" th:text="${tpl.contact != null ? tpl.contact.companyName + ' (' + tpl.contact.name + ')' : '-'}">Company (Name)</td>
+                <td class="search-contact-name" th:text="${tpl.contact != null ? (tpl.contact.companyName != null ? tpl.contact.companyName + ' (' + tpl.contact.name + ')' : tpl.contact.name) : '-'}">>Company (Name)</td>
 
                 <td>
                     <th:block th:if="${not #lists.isEmpty(tpl.items)}">
@@ -222,6 +222,59 @@
             const checkboxes = document.querySelectorAll('.invoice-checkbox');
             checkboxes.forEach(cb => cb.checked = source.checked);
         }
+        // 승인 로직
+        function approveSelected() {
+            // 1. 체크된 항목 확인
+            const checkedBoxes = document.querySelectorAll('.invoice-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert("Please select items to approve.");
+                return;
+            }
+
+            // 2. [검증] IN_REVIEW 상태가 아닌 항목이 있는지 확인
+            let hasInvalidItem = false;
+            checkedBoxes.forEach(cb => {
+                const status = cb.getAttribute('data-status');
+                // 상태가 IN_REVIEW가 아니면 플래그 세움
+                if (status !== 'IN_REVIEW') {
+                    hasInvalidItem = true;
+                }
+            });
+
+            // 3. 잘못된 항목이 있으면 경고 후 중단 (Reject)
+            if (hasInvalidItem) {
+                alert("Only items in 'IN_REVIEW' status can be approved.\n(Please deselect items that are not in review.)");
+                return; // 함수 종료 (서버 전송 안 함)
+            }
+
+            if (!confirm("Are you sure you want to approve " + checkedBoxes.length + " items?")) {
+                return;
+            }
+
+            // 4. (검증 통과 시) 폼 생성 및 전송
+            const form = document.createElement('form');
+            form.method = 'POST';
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+
+            if (status === 'Recurring') {
+                form.action = '/api/invoices/recurring/approve';
+            } else {
+                form.action = '/api/invoices/approve';
+            }
+
+            checkedBoxes.forEach(cb => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids';
+                input.value = cb.value;
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+        }
 
         // 선택 삭제 로직
         function deleteSelected() {
@@ -240,7 +293,18 @@
             // 가상의 폼을 만들어서 POST 전송
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '/api/invoices/delete';
+
+            // [핵심 수정] 현재 URL의 status 파라미터를 확인하여 분기 처리
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+
+            if (status === 'Recurring') {
+                // Recurring 탭이면 탬플릿 삭제 API 호출
+                form.action = '/api/invoices/recurring/delete';
+            } else {
+                // 그 외에는 기존 인보이스 삭제 API 호출
+                form.action = '/api/invoices/delete';
+            }
 
             checkedBoxes.forEach(cb => {
                 const input = document.createElement('input');
@@ -271,8 +335,17 @@
             // 선택된 ID 가져오기
             const id = checkedBoxes[0].value;
 
-            // 컨트롤러로 이동 (copyId 파라미터 전달)
-            location.href = '/invoices/new?copyId=' + id;
+            // 현재 탭(status) 확인하여 경로 분기
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+
+            if (status === 'Recurring') {
+                // 탬플릿 복사 -> 탬플릿 작성 화면으로
+                location.href = '/invoices/new/recurring?copyId=' + id;
+            } else {
+                // 일반 인보이스 복사 -> 인보이스 작성 화면으로
+                location.href = '/invoices/new?copyId=' + id;
+            }
         }
         // 검색 로직
         document.getElementById('searchInput').addEventListener('keyup', function() {

@@ -129,6 +129,16 @@ public class InvoiceService {
 
         return newInvoice; // 아직 DB에 저장되지 않은 상태의 객체 반환 (Controller에서 화면으로 전달됨)
     }
+    // 인보이스 일괄 승인
+    @Transactional
+    public void approveInvoices(List<Long> ids) {
+        List<Invoice> invoices = invoiceRepository.findAllById(ids);
+        for (Invoice invoice : invoices) {
+            if (invoice.getStatus() == InvoiceStatus.IN_REVIEW) {
+                invoice.setStatus(InvoiceStatus.UNPAID);
+            }
+        }
+    }
     // 다음 INV-0000# 생성기
     public String generateNextInvoiceNumber() {
         // DB에서 가장 마지막 송장을 가져옴
@@ -166,7 +176,7 @@ public class InvoiceService {
     List<InvoiceStatus> targetStatuses = List.of(InvoiceStatus.UNPAID, InvoiceStatus.PAID, InvoiceStatus.OVERDUE);
 
     return invoiceRepository.sumTotalByDateAndStatus(startDate, targetStatuses);
-}
+    }
 
     // 기간별 Balance Due 합계
     public BigDecimal calculateGlobalBalance(int days) {

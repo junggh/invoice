@@ -111,27 +111,6 @@ public class InvoiceController {
         model.addAttribute("tax", tax);
         return "view-invoice";
     }
-    // 탬플릿 상세 보기 (View)
-    @GetMapping("/invoices/recurring/{id}")
-    public String viewRecurringInvoice(@PathVariable Long id, Model model) {
-        RecurringInvoice template = recurringService.getRecurringInvoice(id);
-
-        // Subtotal 계산 (아이템 Amount 합계)
-        BigDecimal subtotal = template.getItems().stream()
-                .map(RecurringInvoiceItem::getAmount)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // Tax 계산 (10% + 반올림)
-        BigDecimal tax = subtotal.multiply(new BigDecimal("0.1"))
-                .setScale(2, RoundingMode.HALF_UP);
-
-        model.addAttribute("invoice", template);
-        model.addAttribute("subtotal", subtotal);
-        model.addAttribute("tax", tax);
-
-        return "view-template";
-    }
     // 수정 가능 인보이스 확인
     @GetMapping("/invoices/{id}/edit")
     public String editInvoice(@PathVariable Long id, Model model) {
@@ -176,17 +155,17 @@ public class InvoiceController {
     public String createRecurringInvoiceForm(@RequestParam(required = false) Long copyId, Model model) {
         RecurringInvoice template;
 
-//        if (copyId != null) {
+        if (copyId != null) {
             // [복사] 서비스에게 "이거 복사본 만들어줘"라고 시킴 (한 줄로 끝!)
-            //template = invoiceService.copyInvoice(copyId);
-//        } else {
+            template = recurringService.copyRecurringInvoice(copyId);
+        } else {
             // [신규] 깡통 인보이스 생성
             template = new RecurringInvoice();
             template.setTemplateNumber(recurringService.generateNextTemplateNumber());
             template.setStatus(RecurringStatus.DRAFT);
             template.setStartDate(LocalDate.now());
             template.getItems().add(new RecurringInvoiceItem());
-//        }
+        }
 
         model.addAttribute("invoice", template);
         model.addAttribute("products", productRepository.findAll());
@@ -201,6 +180,27 @@ public class InvoiceController {
         recurringService.createRecurringInvoice(template);
 
         return "redirect:/invoices?status=Recurring";
+    }
+    // 탬플릿 상세 보기 (View)
+    @GetMapping("/invoices/recurring/{id}")
+    public String viewRecurringInvoice(@PathVariable Long id, Model model) {
+        RecurringInvoice template = recurringService.getRecurringInvoice(id);
+
+        // Subtotal 계산 (아이템 Amount 합계)
+        BigDecimal subtotal = template.getItems().stream()
+                .map(RecurringInvoiceItem::getAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Tax 계산 (10% + 반올림)
+        BigDecimal tax = subtotal.multiply(new BigDecimal("0.1"))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        model.addAttribute("invoice", template);
+        model.addAttribute("subtotal", subtotal);
+        model.addAttribute("tax", tax);
+
+        return "view-template";
     }
     // [추가] 탬플릿 수정 화면 진입 (GET)
     @GetMapping("/invoices/recurring/{id}/edit")
@@ -232,6 +232,34 @@ public class InvoiceController {
 
         recurringService.updateRecurringInvoice(template);
 
+        return "redirect:/invoices?status=Recurring";
+    }
+    // [추가] Recurring 탬플릿 삭제 처리
+    @PostMapping("/api/invoices/recurring/delete")
+    public String deleteRecurringInvoices(@RequestParam List<Long> ids) {
+        if (ids != null && !ids.isEmpty()) {
+            recurringService.deleteRecurringInvoices(ids);
+        }
+        return "redirect:/invoices?status=Recurring";
+    }
+
+    // [추가] 인보이스 승인 (IN_REVIEW -> UNPAID)
+    @PostMapping("/api/invoices/approve")
+    public String approveInvoices(@RequestParam List<Long> ids) {
+        if (ids != null && !ids.isEmpty()) {
+            invoiceService.approveInvoices(ids);
+        }
+        // 승인 후 'Unpaid' 탭으로 이동 (혹은 원래 탭 유지)
+        return "redirect:/invoices?status=UNPAID";
+    }
+
+    // [추가] 탬플릿 승인 (IN_REVIEW -> ACTIVE)
+    @PostMapping("/api/invoices/recurring/approve")
+    public String approveRecurringInvoices(@RequestParam List<Long> ids) {
+        if (ids != null && !ids.isEmpty()) {
+            recurringService.approveRecurringInvoices(ids);
+        }
+        // 승인 후 Recurring 목록으로 복귀
         return "redirect:/invoices?status=Recurring";
     }
 }

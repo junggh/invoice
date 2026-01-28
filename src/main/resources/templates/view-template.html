@@ -18,7 +18,9 @@
         <div class="section-left">
             <div class="form-group">
                 <label>Contact Name</label>
-                <input type="text" th:value="${invoice.contact.name} + (${invoice.contact.companyName != null} ? ' (' + ${invoice.contact.companyName} + ')' : '')" readonly>
+                <input type="text"
+                       th:value="${invoice.contact.companyName != null ? invoice.contact.companyName + ' (' + invoice.contact.name + ')' : invoice.contact.name}"
+                       readonly>
             </div>
 
             <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0px;">

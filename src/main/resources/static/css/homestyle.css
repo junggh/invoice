@@ -216,7 +216,11 @@ h1 { margin-top: 0; margin-bottom: 20px; }
 
 /* 드롭다운 내용물 (기본 숨김) */
 .dropdown-content {
-    display: none;           /* 평소엔 안 보임 */
+    /*display: none;           /* 평소엔 안 보임 */
+    display: block;       /* 공간은 차지하되 */
+    visibility: hidden;   /* 보이지 않게 처리 */
+    opacity: 0;           /* 투명하게 처리 */
+
     position: absolute;      /* 버튼 바로 아래에 배치 */
     background-color: white;
     min-width: 120px;        /* 메뉴 너비 */
@@ -226,8 +230,14 @@ h1 { margin-top: 0; margin-bottom: 20px; }
     border-radius: 4px;
     top: 100%;               /* 버튼 바로 밑 */
     left: 0;
-    margin-top: 0px;         /* 버튼과 살짝 띄우기 */
+    margin-top: 4px;         /* 버튼과 살짝 띄우기 */
     overflow: hidden;        /* 둥근 모서리 적용 */
+
+    /* [핵심] 마우스가 떠날 때(Un-hover) 적용되는 효과 */
+    /* opacity: 투명해지는데 0.3초 걸림 */
+    /* visibility: 1초(요청하신 시간) 뒤에 hidden으로 변함 */
+    /* 즉, 1초 동안은 투명도는 변하지만 클릭 가능한 상태로 유지됨 */
+    transition: opacity 0.3s ease, visibility 0s linear 0.6s;
 }
 
 /* 드롭다운 내부 링크 스타일 */
@@ -250,7 +260,14 @@ h1 { margin-top: 0; margin-bottom: 20px; }
 
 /* [핵심] 마우스를 올렸을 때 메뉴 보이기 */
 .dropdown:hover .dropdown-content {
-    display: block;
+    /* display: block; <-- 삭제 */
+
+    /* [변경 3] 보이게 설정 */
+    visibility: visible;
+    opacity: 1;
+
+    /* [핵심] 마우스가 들어올 때는 '즉시' 나타나야 함 (딜레이 0초) */
+    transition: opacity 0.3s ease, visibility 0s linear 0s;
 }
 
 /* 버튼 스타일 보정 (드롭다운 내 버튼이 기존 버튼과 똑같이 보이게) */
