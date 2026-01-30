@@ -19,6 +19,8 @@
                    th:classappend="${currentStatus == 'DRAFT'} ? 'active'">Draft</a></li>
             <li><a th:href="@{/invoices(status='IN_REVIEW', days=${selectedDays})}"
                    th:classappend="${currentStatus == 'IN_REVIEW'} ? 'active'">In Review</a></li>
+            <li><a th:href="@{/invoices(status='APPROVED', days=${selectedDays})}"
+                   th:classappend="${currentStatus == 'APPROVED'} ? 'active'">Approved</a></li>
             <li><a th:href="@{/invoices(status='UNPAID', days=${selectedDays})}"
                    th:classappend="${currentStatus == 'UNPAID'} ? 'active'">Unpaid</a></li>
             <li><a th:href="@{/invoices(status='PAID', days=${selectedDays})}"
@@ -29,7 +31,7 @@
                    th:classappend="${currentStatus == 'Recurring'} ? 'active'">Recurring</a></li>
         </ul>
 
-        <div class="dashboard-header">
+        <div th:if="${currentStatus == 'Overview'}" class="dashboard-header">
             <div class="summary-metrics">
                 <div class="metric-item">
                     <label>Total</label>
@@ -40,7 +42,7 @@
                     <span th:text="'A$' + ${#numbers.formatDecimal(totalBalance, 1, 2)}">A$00.00</span>
                 </div>
                 <div class="metric-item">
-                    <label>Overdue</label>
+                    <label class="text-red">Overdue</label>
                     <span class="text-red" th:text="'A$' + ${#numbers.formatDecimal(totalOverdue, 1, 2)}">A$00.00</span>
                 </div>
             </div>
@@ -55,8 +57,15 @@
         </div>
 
         <div class="toolbar">
-            <div class="search-bar">
+            <div class="search-bar" style="display: flex; gap: 5px;">
                 <input type="text" id="searchInput" placeholder="Search by name, invoice #, company...">
+
+                <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays})}"
+                   class="btn btn-icon"
+                   title="Reset Filters & Sort"
+                   style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
             </div>
             <div class="action-buttons">
                 <div class="dropdown">
@@ -68,10 +77,21 @@
                         <a href="/invoices/new/recurring">Template</a>
                     </div>
                 </div>
-                <button class="btn btn-primary">Send receipt</button>
 
-                <button type="button" class="btn btn-icon" onclick="approveSelected()" title="Approve">
+                <button class="btn btn-primary">New Credit Note</button>
+
+                <button class="btn btn-primary" th:if="${currentStatus != 'Recurring'}">Send receipt</button>
+
+                <button type="button" class="btn btn-icon" onclick="approveSelected()" title="Approve" th:if="${currentStatus != 'Recurring'}">
                     <i class="bi bi-check-lg"></i>
+                </button>
+
+                <button type="button" class="btn btn-icon" onclick="approveSelected()" title="Approve" th:if="${currentStatus == 'Recurring'}">
+                    <i class="bi bi-play-fill"></i>
+                </button>
+
+                <button type="button" class="btn btn-icon" onclick="stopRecurring()" title="Stop Recurring" th:if="${currentStatus == 'Recurring'}">
+                    <i class="bi bi-stop-fill"></i>
                 </button>
 
                 <button type="button" class="btn btn-icon" onclick="deleteSelected()" title="Delete">
@@ -109,7 +129,19 @@
             <tr>
                 <th style="width: 20px;"><input type="checkbox" onclick="toggleAll(this)"></th>
                 <th:block th:if="${currentStatus != 'Recurring'}">
-                    <th style="width: 80px;">Date</th>
+                    <th style="width: 80px;">
+                        <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='issuedDate', sortDir=${sortField == 'issuedDate' and sortDir == 'desc' ? 'asc' : 'desc'})}"
+                            style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
+                            Date
+                            <span th:if="${sortField == 'issuedDate'}" style="margin-left: 5px;">
+                            <i th:if="${sortDir == 'desc'}" class="bi bi-caret-down-fill"></i>
+                            <i th:if="${sortDir == 'asc'}" class="bi bi-caret-up-fill"></i>
+                            </span>
+                            <span th:unless="${sortField == 'issuedDate'}" style="margin-left: 5px; color: #ccc;">
+                            <i class="bi bi-arrow-down-up" style="font-size: 10px;"></i>
+                            </span>
+                        </a>
+                    </th>
                     <th style="width: 80px;">Invoice #</th>
                     <th>Contact</th>
                     <th>E-Mail</th>
@@ -118,11 +150,23 @@
                         style="width: 80px;">Status</th>
                     <th class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'"
                         style="width: 110px;">Total</th>
-                    <th th:if="${currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW'}"
+                    <th th:if="${currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW' and currentStatus != 'APPROVED'}"
                         class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'"
                         style="width: 110px;">Balance due</th>
                     <th th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'"
-                        style="width: 80px; padding-left: 20px;">Due Date</th>
+                        style="width: 80px; padding-left: 20px;">
+                        <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='dueDate', sortDir=${sortField == 'dueDate' and sortDir == 'desc' ? 'asc' : 'desc'})}"
+                            style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
+                            Due Date
+                            <span th:if="${sortField == 'dueDate'}" style="margin-left: 5px;">
+                            <i th:if="${sortDir == 'desc'}" class="bi bi-caret-down-fill"></i>
+                            <i th:if="${sortDir == 'asc'}" class="bi bi-caret-up-fill"></i>
+                            </span>
+                            <span th:unless="${sortField == 'dueDate'}" style="margin-left: 5px; color: #ccc;">
+                            <i class="bi bi-arrow-down-up" style="font-size: 10px;"></i>
+                            </span>
+                        </a>
+                    </th>
                 </th:block>
                 <th:block th:if="${currentStatus == 'Recurring'}">
                     <th style="width: 80px;">Frequency</th>
@@ -138,12 +182,8 @@
             </tr>
             </thead>
             <tbody>
-<!--            <tr th:if="${invoices.isEmpty()}"-->
-<!--                th:with="colCount=${8 + (currentStatus == 'Overview' ? 1 : 0) + (currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW' ? 1 : 0)}">-->
-<!--                <td th:colspan="${colCount}" style="text-align: center; padding: 30px;">No invoices found.</td>-->
-<!--            </tr>-->
             <tr th:if="${(currentStatus != 'Recurring' and invoices.isEmpty()) or (currentStatus == 'Recurring' and recurringInvoices.isEmpty())}"
-                th:with="colCount=${currentStatus == 'Recurring' ? 10 : (8 + (currentStatus == 'Overview' ? 1 : 0) + (currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW' ? 1 : 0))}">
+                th:with="colCount=${currentStatus == 'Recurring' ? 10 : (8 + (currentStatus == 'Overview' ? 1 : 0) + (currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW' and currentStatus != 'APPROVED' ? 1 : 0))}">
                 <td th:colspan="${colCount}" style="text-align: center; padding: 30px;">
                     <span th:if="${currentStatus == 'Recurring'}">No templates found.</span>
                     <span th:unless="${currentStatus == 'Recurring'}">No invoices found.</span>
@@ -154,7 +194,13 @@
                 <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${inv.id}" th:data-status="${inv.status}"></td>
                 <td th:text="${#temporals.format(inv.issuedDate, 'dd/MM/yyyy')}">29/07/2025</td>
                 <td>
-                    <a th:href="${#strings.toString(inv.status) == 'DRAFT'} ? @{/invoices/{id}/edit(id=${inv.id})} : @{/invoices/{id}(id=${inv.id})}" class="invoice-link search-invoice-num" th:text="${inv.invoiceNumber}">INV-00001</a>
+                    <a th:href="${#strings.toString(inv.status) == 'DRAFT'}
+                                ? @{/invoices/{id}/edit(id=${inv.id})}
+                                : @{/invoices/{id}(id=${inv.id})}"
+                       class="invoice-link search-invoice-num"
+                       th:text="${inv.invoiceNumber}">
+                        INV-00001
+                    </a>
                 </td>
                 <td class="search-contact-name" th:text="${inv.customerCompanyName != null ? inv.customerCompanyName + ' (' + inv.customerName + ')' : inv.customerName}">>June Young</td>
                 <td th:text="${inv.customerEmail}">abc@gmail.com</td>
@@ -183,7 +229,13 @@
                 </td>
 
                 <td>
-                    <a th:href="${#strings.toString(tpl.status) == 'DRAFT'} ? @{/invoices/recurring/{id}/edit(id=${tpl.id})} : @{/invoices/recurring/{id}(id=${tpl.id})}" class="invoice-link search-invoice-num" th:text="${tpl.templateNumber}">INVT-001</a>
+                    <a th:href="${#strings.toString(tpl.status) == 'DRAFT'}
+                                ? @{/invoices/recurring/{id}/edit(id=${tpl.id})}
+                                : @{/invoices/recurring/{id}(id=${tpl.id})}"
+                       class="invoice-link search-invoice-num"
+                       th:text="${tpl.templateNumber}">
+                        INVT-00001
+                    </a>
                 </td>
 
                 <td class="search-contact-name" th:text="${tpl.contact != null ? (tpl.contact.companyName != null ? tpl.contact.companyName + ' (' + tpl.contact.name + ')' : tpl.contact.name) : '-'}">>Company (Name)</td>
@@ -278,7 +330,7 @@
 
         // 선택 삭제 로직
         function deleteSelected() {
-            // 체크된 박스 찾기
+            // 1. 체크된 박스 찾기
             const checkedBoxes = document.querySelectorAll('.invoice-checkbox:checked');
 
             if (checkedBoxes.length === 0) {
@@ -286,30 +338,54 @@
                 return;
             }
 
+            // [추가] 2. 삭제 가능한 상태인지 검증 (안전 장치)
+            // 삭제 허용 상태: DRAFT, IN_REVIEW, APPROVED, (Recurring 탭은 별도 처리되므로 논외)
+            // 즉, UNPAID, PAID, OVERDUE, VOID 등은 삭제 불가
+            const allowList = ['DRAFT', 'IN_REVIEW', 'APPROVED'];
+
+            // Recurring 탭은 모든 상태가 탬플릿이므로 삭제 가능하다고 가정 (원하시면 여기도 필터링 가능)
+            // 현재 URL 파라미터 확인
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentTab = urlParams.get('status');
+
+            // Recurring 탭이 아닐 때만 검증 수행
+            if (currentTab !== 'Recurring') {
+                let hasInvalidItem = false;
+
+                checkedBoxes.forEach(cb => {
+                    const status = cb.getAttribute('data-status'); // 예: "UNPAID"
+
+                    // 허용 목록에 없는 상태가 하나라도 있으면 플래그 세움
+                    if (!allowList.includes(status)) {
+                        hasInvalidItem = true;
+                    }
+                });
+
+                if (hasInvalidItem) {
+                    alert("Only invoices in 'DRAFT', 'IN_REVIEW', or 'APPROVED' status can be deleted.\n(Published invoices cannot be deleted.)");
+                    return; // 함수 강제 종료
+                }
+            }
+
+            // 3. 사용자 확인
             if (!confirm("Are you sure you want to delete " + checkedBoxes.length + " invoices?")) {
                 return;
             }
 
-            // 가상의 폼을 만들어서 POST 전송
+            // 4. 폼 전송 (기존 로직 유지)
             const form = document.createElement('form');
             form.method = 'POST';
 
-            // [핵심 수정] 현재 URL의 status 파라미터를 확인하여 분기 처리
-            const urlParams = new URLSearchParams(window.location.search);
-            const status = urlParams.get('status');
-
-            if (status === 'Recurring') {
-                // Recurring 탭이면 탬플릿 삭제 API 호출
+            if (currentTab === 'Recurring') {
                 form.action = '/api/invoices/recurring/delete';
             } else {
-                // 그 외에는 기존 인보이스 삭제 API 호출
                 form.action = '/api/invoices/delete';
             }
 
             checkedBoxes.forEach(cb => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
-                input.name = 'ids'; // 컨트롤러에서 받을 파라미터 이름
+                input.name = 'ids';
                 input.value = cb.value;
                 form.appendChild(input);
             });
@@ -383,6 +459,51 @@
 
             // days 파라미터를 추가하여 이동
             location.href = `/invoices?status=${currentStatus}&days=${days}`;
+        }
+        // Recurring 중단 로직
+        function stopRecurring() {
+            // 1. 체크된 박스 확인
+            const checkedBoxes = document.querySelectorAll('.invoice-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert("Please select recurring templates to stop.");
+                return;
+            }
+            // 'ACTIVE' 상태 검증
+            // 선택된 것 중 ACTIVE가 아닌 것이 하나라도 있는지 확인
+            let hasInvalidItem = false;
+            checkedBoxes.forEach(cb => {
+                const status = cb.getAttribute('data-status');
+                if (status !== 'ACTIVE') {
+                    hasInvalidItem = true;
+                }
+            });
+
+            // ACTIVE가 아닌 항목이 포함되어 있으면 경고 후 중단
+            if (hasInvalidItem) {
+                alert("Only 'ACTIVE' templates can be stopped.\n(DRAFT or already COMPLETED templates cannot be stopped.)");
+                return;
+            }
+
+            // 2. 사용자 확인
+            if (!confirm("Are you sure you want to STOP these " + checkedBoxes.length + " recurring templates?\n(Status will change to COMPLETED)")) {
+                return;
+            }
+
+            // 3. 폼 전송
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/api/invoices/recurring/complete';
+
+            checkedBoxes.forEach(cb => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids';
+                input.value = cb.value;
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
         }
     </script>
 </body>

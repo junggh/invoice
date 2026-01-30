@@ -6,6 +6,7 @@ import com.example.demo.entity.InvoiceStatus;
 import com.example.demo.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +27,6 @@ public class InvoiceService {
 
     @Transactional // 쓰기 작업이 있으므로 읽기전용 해제
     public Long createInvoice(Invoice invoice) {
-
         invoice.setBalanceDue(invoice.getTotal());
         // Items의 부모 명시
         for (InvoiceItem item : invoice.getItems()) {
@@ -62,13 +62,16 @@ public class InvoiceService {
     }
     @Transactional
     public void deleteInvoices(List<Long> ids) {
-        invoiceRepository.deleteAllById(ids);
+        List<Invoice> invoices = invoiceRepository.findAllById(ids);
+        for (Invoice invoice : invoices) {
+            invoice.setStatus(InvoiceStatus.DELETED);
+        }
     }
-    // Status 별로 invoice 조회
+    /*// Status 별로 invoice 조회
     public List<Invoice> getInvoices(String statusCondition) {
         // 1. 상태가 없거나 'Overview'이면 전체 조회
         if (statusCondition == null || statusCondition.isEmpty() || statusCondition.equals("Overview")) {
-            return invoiceRepository.findAllByOrderByIdAsc();
+            return invoiceRepository.findByStatusNotOrderByIdAsc(InvoiceStatus.DELETED);
         }
 
         // 2. 그 외에는 해당 상태(Enum)로 조회
@@ -77,7 +80,33 @@ public class InvoiceService {
             return invoiceRepository.findByStatusOrderByIdAsc(status);
         } catch (IllegalArgumentException e) {
             // 이상한 문자가 들어오면 그냥 전체 조회
-            return invoiceRepository.findAllByOrderByIdAsc();
+            return invoiceRepository.findByStatusNotOrderByIdAsc(InvoiceStatus.DELETED);
+        }
+    }*/
+    // [수정] 정렬 파라미터(sortField, sortDir) 추가
+    public List<Invoice> getInvoices(String statusCondition, String sortField, String sortDir) {
+
+        // 1. 정렬 객체 생성 (기본값: ID 오름차순)
+        Sort sort = Sort.by(Sort.Direction.ASC, "id");
+
+        // 사용자가 정렬 필드를 선택했다면 그에 맞춰 Sort 객체 생성
+        if (sortField != null && !sortField.isEmpty()) {
+            Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+            sort = Sort.by(direction, sortField);
+        }
+
+        // 2. 조회 로직 (Repository 호출 시 sort 객체 전달)
+        // 2-1. 상태가 없거나 'Overview'이면 -> DELETED 제외하고 전체 조회
+        if (statusCondition == null || statusCondition.isEmpty() || statusCondition.equals("Overview")) {
+            return invoiceRepository.findByStatusNot(InvoiceStatus.DELETED, sort);
+        }
+
+        // 2-2. 그 외에는 해당 상태(Enum)로 조회
+        try {
+            InvoiceStatus status = InvoiceStatus.valueOf(statusCondition);
+            return invoiceRepository.findByStatus(status, sort);
+        } catch (IllegalArgumentException e) {
+            return invoiceRepository.findByStatusNot(InvoiceStatus.DELETED, sort);
         }
     }
     public Invoice copyInvoice(Long sourceId) {
@@ -86,7 +115,7 @@ public class InvoiceService {
 
         // 2. 새 객체 생성 및 기본 설정
         Invoice newInvoice = new Invoice();
-        newInvoice.setInvoiceNumber(generateNextInvoiceNumber()); // 번호 새로 발급
+        newInvoice.setInvoiceNumber(generateNextInvoiceNumber());
         newInvoice.setStatus(InvoiceStatus.DRAFT); // 상태는 DRAFT
         newInvoice.setIssuedDate(LocalDate.now()); // 날짜는 오늘
 
@@ -133,16 +162,53 @@ public class InvoiceService {
     @Transactional
     public void approveInvoices(List<Long> ids) {
         List<Invoice> invoices = invoiceRepository.findAllById(ids);
+        LocalDate today = LocalDate.now();
         for (Invoice invoice : invoices) {
-            if (invoice.getStatus() == InvoiceStatus.IN_REVIEW) {
+            // 발행일이 오늘이거나 과거라면 -> 즉시 발송
+            if (!invoice.getIssuedDate().isAfter(today)) {
                 invoice.setStatus(InvoiceStatus.UNPAID);
+                // 번호가 없으면 생성
+                if (invoice.getInvoiceNumber() == null) {
+                    invoice.setInvoiceNumber(generateNextInvoiceNumber());
+                }
+                // TODO: 여기서 이메일 발송 로직 호출 (emailService.send...)
             }
+            // 발행일이 미래라면 -> 승인 상태로 대기
+            else {
+                invoice.setStatus(InvoiceStatus.APPROVED);
+                // 아직 번호는 부여하지 않음 (발송되는 날 순서대로 부여하기 위해)
+            }
+        }
+    }
+    // [신규] 매일 00시에 실행되는 스케줄러: APPROVED -> UNPAID
+    @Scheduled(cron = "0 0 0 * * *")
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void processScheduledInvoices() {
+        LocalDate today = LocalDate.now();
+
+        // 상태가 APPROVED이고, 날짜가 오늘(또는 그 이전)이 된 인보이스 찾기
+        List<Invoice> scheduledInvoices = invoiceRepository.findByStatusAndIssuedDateLessThanEqual(
+                InvoiceStatus.APPROVED, today
+        );
+
+        for (Invoice invoice : scheduledInvoices) {
+            // 상태 변경 (발송 처리)
+            invoice.setStatus(InvoiceStatus.UNPAID);
+
+            // 번호 부여
+            if (invoice.getInvoiceNumber() == null) {
+                invoice.setInvoiceNumber(generateNextInvoiceNumber());
+            }
+
+            // TODO: 이메일 발송 로직 호출
+            System.out.println("Auto-sending Invoice ID: " + invoice.getId());
         }
     }
     // 다음 INV-0000# 생성기
     public String generateNextInvoiceNumber() {
         // DB에서 가장 마지막 송장을 가져옴
-        return invoiceRepository.findTopByOrderByIdDesc()
+        return invoiceRepository.findTopByInvoiceNumberStartingWithOrderByInvoiceNumberDesc("INV-")
                 .map(lastInvoice -> {
                     // 예: "INV-00005"
                     String lastNumber = lastInvoice.getInvoiceNumber();

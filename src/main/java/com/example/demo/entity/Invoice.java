@@ -16,7 +16,7 @@ public class Invoice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String invoiceNumber; // 예: INV-00001
 
     private String reference; // 참조 번호

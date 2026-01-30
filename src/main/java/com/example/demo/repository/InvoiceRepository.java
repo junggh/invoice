@@ -2,6 +2,7 @@ package com.example.demo.repository;
 
 import com.example.demo.entity.Invoice;
 import com.example.demo.entity.InvoiceStatus;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,13 +17,10 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
     Optional<Invoice> findTopByInvoiceNumberStartingWithOrderByInvoiceNumberDesc(String prefix);
     List<Invoice> findByStatusOrderByIdAsc(InvoiceStatus status);
     List<Invoice> findAllByOrderByIdAsc();
+    List<Invoice> findByStatus(InvoiceStatus status, Sort sort);
+    List<Invoice> findByStatusNotOrderByIdAsc(InvoiceStatus status);
+    List<Invoice> findByStatusNot(InvoiceStatus status, Sort sort);
     List<Invoice> findByStatusAndDueDateBefore(InvoiceStatus status, LocalDate date);
-
-//    @Query("SELECT COALESCE(SUM(i.total), 0) FROM Invoice i WHERE (:status IS NULL OR i.status = :status)")
-//    BigDecimal sumTotalByStatus(@Param("status") InvoiceStatus status);
-//
-//    @Query("SELECT COALESCE(SUM(i.balanceDue), 0) FROM Invoice i WHERE (:status IS NULL OR i.status = :status)")
-//    BigDecimal sumBalanceDueByStatus(@Param("status") InvoiceStatus status);
 
     // 1. 기간 내 유효한 상태(UNPAID, PAID, OVERDUE)의 Total 합계
     @Query("SELECT COALESCE(SUM(i.total), 0) FROM Invoice i " +
@@ -43,4 +41,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
             "WHERE i.issuedDate >= :startDate " +
             "AND i.status = 'OVERDUE'")
     BigDecimal sumOverdueBalanceByDate(@Param("startDate") LocalDate startDate);
+
+    List<Invoice> findByStatusAndIssuedDateLessThanEqual(InvoiceStatus invoiceStatus, LocalDate today);
 }

@@ -10,9 +10,9 @@
     <div class="container">
         <div class="header">
             <h1>View Invoice</h1>
-            <span style="color: #888;" th:text="'# ' + ${invoice.invoiceNumber}"></span>
+            <span style="color: #888;" th:text="'# ' + (${invoice.invoiceNumber} ?: '-')"></span>
         </div>
-        <h3 style="margin-top:0;">Invoice Details</h3>
+        <!--<h3 style="margin-top:0;">Invoice Details</h3>
         <div class="form-grid">
             <div class="section-left">
                 <div class="form-group">
@@ -45,7 +45,7 @@
                 <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0px">
                     <div class="form-group">
                         <label for="invoiceNumber">Invoice #</label>
-                        <input type="text" id="invoiceNumber" name="invoiceNumber" th:value="${invoice.invoiceNumber}"
+                        <input type="text" id="invoiceNumber" name="invoiceNumber" th:value="${invoice.invoiceNumber} ?: '-'"
                                readonly style="background-color: #f0f0f0;">
                     </div>
 
@@ -54,11 +54,6 @@
                         <input type="number" id="reference" name="reference" th:value="${invoice.reference}" readonly>
                     </div>
                 </div>
-
-                <!--<div class="form-group">
-                    <label for="status">Status</label>
-                    <input type="text" id="status" name="status" th:value="${invoice.status}" readonly>
-                </div>-->
 
                 <div class="form-grid" style="margin-bottom: 0; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-group">
@@ -71,7 +66,60 @@
                     </div>
                 </div>
             </div>
+        </div>-->
+        <div class="details-container">
+            <div class="details-column">
+                <div class="details-header">Contact Details</div>
+
+                <div class="info-row">
+                    <span class="info-label">Contact</span>
+                    <span class="info-value"
+                          th:text="${invoice.customerCompanyName != null ? invoice.customerCompanyName + ' (' + invoice.customerName + ')' : invoice.customerName}">
+                        June Young
+                    </span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Bill To</span>
+                    <span class="info-value" th:text="${invoice.customerBillTo} ?: '-'">Seoul</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Currency</span>
+                    <span class="info-value" th:text="${invoice.customerCurrency} ?: '-'">KRW</span>
+                </div>
+            </div>
+
+            <div class="details-column">
+                <div class="details-header">Invoice Details</div>
+
+                <div class="info-row">
+                    <span class="info-label">Invoice Number</span>
+                    <span class="info-value" th:text="${invoice.invoiceNumber} ?: '-'">INV-0001</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Reference</span>
+                    <span class="info-value" th:text="${invoice.reference} ?: '-'">-</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Invoice Date</span>
+                    <span class="info-value" th:text="${#temporals.format(invoice.issuedDate, 'dd/MM/yyyy')}">01 Jan 2026</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Due Date</span>
+                    <span class="info-value" th:text="${#temporals.format(invoice.dueDate, 'dd/MM/yyyy')}">01 Feb 2026</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Salesperson</span>
+                    <span class="info-value" th:text="${invoice.salesPerson} ?: '-'">-</span>
+                </div>
+            </div>
         </div>
+
 
         <h3>Items</h3>
         <table class="items-table">

@@ -10,10 +10,10 @@
 <div class="container">
     <div class="header">
         <h1>View Template</h1>
-        <span style="color: #888;" th:text="'# ' + ${invoice.templateNumber}"></span>
+        <span style="color: #888;" th:text="'# ' + (${invoice.templateNumber} ?: '-')"></span>
     </div>
 
-    <h3 style="margin-top:0;">Template Details</h3>
+    <!--<h3 style="margin-top:0;">Template Details</h3>
     <div class="form-grid">
         <div class="section-left">
             <div class="form-group">
@@ -48,7 +48,7 @@
                     <input type="number" th:value="${invoice.frequencyInterval}" readonly>
                 </div>
                 <div class="form-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
-                    <label style="display: flex; align-items: center; justify-content: center; height: 38px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 0 10px; font-size: 14px; color: #333;">
+                    <label style="display: flex; align-items: center; justify-content: center; height: 37px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 0 10px; font-size: 14px; color: #333; margin-bottom: 0px;">
                         <input type="checkbox" th:checked="${invoice.autoSend}" disabled
                                style="margin-right: 8px; width: 16px; height: 16px;">
                         Auto Send
@@ -61,7 +61,7 @@
             <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0px">
                 <div class="form-group">
                     <label>Invoice #</label>
-                    <input type="text" th:value="${invoice.templateNumber}" readonly style="background-color: #f0f0f0;">
+                    <input type="text" th:value="${invoice.templateNumber} ?: '-'" readonly style="background-color: #f0f0f0;">
                 </div>
                 <div class="form-group">
                     <label>Reference</label>
@@ -85,6 +85,84 @@
                     <label>End Date</label>
                     <input type="text" th:value="${invoice.endDate != null ? #temporals.format(invoice.endDate, 'dd / MM / yyyy') : '-'}" readonly>
                 </div>
+            </div>
+        </div>
+    </div>-->
+    <div class="details-container">
+        <div class="details-column">
+            <div class="details-header">Contact Details</div>
+
+            <div class="info-row">
+                <span class="info-label">Contact</span>
+                <span class="info-value"
+                      th:text="${invoice.contact.companyName != null ? invoice.contact.companyName + ' (' + invoice.contact.name + ')' : invoice.contact.name}">
+                </span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Bill To</span>
+                <span class="info-value" th:text="${invoice.contact.billTo} ?: '-'"></span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Currency</span>
+                <span class="info-value" th:text="${invoice.contact.currency} ?: '-'"></span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Salesperson</span>
+                <span class="info-value" th:text="${invoice.salesPerson} ?: '-'"></span>
+            </div>
+
+            <div class="details-header" style="margin-top: 30px;">Recurring Settings</div>
+            <div class="info-row">
+                <span class="info-label">Frequency</span>
+                <span class="info-value">
+                    <span th:text="${invoice.frequencyInterval} + ' ' + ${#strings.capitalize(#strings.toLowerCase(invoice.frequency))}"></span>
+                    <span style="color: #888; font-size: 0.9em;" th:if="${invoice.autoSend}">(Auto Send)</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="details-column">
+            <div class="details-header">Template Details</div>
+
+            <div class="info-row">
+                <span class="info-label">Template #</span>
+                <span class="info-value" th:text="${invoice.templateNumber} ?: '-'">INVT-001</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Reference</span>
+                <span class="info-value" th:text="${invoice.reference} ?: '-'"></span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Start Date</span>
+                <span class="info-value" th:text="${#temporals.format(invoice.startDate, 'dd/MM/yyyy')}"></span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">End Date</span>
+                <span class="info-value" th:text="${invoice.endDate != null ? #temporals.format(invoice.endDate, 'dd/MM/yyyy') : '-'}"></span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Due Date Term</span>
+                <span class="info-value" th:text="${invoice.dueDateDays} + ' Days'"></span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Last Issue</span>
+                <span class="info-value" th:text="${invoice.lastIssuedDate != null ? #temporals.format(invoice.lastIssuedDate, 'dd/MM/yyyy') : '-'}"></span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Next Issue</span>
+                <span class="info-value"
+                      th:text="${invoice.nextInvoiceDate != null ? #temporals.format(invoice.nextInvoiceDate, 'dd/MM/yyyy') : 'Completed'}"
+                      th:style="${invoice.nextInvoiceDate == null ? 'color: red;' : ''}">
+                </span>
             </div>
         </div>
     </div>

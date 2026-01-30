@@ -38,3 +38,6 @@ out/
 
 ### DataBase ###
 /data/
+
+### DBeaver ###
+.dbeaver

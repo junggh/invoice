@@ -5,5 +5,6 @@ public enum RecurringStatus {
     IN_REVIEW,
     ACTIVE,
     PAUSED,
-    COMPLETED
+    COMPLETED,
+    DELETED
 }

@@ -94,7 +94,7 @@ public class RecurringInvoiceService {
                 "nextInvoiceDate", "lastIssuedDate", "items", "endDate");
 
         // 2. 고유값 재설정
-        copy.setTemplateNumber(generateNextTemplateNumber()); // 새 번호 채번
+        copy.setTemplateNumber(generateNextTemplateNumber());
         copy.setStatus(RecurringStatus.DRAFT); // 복사본은 무조건 DRAFT 시작
         copy.setStartDate(LocalDate.now());    // 시작일은 오늘로 리셋
         // next, last 날짜는 null 상태 유지 (승인 시 설정됨)
@@ -121,7 +121,7 @@ public class RecurringInvoiceService {
     }
     // [추가] TMP-0000# 번호 생성기
     public String generateNextTemplateNumber() {
-        return recurringRepository.findTopByOrderByIdDesc()
+        return recurringRepository.findTopByTemplateNumberStartingWithOrderByTemplateNumberDesc("INVT-")
                 .map(lastTemplate -> {
                     String lastNumber = lastTemplate.getTemplateNumber();
                     // "INVT-00005" -> 5 추출
@@ -155,7 +155,9 @@ public class RecurringInvoiceService {
             // IN_REVIEW -> ACTIVE 변경
             if (template.getStatus() == RecurringStatus.IN_REVIEW) {
                 template.setStatus(RecurringStatus.ACTIVE);
-
+                if (template.getTemplateNumber() == null) {
+                    template.setTemplateNumber(generateNextTemplateNumber());
+                }
                 // [핵심] 상태 변경 즉시 발행 조건 확인
                 // 예정일이 없거나, 예정일이 오늘보다 미래가 아니라면(즉, 오늘이거나 과거라면) 즉시 실행
                 if (template.getNextInvoiceDate() != null &&
@@ -179,6 +181,7 @@ public class RecurringInvoiceService {
         // 3. 종료일 체크 및 상태 변경
         if (template.getEndDate() != null && template.getNextInvoiceDate().isAfter(template.getEndDate())) {
             template.setStatus(RecurringStatus.COMPLETED);
+            template.setNextInvoiceDate(null);
         }
     }
 
@@ -224,7 +227,7 @@ public class RecurringInvoiceService {
     }
     // 탬플릿 목록 전체 조회
     public List<RecurringInvoice> getAllTemplates() {
-        return recurringRepository.findAllByOrderByIdAsc();
+        return recurringRepository.findByStatusNotOrderByIdAsc(RecurringStatus.DELETED);
     }
     // 탬플릿 단건 조회
     public RecurringInvoice getRecurringInvoice(Long id) {
@@ -233,6 +236,26 @@ public class RecurringInvoiceService {
     }
     // 삭제
     public void deleteRecurringInvoices(List<Long> ids) {
-        recurringRepository.deleteAllById(ids);
+        List<RecurringInvoice> templates = recurringRepository.findAllById(ids);
+        for (RecurringInvoice template : templates) {
+            template.setStatus(RecurringStatus.DELETED);
+        }
+    }
+    // 종료
+    @Transactional
+    public void completeRecurringInvoices(List<Long> ids) {
+        List<RecurringInvoice> templates = recurringRepository.findAllById(ids);
+        LocalDate today = LocalDate.now();
+
+        for (RecurringInvoice template : templates) {
+            // 1. 상태를 COMPLETED(완료/종료)로 변경
+            template.setStatus(RecurringStatus.COMPLETED);
+
+            // 2. 종료일을 오늘 날짜로 기록
+            template.setEndDate(today);
+
+            // 3. 더 이상 자동 생성되지 않도록 다음 예정일을 삭제 (Double Check)
+            template.setNextInvoiceDate(null);
+        }
     }
 }

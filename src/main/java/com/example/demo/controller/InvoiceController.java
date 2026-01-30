@@ -32,6 +32,8 @@ public class InvoiceController {
     @GetMapping("/invoices")
     public String home(@RequestParam(required = false) String status,
                        @RequestParam(defaultValue = "30") int days,
+                       @RequestParam(required = false) String sortField,
+                       @RequestParam(required = false) String sortDir,
                        Model model) {
         // 현재 탭 활성화용
         String currentStatus = (status == null || status.isEmpty()) ? "Overview" : status;
@@ -55,10 +57,13 @@ public class InvoiceController {
             model.addAttribute("invoices", List.of());
         } else {
             // 기존 로직: 일반 인보이스 목록 조회
-            List<Invoice> invoices = invoiceService.getInvoices(status);
+            //List<Invoice> invoices = invoiceService.getInvoices(status);
+            List<Invoice> invoices = invoiceService.getInvoices(status, sortField, sortDir);
             model.addAttribute("invoices", invoices);
             model.addAttribute("recurringInvoices", List.of());
         }
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
 
         return "home";
     }
@@ -250,7 +255,7 @@ public class InvoiceController {
             invoiceService.approveInvoices(ids);
         }
         // 승인 후 'Unpaid' 탭으로 이동 (혹은 원래 탭 유지)
-        return "redirect:/invoices?status=UNPAID";
+        return "redirect:/invoices";
     }
 
     // [추가] 탬플릿 승인 (IN_REVIEW -> ACTIVE)
@@ -260,6 +265,15 @@ public class InvoiceController {
             recurringService.approveRecurringInvoices(ids);
         }
         // 승인 후 Recurring 목록으로 복귀
+        return "redirect:/invoices?status=Recurring";
+    }
+    // 탬플릿 종료
+    @PostMapping("/api/invoices/recurring/complete")
+    public String completeRecurringInvoices(@RequestParam List<Long> ids) {
+        if (ids != null && !ids.isEmpty()) {
+            recurringService.completeRecurringInvoices(ids);
+        }
+        // 처리가 끝나면 Recurring 탭으로 리다이렉트
         return "redirect:/invoices?status=Recurring";
     }
 }

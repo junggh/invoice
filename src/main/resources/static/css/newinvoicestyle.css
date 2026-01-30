@@ -165,3 +165,38 @@ textarea { resize: vertical; height: 80px; }
     right: 1px !important;
     width: 30px !important;
 }
+
+/* VIEW 화면에서의 info text */
+.details-container {
+    display: flex;
+    gap: 50px;
+    margin-bottom: 40px;
+    background-color: #fff;
+}
+.details-column {
+    flex: 1;
+}
+.details-header {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}
+.info-row {
+    display: grid;
+    grid-template-columns: 140px 1fr; /* 라벨 너비 고정, 값은 나머지 */
+    margin-bottom: 12px;
+    align-items: baseline;
+}
+.info-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+}
+.info-value {
+    font-size: 14px;
+    color: #000;
+    font-weight: 400;
+}

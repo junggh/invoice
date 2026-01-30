@@ -15,7 +15,7 @@
 
         <div class="header">
             <h1 th:text="${title}">Invoice</h1>
-            <span style="color: #888;" th:text="'# ' + ${invoice.invoiceNumber}"></span>
+            <span style="color: #888;" th:text="'# ' + (${invoice.invoiceNumber} ?: '-')"></span>
         </div>
 
         <h3 style="margin-top:0;">Invoice Details</h3>
@@ -65,7 +65,8 @@
                     <div class="form-group">
                         <label for="invoiceNumber">Invoice #</label>
                         <input type="text" id="invoiceNumber" name="invoiceNumber"
-                               th:value="${invoice.invoiceNumber}" readonly style="background-color: #f0f0f0;">
+                               th:value="${invoice.invoiceNumber} ?: '-'"
+                               readonly style="background-color: #f0f0f0;">
                     </div>
 
                     <div class="form-group">

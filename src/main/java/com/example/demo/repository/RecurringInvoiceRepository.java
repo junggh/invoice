@@ -16,4 +16,5 @@ public interface RecurringInvoiceRepository extends JpaRepository<RecurringInvoi
     Optional<RecurringInvoice> findTopByTemplateNumberStartingWithOrderByTemplateNumberDesc(String prefix);
 
     List<RecurringInvoice> findAllByOrderByIdAsc();
+    List<RecurringInvoice> findByStatusNotOrderByIdAsc(RecurringStatus status);
 }
