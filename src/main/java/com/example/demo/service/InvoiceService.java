@@ -67,6 +67,17 @@ public class InvoiceService {
             invoice.setStatus(InvoiceStatus.DELETED);
         }
     }
+    @Transactional
+    public void submitInvoices(List<Long> ids) {
+        List<Invoice> invoices = invoiceRepository.findAllById(ids);
+
+        for (Invoice invoice : invoices) {
+            // DRAFT 상태인 것만 변경 (혹시 모를 오류 방지)
+            if (invoice.getStatus() == InvoiceStatus.DRAFT) {
+                invoice.setStatus(InvoiceStatus.IN_REVIEW);
+            }
+        }
+    }
     /*// Status 별로 invoice 조회
     public List<Invoice> getInvoices(String statusCondition) {
         // 1. 상태가 없거나 'Overview'이면 전체 조회

@@ -146,6 +146,25 @@ public class InvoiceController {
 
         return "redirect:/invoices";
     }
+    // 인보이스 제출 (DRAFT -> IN_REVIEW)
+    @PostMapping("/api/invoices/submit")
+    public String submitInvoices(@RequestParam List<Long> ids) {
+        if (ids != null && !ids.isEmpty()) {
+            invoiceService.submitInvoices(ids);
+        }
+        // 처리 후 DRAFT 목록으로 돌아가거나, IN_REVIEW 목록으로 이동
+        // 보통 제출했으면 목록에서 사라지는 게 자연스러우므로 현재 페이지(DRAFT) 유지 -> 목록에서 사라짐
+        return "redirect:/invoices?status=DRAFT";
+    }
+    // 인보이스 승인 (IN_REVIEW -> UNPAID)
+    @PostMapping("/api/invoices/approve")
+    public String approveInvoices(@RequestParam List<Long> ids) {
+        if (ids != null && !ids.isEmpty()) {
+            invoiceService.approveInvoices(ids);
+        }
+        // 승인 후 'Unpaid' 탭으로 이동 (혹은 원래 탭 유지)
+        return "redirect:/invoices?status=IN_REVIEW";
+    }
     // 인보이스 삭제 Post
     @PostMapping("/api/invoices/delete")
     public String deleteInvoices(@RequestParam List<Long> ids) {
@@ -239,7 +258,7 @@ public class InvoiceController {
 
         return "redirect:/invoices?status=Recurring";
     }
-    // [추가] Recurring 탬플릿 삭제 처리
+    // Recurring 탬플릿 삭제 처리
     @PostMapping("/api/invoices/recurring/delete")
     public String deleteRecurringInvoices(@RequestParam List<Long> ids) {
         if (ids != null && !ids.isEmpty()) {
@@ -247,17 +266,6 @@ public class InvoiceController {
         }
         return "redirect:/invoices?status=Recurring";
     }
-
-    // [추가] 인보이스 승인 (IN_REVIEW -> UNPAID)
-    @PostMapping("/api/invoices/approve")
-    public String approveInvoices(@RequestParam List<Long> ids) {
-        if (ids != null && !ids.isEmpty()) {
-            invoiceService.approveInvoices(ids);
-        }
-        // 승인 후 'Unpaid' 탭으로 이동 (혹은 원래 탭 유지)
-        return "redirect:/invoices";
-    }
-
     // [추가] 탬플릿 승인 (IN_REVIEW -> ACTIVE)
     @PostMapping("/api/invoices/recurring/approve")
     public String approveRecurringInvoices(@RequestParam List<Long> ids) {
