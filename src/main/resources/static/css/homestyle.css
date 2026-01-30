@@ -333,3 +333,53 @@ h1 { margin-top: 0; margin-bottom: 20px; }
     color: #000;
     font-weight: 400;
 }
+
+/* --- [추가] 상태 뱃지 스타일 --- */
+.status-badge {
+    padding: 6px 12px;      /* 뱃지 내부 여백 */
+    border-radius: 20px;    /* 둥근 모서리 (Pill shape) */
+    font-size: 13px;
+    font-weight: 600;       /* 글자 굵게 */
+    display: inline-block;  /* 크기 적용을 위해 필수 */
+    text-transform: capitalize; /* in_review -> In Review 처럼 첫글자 대문자 자동 변환 */
+    line-height: 1;         /* 텍스트 수직 정렬 보정 */
+    white-space: nowrap;    /* 줄바꿈 방지 */
+}
+
+/* 상태별 색상 매핑 */
+
+/* Draft: 회색 계열 */
+.status-draft {
+    color: #64748B;
+    background-color: #F1F5F9;
+}
+
+/* In Review: 보라색 계열 */
+.status-in_review {
+    color: #A880FF;
+    background-color: #F8F5FF;
+}
+
+/* Approved / Active: 초록색 계열 */
+.status-approved, .status-active {
+    color: #10B981;
+    background-color: #ECFDF5;
+}
+
+/* Unpaid: 주황색 계열 */
+.status-unpaid {
+    color: #F59E0B;
+    background-color: #FFF7ED;
+}
+
+/* Paid / Completed: 파란색 계열 */
+.status-paid, .status-completed {
+    color: #3B82F6;
+    background-color: #EFF6FF;
+}
+
+/* Overdue: 빨간색 계열 */
+.status-overdue {
+    color: #FF3838;
+    background-color: #FFF4F4;
+}

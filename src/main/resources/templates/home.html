@@ -46,15 +46,19 @@
             <div class="summary-metrics">
                 <div class="metric-item">
                     <label>Total</label>
-                    <span th:text="'A$' + ${#numbers.formatDecimal(totalAmount, 1, 2)}">A$00.00</span>
+                    <span th:text="'A$' + ${#numbers.formatDecimal(totalAmount, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
                 </div>
                 <div class="metric-item">
-                    <label>Balance Due</label>
-                    <span th:text="'A$' + ${#numbers.formatDecimal(totalBalance, 1, 2)}">A$00.00</span>
+                    <a th:href="@{/invoices(status='UNPAID', days=${selectedDays})}" style="text-decoration: none; display: block; cursor: pointer; color: inherit;">
+                        <label style="cursor: pointer;">Balance Due</label>
+                        <span th:text="'A$' + ${#numbers.formatDecimal(totalBalance, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
+                    </a>
                 </div>
                 <div class="metric-item">
-                    <label class="text-red">Overdue</label>
-                    <span class="text-red" th:text="'A$' + ${#numbers.formatDecimal(totalOverdue, 1, 2)}">A$00.00</span>
+                    <a th:href="@{/invoices(status='OVERDUE', days=${selectedDays})}" style="text-decoration: none; display: block; cursor: pointer;">
+                        <label class="text-red" style="cursor: pointer;">Overdue</label>
+                        <span class="text-red" th:text="'A$' + ${#numbers.formatDecimal(totalOverdue, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
+                    </a>
                 </div>
             </div>
 
@@ -151,24 +155,27 @@
                     <th>Contact</th>
                     <th>E-Mail</th>
                     <th>Bill To</th>
-                    <th th:if="${currentStatus == 'Overview'}"
-                        style="width: 80px;">Status</th>
+                    <th style="width: 90px;">Status</th>
+
+                    <th class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'"
+                        style="width: 110px;">
+                        <span th:unless="${currentStatus == 'DRAFT' or currentStatus == 'IN_REVIEW' or currentStatus == 'APPROVED'}">Balance due</span>
+                    </th>
+
                     <th class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'"
                         style="width: 110px;">Total</th>
-                    <th th:if="${currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW' and currentStatus != 'APPROVED'}"
-                        class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'"
-                        style="width: 110px;">Balance due</th>
+
                     <th th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'"
                         style="width: 80px; padding-left: 20px;">
                         <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='dueDate', sortDir=${sortField == 'dueDate' and sortDir == 'desc' ? 'asc' : 'desc'})}"
-                            style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
+                           style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
                             Due Date
                             <span th:if="${sortField == 'dueDate'}" style="margin-left: 5px;">
-                            <i th:if="${sortDir == 'desc'}" class="bi bi-caret-down-fill"></i>
-                            <i th:if="${sortDir == 'asc'}" class="bi bi-caret-up-fill"></i>
+                                <i th:if="${sortDir == 'desc'}" class="bi bi-caret-down-fill"></i>
+                                <i th:if="${sortDir == 'asc'}" class="bi bi-caret-up-fill"></i>
                             </span>
                             <span th:unless="${sortField == 'dueDate'}" style="margin-left: 5px; color: #ccc;">
-                            <i class="bi bi-arrow-down-up" style="font-size: 10px;"></i>
+                                <i class="bi bi-arrow-down-up" style="font-size: 10px;"></i>
                             </span>
                         </a>
                     </th>
@@ -187,9 +194,8 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:if="${(currentStatus != 'Recurring' and invoices.isEmpty()) or (currentStatus == 'Recurring' and recurringInvoices.isEmpty())}"
-                th:with="colCount=${currentStatus == 'Recurring' ? 10 : (8 + (currentStatus == 'Overview' ? 1 : 0) + (currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW' and currentStatus != 'APPROVED' ? 1 : 0))}">
-                <td th:colspan="${colCount}" style="text-align: center; padding: 30px;">
+            <tr th:if="${(currentStatus != 'Recurring' and invoices.isEmpty()) or (currentStatus == 'Recurring' and recurringInvoices.isEmpty())}">
+                <td colspan="10" style="text-align: center; padding: 30px;">
                     <span th:if="${currentStatus == 'Recurring'}">No templates found.</span>
                     <span th:unless="${currentStatus == 'Recurring'}">No invoices found.</span>
                 </td>
@@ -211,15 +217,22 @@
                 <td th:text="${inv.customerEmail}">abc@gmail.com</td>
                 <td th:text="${inv.customerBillTo}">Seoul</td>
 
-                <td th:if="${currentStatus == 'Overview'}" th:text="${inv.status}">DRAFT</td>
-
-                <td class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
-                    <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span><span th:text="${inv.total}">13</span>
+                <td>
+                    <span class="status-badge" th:classappend="'status-' + ${#strings.toLowerCase(inv.status)}" th:text="${#strings.replace(#strings.toLowerCase(inv.status), '_', ' ')}">
+                        Draft
+                    </span>
                 </td>
 
-                <td th:if="${currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW' and currentStatus != 'APPROVED'}"
-                    class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
-                    <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span><span th:text="${inv.balanceDue}">0</span>
+                <td class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
+                    <th:block th:unless="${#strings.toString(inv.status) == 'DRAFT' or #strings.toString(inv.status) == 'IN_REVIEW' or #strings.toString(inv.status) == 'APPROVED'}">
+                        <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span>
+                        <span th:text="${#numbers.formatDecimal(inv.balanceDue, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
+                    </th:block>
+                </td>
+
+                <td class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
+                    <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span>
+                    <span th:text="${#numbers.formatDecimal(inv.total, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
                 </td>
 
                 <td th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" th:text="${#temporals.format(inv.dueDate, 'dd/MM/yyyy')}" style="padding-left: 20px;">07/08/2025</td>
@@ -259,7 +272,8 @@
                 <td th:text="${tpl.nextInvoiceDate != null ? #temporals.format(tpl.nextInvoiceDate, 'dd/MM/yyyy') : '-'}">-</td>
 
                 <td class="text-right">
-                    <span class="text-gray">A$</span><span th:text="${tpl.total}">0.00</span>
+                    <span class="text-gray">A$</span>
+                    <span th:text="${#numbers.formatDecimal(tpl.total, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
                 </td>
 
                 <td class="text-center">
