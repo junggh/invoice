@@ -217,7 +217,7 @@
                     <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span><span th:text="${inv.total}">13</span>
                 </td>
 
-                <td th:if="${currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW'}"
+                <td th:if="${currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW' and currentStatus != 'APPROVED'}"
                     class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
                     <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span><span th:text="${inv.balanceDue}">0</span>
                 </td>
