@@ -39,6 +39,7 @@ public class InvoiceController {
                        @RequestParam(defaultValue = "30") int days,
                        @RequestParam(required = false) String sortField,
                        @RequestParam(required = false) String sortDir,
+                       @RequestParam(required = false) String recurringStatus,
                        Model model) {
 
         // 1. 상태 및 필터 설정
@@ -47,6 +48,7 @@ public class InvoiceController {
         model.addAttribute("selectedDays", days);
         model.addAttribute("sortField", sortField);
         model.addAttribute("sortDir", sortDir);
+        model.addAttribute("recurringStatus", recurringStatus);
 
         // 2. 상단 요약 정보 계산 (Total, Balance, Overdue)
         model.addAttribute("totalAmount", invoiceService.calculateGlobalTotal(days));
@@ -55,7 +57,7 @@ public class InvoiceController {
 
         // 3. 탭별 리스트 조회
         if ("Recurring".equals(currentStatus)) {
-            model.addAttribute("recurringInvoices", recurringService.getAllTemplates());
+            model.addAttribute("recurringInvoices", recurringService.getTemplates(recurringStatus));
             model.addAttribute("invoices", Collections.emptyList());
         } else {
             model.addAttribute("invoices", invoiceService.getInvoices(status, sortField, sortDir));

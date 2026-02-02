@@ -204,6 +204,30 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // ============================================================
+    // 9. 필터 드롭다운 토글 기능
+    // ============================================================
+    window.toggleFilterDropdown = function(event) {
+        event.stopPropagation(); // 버튼 클릭 시 window 클릭 이벤트로 전파되지 않게 막음
+        const dropdown = document.getElementById("filterDropdown");
+        if (dropdown) {
+            dropdown.classList.toggle("show");
+        }
+    };
+
+    // 화면의 아무 곳이나 클릭하면 열려있는 드롭다운 닫기
+    window.onclick = function(event) {
+        if (!event.target.closest('.dropbtn') && !event.target.closest('.btn-icon')) {
+            const dropdowns = document.getElementsByClassName("dropdown-content");
+            for (let i = 0; i < dropdowns.length; i++) {
+                const openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    };
+
+    // ============================================================
     // [Helper] 폼 생성 및 전송 (중복 제거)
     // ============================================================
     function submitForm(actionUrl, checkedBoxes) {

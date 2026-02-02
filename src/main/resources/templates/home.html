@@ -81,6 +81,30 @@
                style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
                 <i class="bi bi-arrow-counterclockwise"></i>
             </a>
+
+            <div class="dropdown dropdown-click" th:if="${currentStatus == 'Recurring'}" style="position: relative;">
+                <button type="button" class="btn btn-icon" onclick="toggleFilterDropdown(event)" title="Filter Status"
+                        th:style="${recurringStatus != null and recurringStatus != 'ALL'} ? 'border-color: var(--primary-color); background-color: #f0f9ff;' : ''">
+                    <i class="bi bi-funnel-fill"></i>
+                </button>
+
+                <div id="filterDropdown" class="dropdown-content filter-dropdown-content">
+                    <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='ALL')}"
+                       th:style="${recurringStatus == 'ALL' or recurringStatus == null} ? 'color: var(--primary-color); font-weight:bold;' : ''">All</a>
+
+                    <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='DRAFT')}"
+                       th:style="${recurringStatus == 'DRAFT'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Draft</a>
+
+                    <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='IN_REVIEW')}"
+                       th:style="${recurringStatus == 'IN_REVIEW'} ? 'color: var(--primary-color); font-weight:bold;' : ''">In Review</a>
+
+                    <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='ACTIVE')}"
+                       th:style="${recurringStatus == 'ACTIVE'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Active</a>
+
+                    <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='COMPLETED')}"
+                       th:style="${recurringStatus == 'COMPLETED'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Completed</a>
+                </div>
+            </div>
         </div>
         <div class="action-buttons">
             <button class="btn btn-primary" th:if="${currentStatus == 'PAID'}">New Credit Note</button>
@@ -251,7 +275,10 @@
                 <i th:if="${tpl.autoSend}" class="bi bi-check-lg" style="color: #00A3FF; font-size: 1.2em;"></i>
                 <i th:unless="${tpl.autoSend}" class="bi bi-x-lg" style="color: #ccc; font-size: 1.0em;"></i>
             </td>
-            <td><span th:text="${tpl.status}">ACTIVE</span></td>
+            <td>
+                <span class="status-badge" th:classappend="'status-recurring-' + ${#strings.toLowerCase(tpl.status)}"
+                      th:text="${#strings.replace(#strings.toLowerCase(tpl.status), '_', ' ')}">Active</span>
+            </td>
         </tr>
         </tbody>
     </table>

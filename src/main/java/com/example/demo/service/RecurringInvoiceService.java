@@ -26,9 +26,21 @@ public class RecurringInvoiceService {
     // 1. Read Operations (조회)
     // ===================================================================================
 
-    // [조회] 템플릿 목록 (삭제된 것 제외)
-    public List<RecurringInvoice> getAllTemplates() {
-        return recurringRepository.findByStatusNotOrderByIdAsc(RecurringStatus.DELETED);
+    // [조회] 선택된 Status 템플릿 목록 (삭제된 것 제외)
+    public List<RecurringInvoice> getTemplates(String statusFilter) {
+        // 1. 필터가 없거나 'ALL'이면 기존대로 삭제된 것 빼고 전체 조회
+        if (statusFilter == null || statusFilter.isEmpty() || "ALL".equals(statusFilter)) {
+            return recurringRepository.findByStatusNotOrderByIdAsc(RecurringStatus.DELETED);
+        }
+
+        // 2. 특정 상태 필터링
+        try {
+            RecurringStatus status = RecurringStatus.valueOf(statusFilter);
+            return recurringRepository.findByStatusOrderByIdAsc(status);
+        } catch (IllegalArgumentException e) {
+            // 잘못된 값이 들어오면 전체 조회 (안전장치)
+            return recurringRepository.findByStatusNotOrderByIdAsc(RecurringStatus.DELETED);
+        }
     }
 
     // [조회] 템플릿 상세
