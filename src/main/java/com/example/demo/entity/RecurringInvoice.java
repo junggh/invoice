@@ -13,61 +13,62 @@ import java.util.List;
 @Getter @Setter
 public class RecurringInvoice {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true)
-    private String templateNumber;
+    private String templateNumber; // 템플릿 번호 (예: INVT-00001)
+
+    @Enumerated(EnumType.STRING)
+    private RecurringStatus status; // 상태 (ACTIVE, PAUSED...)
 
     // --- 스케줄링 설정 ---
     @Enumerated(EnumType.STRING)
     private RecurringFrequency frequency; // 주기 (DAILY, WEEKLY...)
 
-    // [추가] "몇" 주/달마다 인지 설정 (기본값 1)
-    // 예: frequency=WEEKLY, frequencyInterval=2 -> "2주마다(격주)"
     @Column(nullable = false)
-    private int frequencyInterval = 1;
+    private int frequencyInterval = 1; // 간격 (예: 2주마다, 3개월마다)
 
+    @Column(nullable = false)
+    private Integer dueDateDays = 7;   // 생성될 인보이스의 납기일 여유 기간
+
+    private boolean autoSend;          // 자동 발송 여부
+
+    // --- 실행 날짜 ---
     private LocalDate startDate;       // 시작일
-    private LocalDate nextInvoiceDate; // 다음 예정일
-    private LocalDate lastIssuedDate;  // [추가됨] 최근 발행일
     private LocalDate endDate;         // 종료일 (옵션)
+    private LocalDate nextInvoiceDate; // 다음 발행 예정일
+    private LocalDate lastIssuedDate;  // 최근 발행일
 
-    @Column(nullable = false)
-    private Integer dueDateDays = 7;
-
-    private boolean autoSend;
-
-    @Enumerated(EnumType.STRING)
-    private RecurringStatus status; // ACTIVE, PAUSED, COMPLETED
+    // --- 기본 정보 ---
+    private String salesPerson;
+    private String reference;
+    private BigDecimal total;
 
     // --- 연관 관계 ---
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_id")
     private Contact contact;
 
-    private String salesPerson;
-    private String reference;
-    private BigDecimal total;
-
     @OneToMany(mappedBy = "recurringInvoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecurringInvoiceItem> items = new ArrayList<>();
 
-    // --- [핵심] 날짜 계산 로직 수정 ---
+    // --- 도메인 로직: 다음 날짜 계산 ---
     public void calculateNextDate() {
         if (this.nextInvoiceDate == null) {
             this.nextInvoiceDate = this.startDate;
             return;
         }
 
-        // 안전장치: 0이나 음수가 들어오면 1로 처리
-        int interval = (this.frequencyInterval < 1) ? 1 : this.frequencyInterval;
+        // 최소 간격 보장 (음수 방지)
+        int interval = Math.max(this.frequencyInterval, 1);
 
-        switch (this.frequency) {
-            case DAILY -> this.nextInvoiceDate = this.nextInvoiceDate.plusDays(interval);
-            case WEEKLY -> this.nextInvoiceDate = this.nextInvoiceDate.plusWeeks(interval);
-            case MONTHLY -> this.nextInvoiceDate = this.nextInvoiceDate.plusMonths(interval);
-            case YEARLY -> this.nextInvoiceDate = this.nextInvoiceDate.plusYears(interval);
-        }
+        this.nextInvoiceDate = switch (this.frequency) {
+            case DAILY   -> this.nextInvoiceDate.plusDays(interval);
+            case WEEKLY  -> this.nextInvoiceDate.plusWeeks(interval);
+            case MONTHLY -> this.nextInvoiceDate.plusMonths(interval);
+            case YEARLY  -> this.nextInvoiceDate.plusYears(interval);
+        };
     }
 }

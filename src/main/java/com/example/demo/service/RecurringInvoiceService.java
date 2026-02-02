@@ -1,7 +1,6 @@
 package com.example.demo.service;
 
 import com.example.demo.entity.*;
-import com.example.demo.repository.InvoiceRepository;
 import com.example.demo.repository.RecurringInvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -11,96 +10,65 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class RecurringInvoiceService {
 
     private final RecurringInvoiceRepository recurringRepository;
     private final InvoiceService invoiceService;
 
+    // ===================================================================================
+    // 1. Read Operations (조회)
+    // ===================================================================================
+
+    // [조회] 템플릿 목록 (삭제된 것 제외)
+    public List<RecurringInvoice> getAllTemplates() {
+        return recurringRepository.findByStatusNotOrderByIdAsc(RecurringStatus.DELETED);
+    }
+
+    // [조회] 템플릿 상세
+    public RecurringInvoice getRecurringInvoice(Long id) {
+        return recurringRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 템플릿이 없습니다. id=" + id));
+    }
+
+    // ===================================================================================
+    // 2. Create & Update Operations (생성 및 수정)
+    // ===================================================================================
+
+    // [생성] 신규 템플릿 저장
+    @Transactional
     public Long createRecurringInvoice(RecurringInvoice template) {
-        // [추가] 다음 예정일이 없으면 시작일로 설정 (IN_REVIEW 상태라도 스케줄은 잡아둠)
         if (template.getNextInvoiceDate() == null) {
             template.setNextInvoiceDate(template.getStartDate());
         }
-
-        // 자식 엔티티에 부모 연결
         if (template.getItems() != null) {
-            for (RecurringInvoiceItem item : template.getItems()) {
-                item.setRecurringInvoice(template);
-            }
+            template.getItems().forEach(item -> item.setRecurringInvoice(template));
         }
-
-        // 3. 저장
         return recurringRepository.save(template).getId();
     }
-    // 탬플릿 업데이트 로직
-    public void updateRecurringInvoice(RecurringInvoice formTemplate) {
-        // 기존 데이터 조회
-        RecurringInvoice existingTemplate = getRecurringInvoice(formTemplate.getId());
 
-        // 기본 정보 복사
-        BeanUtils.copyProperties(formTemplate, existingTemplate, "id", "items", "lastIssuedDate", "nextInvoiceDate", "startDate");
-
-        // 1. NextInvoiceDate가 아예 없는 경우 (안전장치)
-        if (existingTemplate.getNextInvoiceDate() == null) {
-            existingTemplate.setStartDate(formTemplate.getStartDate());
-            existingTemplate.setNextInvoiceDate(formTemplate.getStartDate());
-        }
-        // 2. StartDate가 변경된 경우의 로직 처리
-        else if (!existingTemplate.getStartDate().equals(formTemplate.getStartDate())) {
-            // 일단 시작일은 업데이트
-            existingTemplate.setStartDate(formTemplate.getStartDate());
-
-            // 최근 발행일(lastIssuedDate)이 'NULL'일 때만 다음 예정일을 새 시작일로 동기화
-            // 한 번이라도 발행된 적이 있으면 스케줄이 꼬이지 않도록 nextInvoiceDate를 건드리지 않음
-            if (existingTemplate.getLastIssuedDate() == null) {
-                existingTemplate.setNextInvoiceDate(formTemplate.getStartDate());
-            }
-        }
-
-        // 아이템 리스트 업데이트
-        existingTemplate.getItems().clear(); // 기존 아이템 삭제 (OrphanRemoval 동작)
-
-        if (formTemplate.getItems() != null) {
-            for (RecurringInvoiceItem item : formTemplate.getItems()) {
-                // 빈 아이템 방지
-                if (item.getProduct() == null || item.getProduct().getId() == null) {
-                    continue;
-                }
-
-                // 새 아이템 세팅
-                item.setId(null); // 신규 생성으로 처리
-                item.setRecurringInvoice(existingTemplate); // 부모 연결
-                existingTemplate.getItems().add(item);
-            }
-        }
-    }
-    // [추가] 탬플릿 복사 (Form에 뿌려줄 임시 객체 생성)
+    // [생성] 템플릿 복사 (메모리상 객체 생성)
     public RecurringInvoice copyRecurringInvoice(Long copyId) {
-        RecurringInvoice original = getRecurringInvoice(copyId); // 기존 데이터 조회
+        RecurringInvoice original = getRecurringInvoice(copyId);
         RecurringInvoice copy = new RecurringInvoice();
 
-        // 1. 기본 정보 복사 (ID, 번호, 날짜 등 고유값 제외)
-        // 제외할 필드: id, templateNumber, status, startDate, nextInvoiceDate, lastIssuedDate, items
+        // 1. 기본 정보 복사 (상태값, 날짜 등 제외)
         BeanUtils.copyProperties(original, copy,
                 "id", "templateNumber", "status", "startDate",
                 "nextInvoiceDate", "lastIssuedDate", "items", "endDate");
 
-        // 2. 고유값 재설정
+        // 2. 초기값 재설정
         copy.setTemplateNumber(generateNextTemplateNumber());
-        copy.setStatus(RecurringStatus.DRAFT); // 복사본은 무조건 DRAFT 시작
-        copy.setStartDate(LocalDate.now());    // 시작일은 오늘로 리셋
-        // next, last 날짜는 null 상태 유지 (승인 시 설정됨)
+        copy.setStatus(RecurringStatus.DRAFT);
+        copy.setStartDate(LocalDate.now());
 
-        // 3. 아이템 깊은 복사 (Deep Copy)
-        // 원본의 아이템을 하나씩 꺼내서 새 아이템 객체로 만들어 넣어야 함
+        // 3. 아이템 딥 카피
         List<RecurringInvoiceItem> newItems = new ArrayList<>();
         if (original.getItems() != null) {
             for (RecurringInvoiceItem originalItem : original.getItems()) {
@@ -109,8 +77,7 @@ public class RecurringInvoiceService {
                 newItem.setQuantity(originalItem.getQuantity());
                 newItem.setDiscount(originalItem.getDiscount());
                 newItem.setAmount(originalItem.getAmount());
-
-                newItem.setRecurringInvoice(copy); // 부모 연결
+                newItem.setRecurringInvoice(copy);
                 newItems.add(newItem);
             }
         }
@@ -119,95 +86,155 @@ public class RecurringInvoiceService {
 
         return copy;
     }
-    // [추가] TMP-0000# 번호 생성기
-    public String generateNextTemplateNumber() {
-        return recurringRepository.findTopByTemplateNumberStartingWithOrderByTemplateNumberDesc("INVT-")
-                .map(lastTemplate -> {
-                    String lastNumber = lastTemplate.getTemplateNumber();
-                    // "INVT-00005" -> 5 추출
-                    int num = Integer.parseInt(lastNumber.substring(5));
-                    return String.format("INVT-%05d", num + 1);
-                })
-                .orElse("INVT-00001");
-    }
 
-    // --- [변경 1] 스케줄러 로직 ---
-    @Scheduled(cron = "0 0 0 * * *")
-    @EventListener(ApplicationReadyEvent.class)
-    public void generateRecurringInvoices() {
-        LocalDate today = LocalDate.now();
-        List<RecurringInvoice> templates = recurringRepository
-                .findByStatusAndNextInvoiceDateLessThanEqual(RecurringStatus.ACTIVE, today);
+    // [수정] 템플릿 업데이트
+    @Transactional
+    public void updateRecurringInvoice(RecurringInvoice formTemplate) {
+        RecurringInvoice existingTemplate = getRecurringInvoice(formTemplate.getId());
 
-        for (RecurringInvoice template : templates) {
-            // 공통 로직 메서드 호출
-            processInvoiceGeneration(template);
+        // 기본 정보 복사 (일부 날짜 필드 제외)
+        BeanUtils.copyProperties(formTemplate, existingTemplate,
+                "id", "items", "lastIssuedDate", "nextInvoiceDate", "startDate");
+
+        // 날짜 관련 로직 처리
+        handleStartDateChange(existingTemplate, formTemplate.getStartDate());
+
+        // 아이템 리스트 교체
+        existingTemplate.getItems().clear();
+        if (formTemplate.getItems() != null) {
+            for (RecurringInvoiceItem item : formTemplate.getItems()) {
+                if (item.getProduct() == null || item.getProduct().getId() == null) continue;
+
+                item.setId(null);
+                item.setRecurringInvoice(existingTemplate);
+                existingTemplate.getItems().add(item);
+            }
         }
     }
 
-    // --- [변경 2] 탬플릿 승인 로직 (즉시 발행 추가) ---
+    private void handleStartDateChange(RecurringInvoice existing, LocalDate newStartDate) {
+        if (existing.getNextInvoiceDate() == null) {
+            existing.setStartDate(newStartDate);
+            existing.setNextInvoiceDate(newStartDate);
+        } else if (!existing.getStartDate().equals(newStartDate)) {
+            existing.setStartDate(newStartDate);
+            // 발행 기록이 없을 때만 다음 예정일을 시작일로 동기화
+            if (existing.getLastIssuedDate() == null) {
+                existing.setNextInvoiceDate(newStartDate);
+            }
+        }
+    }
+
+    // ===================================================================================
+    // 3. Status Management (상태 관리)
+    // ===================================================================================
+
+    // [상태변경] 승인 (Review -> Active) 및 즉시 발행 체크
     @Transactional
     public void approveRecurringInvoices(List<Long> ids) {
         List<RecurringInvoice> templates = recurringRepository.findAllById(ids);
         LocalDate today = LocalDate.now();
 
         for (RecurringInvoice template : templates) {
-            // IN_REVIEW -> ACTIVE 변경
             if (template.getStatus() == RecurringStatus.IN_REVIEW) {
                 template.setStatus(RecurringStatus.ACTIVE);
                 if (template.getTemplateNumber() == null) {
                     template.setTemplateNumber(generateNextTemplateNumber());
                 }
-                // [핵심] 상태 변경 즉시 발행 조건 확인
-                // 예정일이 없거나, 예정일이 오늘보다 미래가 아니라면(즉, 오늘이거나 과거라면) 즉시 실행
-                if (template.getNextInvoiceDate() != null &&
-                        !template.getNextInvoiceDate().isAfter(today)) {
 
-                    processInvoiceGeneration(template); // 인보이스 생성 및 날짜 갱신 로직 실행
+                // 승인 시점에 이미 예정일이 도래했다면 즉시 발행
+                if (template.getNextInvoiceDate() != null && !template.getNextInvoiceDate().isAfter(today)) {
+                    processInvoiceGeneration(template);
                 }
             }
         }
     }
 
-    // --- [신규] 공통 처리 로직 추출 (스케줄러와 승인 메서드에서 같이 사용) ---
+    // [상태변경] 종료 (Active -> Completed)
+    @Transactional
+    public void completeRecurringInvoices(List<Long> ids) {
+        List<RecurringInvoice> templates = recurringRepository.findAllById(ids);
+        LocalDate today = LocalDate.now();
+
+        for (RecurringInvoice template : templates) {
+            template.setStatus(RecurringStatus.COMPLETED);
+            template.setEndDate(today);
+            template.setNextInvoiceDate(null); // 자동 생성 중지
+        }
+    }
+
+    // [상태변경] 삭제 (Soft Delete)
+    @Transactional
+    public void deleteRecurringInvoices(List<Long> ids) {
+        List<RecurringInvoice> templates = recurringRepository.findAllById(ids);
+        templates.forEach(t -> t.setStatus(RecurringStatus.DELETED));
+    }
+
+    // ===================================================================================
+    // 4. Scheduler & System Operations (자동화 로직)
+    // ===================================================================================
+
+    // [스케줄러] 정기 인보이스 자동 생성
+    @Scheduled(cron = "0 0 0 * * *")
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void generateRecurringInvoices() {
+        LocalDate today = LocalDate.now();
+        List<RecurringInvoice> templates = recurringRepository
+                .findByStatusAndNextInvoiceDateLessThanEqual(RecurringStatus.ACTIVE, today);
+
+        templates.forEach(this::processInvoiceGeneration);
+    }
+
+    // [유틸] 템플릿 번호 생성 (INVT-0000#)
+    public String generateNextTemplateNumber() {
+        return recurringRepository.findTopByTemplateNumberStartingWithOrderByTemplateNumberDesc("INVT-")
+                .map(last -> {
+                    int num = Integer.parseInt(last.getTemplateNumber().substring(5));
+                    return String.format("INVT-%05d", num + 1);
+                })
+                .orElse("INVT-00001");
+    }
+
+    // ===================================================================================
+    // 5. Internal Helper Methods (내부 로직)
+    // ===================================================================================
+
+    // 공통: 인보이스 생성 및 템플릿 날짜 갱신
     private void processInvoiceGeneration(RecurringInvoice template) {
-        // 1. 인보이스 생성
         createInvoiceFromTemplate(template);
 
-        // 2. 날짜 갱신
         template.setLastIssuedDate(LocalDate.now());
         template.calculateNextDate();
 
-        // 3. 종료일 체크 및 상태 변경
+        // 종료일 체크
         if (template.getEndDate() != null && template.getNextInvoiceDate().isAfter(template.getEndDate())) {
             template.setStatus(RecurringStatus.COMPLETED);
             template.setNextInvoiceDate(null);
         }
     }
 
-    // 내부 로직: 탬플릿 -> 실제 인보이스 변환 (기존 코드 유지)
+    // 내부: 템플릿 -> 실제 인보이스 객체 변환 및 저장 요청
     private void createInvoiceFromTemplate(RecurringInvoice template) {
         Invoice newInvoice = new Invoice();
 
         newInvoice.setInvoiceNumber(invoiceService.generateNextInvoiceNumber());
         newInvoice.setIssuedDate(LocalDate.now());
+        newInvoice.setDueDate(newInvoice.getIssuedDate().plusDays(template.getDueDateDays()));
+        newInvoice.setStatus(template.isAutoSend() ? InvoiceStatus.UNPAID : InvoiceStatus.DRAFT);
 
-        int days = template.getDueDateDays() != null ? template.getDueDateDays() : 7;
-        newInvoice.setDueDate(newInvoice.getIssuedDate().plusDays(days));
-
-        newInvoice.setContact(template.getContact());
-        newInvoice.setSalesPerson(template.getSalesPerson());
-        newInvoice.setReference(template.getReference());
-
+        // 고객 정보 복사
         Contact c = template.getContact();
+        newInvoice.setContact(c);
         newInvoice.setCustomerName(c.getName());
         newInvoice.setCustomerEmail(c.getEmail());
         newInvoice.setCustomerCompanyName(c.getCompanyName());
         newInvoice.setCustomerBillTo(c.getBillTo());
         newInvoice.setCustomerCurrency(c.getCurrency());
+        newInvoice.setSalesPerson(template.getSalesPerson());
+        newInvoice.setReference(template.getReference());
 
-        newInvoice.setStatus(template.isAutoSend() ? InvoiceStatus.UNPAID : InvoiceStatus.DRAFT);
-
+        // 아이템 복사
         List<InvoiceItem> newItems = new ArrayList<>();
         for (RecurringInvoiceItem tItem : template.getItems()) {
             InvoiceItem item = new InvoiceItem();
@@ -218,44 +245,10 @@ public class RecurringInvoiceService {
             item.setInvoice(newInvoice);
             newItems.add(item);
         }
-
         newInvoice.setItems(newItems);
         newInvoice.setTotal(template.getTotal());
         newInvoice.setBalanceDue(template.getTotal());
 
         invoiceService.createInvoice(newInvoice);
-    }
-    // 탬플릿 목록 전체 조회
-    public List<RecurringInvoice> getAllTemplates() {
-        return recurringRepository.findByStatusNotOrderByIdAsc(RecurringStatus.DELETED);
-    }
-    // 탬플릿 단건 조회
-    public RecurringInvoice getRecurringInvoice(Long id) {
-        return recurringRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 탬플릿이 없습니다. id=" + id));
-    }
-    // 삭제
-    public void deleteRecurringInvoices(List<Long> ids) {
-        List<RecurringInvoice> templates = recurringRepository.findAllById(ids);
-        for (RecurringInvoice template : templates) {
-            template.setStatus(RecurringStatus.DELETED);
-        }
-    }
-    // 종료
-    @Transactional
-    public void completeRecurringInvoices(List<Long> ids) {
-        List<RecurringInvoice> templates = recurringRepository.findAllById(ids);
-        LocalDate today = LocalDate.now();
-
-        for (RecurringInvoice template : templates) {
-            // 1. 상태를 COMPLETED(완료/종료)로 변경
-            template.setStatus(RecurringStatus.COMPLETED);
-
-            // 2. 종료일을 오늘 날짜로 기록
-            template.setEndDate(today);
-
-            // 3. 더 이상 자동 생성되지 않도록 다음 예정일을 삭제 (Double Check)
-            template.setNextInvoiceDate(null);
-        }
     }
 }

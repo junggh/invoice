@@ -1,10 +1,13 @@
 :root {
-    --primary-color: #00A3FF; /* 스크린샷의 파란색 버튼 컬러 */
+    --primary-color: #00A3FF;
     --border-color: #E0E0E0;
     --text-color: #333;
     --bg-color: #F5F7FA;
 }
 
+/* ==========================================================================
+   1. Global & Layout
+   ========================================================================== */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background-color: var(--bg-color);
@@ -33,10 +36,13 @@ body {
 
 h1 { margin: 0; font-size: 24px; }
 
-/* 폼 그리드 레이아웃 */
+/* ==========================================================================
+   2. Form Styles
+   ========================================================================== */
+/* 2단 그리드 레이아웃 */
 .form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* 2단 레이아웃 */
+    grid-template-columns: 1fr 1fr;
     gap: 30px;
     margin-bottom: 30px;
 }
@@ -69,7 +75,9 @@ input:focus, select:focus, textarea:focus {
 
 textarea { resize: vertical; height: 80px; }
 
-/* 품목 테이블 스타일 */
+/* ==========================================================================
+   3. Table Styles (Items)
+   ========================================================================== */
 .items-table {
     width: 100%;
     border-collapse: collapse;
@@ -83,11 +91,15 @@ textarea { resize: vertical; height: 80px; }
     text-align: left;
 }
 
-.items-table th { background-color: #f9f9f9; color: #555; font-size: 14px; }
-.text-right { text-align: right !important; }
-.width-sm { width: 100px; }
+.items-table th {
+    background-color: #f9f9f9;
+    color: #555;
+    font-size: 14px;
+}
 
-/* 하단 버튼 영역 */
+/* ==========================================================================
+   4. Buttons & Actions
+   ========================================================================== */
 .actions {
     display: flex;
     justify-content: flex-end;
@@ -121,43 +133,44 @@ textarea { resize: vertical; height: 80px; }
 .btn-primary:hover { filter: brightness(90%); }
 .btn-primary:active { filter: brightness(80%); border-color: rgba(0,0,0,0.1); }
 
-/* --- Select2 높이 및 아이콘 위치 수정 (최종) --- */
-
-/* 1. 컨테이너: 높이 키우고 기준점(relative) 잡기 */
+/* ==========================================================================
+   5. Select2 Overrides (Custom Styling)
+   ========================================================================== */
+/* 컨테이너: 높이 및 기준점 설정 */
 .select2-container .select2-selection--single {
     height: 42px !important;
     display: flex !important;
     align-items: center !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 6px !important;
-    position: relative !important; /* [중요] 자식 요소들의 절대 위치 기준점 */
+    position: relative !important;
 }
 
-/* 2. 텍스트 영역: 공간 확보 */
+/* 텍스트 영역: 여백 확보 */
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    display: block !important;      /* flex 무시하고 블록으로 처리 */
-    width: 100% !important;         /* 전체 너비 사용 */
-    line-height: 42px !important;   /* 수직 정렬 */
+    display: block !important;
+    width: 100% !important;
+    line-height: 42px !important;
     padding-left: 12px !important;
-    padding-right: 50px !important; /* [중요] X버튼과 화살표가 들어갈 공간 확보 */
+    padding-right: 50px !important; /* X버튼과 화살표 공간 */
     color: #333 !important;
 }
 
-/* 3. 삭제(X) 버튼: 절대 위치로 강제 이동 */
+/* 삭제(X) 버튼: 절대 위치 배치 */
 .select2-container--default .select2-selection--single .select2-selection__clear {
-    position: absolute !important;  /* 흐름에서 떼어내어 좌표로 배치 */
-    right: 35px !important;         /* 화살표 왼쪽 공간에 배치 */
+    position: absolute !important;
+    right: 35px !important;
     top: 50% !important;
-    transform: translateY(-50%) !important; /* 정확한 수직 중앙 정렬 */
-    float: none !important;         /* 기존 float 속성 무력화 */
+    transform: translateY(-50%) !important;
+    float: none !important;
     margin: 0 !important;
-    font-size: 18px !important;     /* 크기 조정 */
+    font-size: 18px !important;
     color: #999 !important;
     cursor: pointer !important;
-    z-index: 10 !important;         /* 텍스트보다 위에 오도록 */
+    z-index: 10 !important;
 }
 
-/* 4. 화살표(▼) 버튼: 절대 위치 고정 */
+/* 화살표(▼) 버튼: 절대 위치 배치 */
 .select2-container--default .select2-selection--single .select2-selection__arrow {
     height: 40px !important;
     position: absolute !important;
@@ -166,16 +179,20 @@ textarea { resize: vertical; height: 80px; }
     width: 30px !important;
 }
 
-/* VIEW 화면에서의 info text */
+/* ==========================================================================
+   6. View Details (Read-only Pages)
+   ========================================================================== */
 .details-container {
     display: flex;
     gap: 50px;
     margin-bottom: 40px;
     background-color: #fff;
 }
+
 .details-column {
     flex: 1;
 }
+
 .details-header {
     font-size: 16px;
     font-weight: bold;
@@ -184,19 +201,28 @@ textarea { resize: vertical; height: 80px; }
     padding-bottom: 5px;
     border-bottom: 1px solid #eee;
 }
+
 .info-row {
     display: grid;
-    grid-template-columns: 140px 1fr; /* 라벨 너비 고정, 값은 나머지 */
+    grid-template-columns: 140px 1fr;
     margin-bottom: 12px;
     align-items: baseline;
 }
+
 .info-label {
     font-size: 14px;
     font-weight: 600;
     color: #666;
 }
+
 .info-value {
     font-size: 14px;
     color: #000;
     font-weight: 400;
 }
+
+/* ==========================================================================
+   7. Utilities
+   ========================================================================== */
+.text-right { text-align: right !important; }
+.width-sm { width: 100px; }

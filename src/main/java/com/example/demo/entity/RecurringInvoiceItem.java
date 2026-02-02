@@ -13,10 +13,12 @@ public class RecurringInvoiceItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // --- 아이템 상세 ---
     private Integer quantity;
     private BigDecimal discount;
     private BigDecimal amount;
 
+    // --- 연관 관계 ---
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recurring_invoice_id")
     private RecurringInvoice recurringInvoice;

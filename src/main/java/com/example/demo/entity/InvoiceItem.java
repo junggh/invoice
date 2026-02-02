@@ -13,12 +13,14 @@ public class InvoiceItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // --- 아이템 상세 ---
     private Integer quantity;    // 수량
-    private BigDecimal discount; // 할인
-    private BigDecimal amount;   // 확정 가격
-    // Foreign Key
+    private BigDecimal discount; // 개별 할인
+    private BigDecimal amount;   // 최종 금액 ( (단가 * 수량) - 할인 )
+
+    // --- 연관 관계 ---
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id") // DB에 invoice_id 컬럼이 생김
+    @JoinColumn(name = "invoice_id")
     private Invoice invoice;
 
     @ManyToOne(fetch = FetchType.LAZY)

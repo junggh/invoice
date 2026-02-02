@@ -12,15 +12,13 @@ public class Contact {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name; // 고객 (거래처)
-
-    private String currency; // 통화 단위
-
-    private String billTo; // 청구 주소
-
-    private String companyName; // 회사
-
+    // --- 기본 정보 ---
+    private String name;        // 고객명 (담당자)
+    private String companyName; // 회사명
+    private String email;       // 이메일
     private String phoneNumber; // 연락처
 
-    private String email; // 이메일
+    // --- 청구 정보 ---
+    private String currency;    // 통화 단위 (예: USD, KRW)
+    private String billTo;      // 청구 주소
 }

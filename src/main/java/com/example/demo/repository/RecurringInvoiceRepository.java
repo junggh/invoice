@@ -9,12 +9,21 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RecurringInvoiceRepository extends JpaRepository<RecurringInvoice, Long> {
-    // "상태가 ACTIVE이고, 다음 예정일이 오늘 이전(포함)인 것들"
-    List<RecurringInvoice> findByStatusAndNextInvoiceDateLessThanEqual(RecurringStatus status, LocalDate date);
-    // 가장 최근에 생성된 템플릿 조회 (번호 생성용)
-    Optional<RecurringInvoice> findTopByOrderByIdDesc();
+
+    // ===================================================================================
+    // 1. Basic Lookups (목록 조회 및 유틸)
+    // ===================================================================================
+
+    // 목록 조회 (삭제된 것 제외, ID순 정렬)
+    List<RecurringInvoice> findByStatusNotOrderByIdAsc(RecurringStatus status);
+
+    // 마지막 템플릿 번호 조회 (INVT-0000# 생성용)
     Optional<RecurringInvoice> findTopByTemplateNumberStartingWithOrderByTemplateNumberDesc(String prefix);
 
-    List<RecurringInvoice> findAllByOrderByIdAsc();
-    List<RecurringInvoice> findByStatusNotOrderByIdAsc(RecurringStatus status);
+    // ===================================================================================
+    // 2. Scheduler Support (자동 생성용)
+    // ===================================================================================
+
+    // [자동생성] 상태가 ACTIVE이고, 다음 예정일이 오늘 이전(포함)인 템플릿 조회
+    List<RecurringInvoice> findByStatusAndNextInvoiceDateLessThanEqual(RecurringStatus status, LocalDate date);
 }

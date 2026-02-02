@@ -12,61 +12,7 @@
             <h1>View Invoice</h1>
             <span style="color: #888;" th:text="'# ' + (${invoice.invoiceNumber} ?: '-')"></span>
         </div>
-        <!--<h3 style="margin-top:0;">Invoice Details</h3>
-        <div class="form-grid">
-            <div class="section-left">
-                <div class="form-group">
-                    <label for="customerName">Contact Name</label>
-                    <input type="text" id="customerName" name="customerName"
-                           th:value="${invoice.customerCompanyName != null ? invoice.customerCompanyName + ' (' + invoice.customerName + ')' : invoice.customerName}"
-                           readonly>
-                </div>
 
-
-                <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0px;">
-                    <div class="form-group">
-                        <label for="customerCurrency">Currency</label>
-                        <input type="text" id="customerCurrency" name="customerCurrency" th:value="${invoice.customerCurrency}" readonly>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="customerBillTo">Bill To</label>
-                        <input type="text" id="customerBillTo" name="customerBillTo" th:value="${invoice.customerBillTo}" readonly>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="salesPerson">Salesperson</label>
-                        <input type="text" id="salesPerson" name="salesPerson" th:value="${invoice.salesPerson}" readonly>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section-right">
-                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0px">
-                    <div class="form-group">
-                        <label for="invoiceNumber">Invoice #</label>
-                        <input type="text" id="invoiceNumber" name="invoiceNumber" th:value="${invoice.invoiceNumber} ?: '-'"
-                               readonly style="background-color: #f0f0f0;">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="reference">Reference</label>
-                        <input type="number" id="reference" name="reference" th:value="${invoice.reference}" readonly>
-                    </div>
-                </div>
-
-                <div class="form-grid" style="margin-bottom: 0; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-group">
-                        <label for="issuedDate">Issued Date</label>
-                        <input type="text" id="issuedDate" name="issuedDate" th:value="${#temporals.format(invoice.issuedDate, 'dd / MM / yyyy')}" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="dueDate">Due Date</label>
-                        <input type="text" id="dueDate" name="dueDate" th:value="${#temporals.format(invoice.dueDate, 'dd / MM / yyyy')}" readonly>
-                    </div>
-                </div>
-            </div>
-        </div>-->
         <div class="details-container">
             <div class="details-column">
                 <div class="details-header">Contact Details</div>
@@ -187,7 +133,6 @@
             </div>
 
             <button type="button" onclick="location.href='/invoices'" class="btn btn-secondary">Cancel</button>
-<!--            <button type="button" th:onclick="|location.href='@{/invoices/{id}/edit(id=${invoice.id})}'|" class="btn btn-primary">Edit Invoice</button>-->
         </div>
     </div>
 </body>

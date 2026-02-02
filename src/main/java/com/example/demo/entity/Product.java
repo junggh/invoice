@@ -14,10 +14,9 @@ public class Product {
     private Long id;
 
     private String name;        // 상품명
+    private String description; // 상세 설명
 
-    private String description; // 설명
-
+    // --- 가격 정보 ---
     private BigDecimal price;   // 기본 단가
-
-    private Double taxRate;     // 세율
+    private Double taxRate;     // 세율 (예: 0.1)
 }
