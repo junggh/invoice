@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="/css/authstyle.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/css/intlTelInput.css">
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/intlTelInput.min.js"></script>
+</head>
+<body>
+
+<div class="auth-container">
+    <h2 id="pageTitle">Create your account</h2>
+
+    <div th:if="${errorMessage}" style="color: red; margin-bottom: 15px;" th:text="${errorMessage}"></div>
+
+    <form th:action="@{/signup}" th:object="${signupForm}" method="post" id="signupForm">
+
+        <div class="step-section active" id="step1">
+            <h3 style="margin-top: 0; color: #666; font-size: 18px; margin-bottom: 20px;">Personal Details</h3>
+
+            <div class="form-group">
+                <label>First Name</label>
+                <input type="text" th:field="*{firstName}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Middle Name (optional)</label>
+                <input type="text" th:field="*{middleName}">
+            </div>
+
+            <div class="form-group">
+                <label>Last Name</label>
+                <input type="text" th:field="*{lastName}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email (Personal)</label>
+                <input type="email" th:field="*{personalEmail}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Phone (Personal)</label>
+                <input type="hidden" id="personalCountryCode" th:field="*{personalCountryCode}">
+                <input type="tel" id="personalPhone" th:field="*{personalPhone}"
+                       style="padding-left: 60px !important;">
+            </div>
+
+            <div class="form-group">
+                <label>Your Timezone</label>
+                <select th:field="*{memberTimezone}" required>
+                    <option value="">Select Timezone</option>
+                    <option th:each="tz : ${timezones}"
+                            th:value="${tz}"
+                            th:text="${tz.displayValue}">UTC+09:00</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 20px; font-size: 14px;">
+                <label style="font-weight: normal; display: flex; align-items: flex-start; gap: 8px;">
+                    <input type="checkbox" th:field="*{agreeTerms}" required style="margin-top: 3px;">
+                    <span>I have read and agree to the Terms of Service and Privacy Policy. <span style="color:red">*</span></span>
+                </label>
+                <label style="font-weight: normal; display: flex; align-items: flex-start; gap: 8px; margin-top: 10px;">
+                    <input type="checkbox" th:field="*{marketingConsent}" style="margin-top: 3px;">
+                    <span>Yes, I want to receive product updates via email.</span>
+                </label>
+            </div>
+
+            <div class="step-actions">
+                <button type="button" class="btn btn-primary" style="width: auto;" onclick="nextStep(2)">Next</button>
+            </div>
+        </div>
+
+        <div class="step-section" id="step2">
+            <div style="text-align: center; padding: 40px 0;">
+                <h3>Verification</h3>
+                <p style="color: #666; margin-bottom: 30px;">We sent a verification code to your email.</p>
+
+                <input type="text" placeholder="Enter Code" style="width: 200px; text-align: center; letter-spacing: 5px; font-size: 20px;">
+                <span style="display: block; margin-top: 10px; color: #888;">00:00</span>
+
+                <a href="#" style="display: block; margin-top: 20px; color: var(--primary-color); text-decoration: none;">Resend Code</a>
+                <a href="#" style="display: block; margin-top: 20px; color: var(--primary-color); text-decoration: none;">Choose other way to verification</a>
+            </div>
+
+            <div class="step-actions">
+                <button type="button" class="btn btn-secondary" onclick="prevStep(1)">Back</button>
+                <button type="button" class="btn btn-primary" style="width: auto;" onclick="nextStep(3)">Verify & Next</button>
+            </div>
+        </div>
+
+        <div class="step-section" id="step3">
+            <h3 style="margin-top: 0; color: #666; font-size: 18px; margin-bottom: 20px;">Account Security</h3>
+
+            <div class="form-group">
+                <label>Username (ID)</label>
+                <div style="position: relative;">
+                    <input type="text" th:field="*{username}" id="username" required
+                           placeholder="Enter your ID" style="padding-right: 80px;" oninput="resetUsernameCheck()">
+
+                    <button type="button" onclick="checkUsername()"
+                            style="position: absolute; right: 5px; top: 5px; bottom: 5px;
+                                   background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px;
+                                   cursor: pointer; padding: 0 10px; font-size: 13px;">
+                        Check
+                    </button>
+                </div>
+                <div id="usernameMsg" style="font-size: 13px; margin-top: 5px; display: none;"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" th:field="*{password}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" th:field="*{checkPassword}" required>
+                <div id="pwError" class="error-msg">Passwords do not match.</div>
+            </div>
+
+            <div class="step-actions">
+                <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>
+                <button type="button" class="btn btn-primary" style="width: auto;" onclick="validateAndNextStep3()">Next</button>
+            </div>
+        </div>
+
+        <div class="step-section" id="step4">
+            <h3 style="margin-top: 0;">Set your business</h3>
+
+            <div class="form-group" style="position: relative;">
+                <label>ABN</label>
+                <input type="text" id="abnInput" th:field="*{abn}" placeholder="Search ABN..."
+                       style="padding-right: 40px;" oninput="resetAbnResult()">
+
+                <i class="bi bi-search" onclick="searchAbn()"
+                   style="position: absolute; right: 12px; top: 38px; color: #999; cursor: pointer;"></i>
+
+                <div id="abnResultMsg" style="font-size: 13px; margin-top: 5px; display: none;"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Business Name</label>
+                <input type="text" id="businessName" th:field="*{businessName}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Business Industry</label>
+                <select th:field="*{industry}">
+                    <option value="">Select Industry</option>
+                    <option value="IT">IT & Software</option>
+                    <option value="Retail">Retail</option>
+                    <option value="Construction">Construction</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Country</label>
+                <select th:field="*{country}">
+                    <option value="Australia">Australia</option>
+                    <option value="South Korea">South Korea</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Currency</label>
+                <select th:field="*{currency}">
+                    <option value="AUD">Australian Dollar (AUD)</option>
+                    <option value="KRW">Korean Won (KRW)</option>
+                    <option value="USD">US Dollar (USD)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Business Timezone</label>
+                <select th:field="*{companyTimezone}">
+                    <option value="">Select Timezone</option>
+                    <option th:each="tz : ${timezones}"
+                            th:value="${tz}"
+                            th:text="${tz.displayValue}">UTC+09:00</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Financial Year End</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" th:field="*{financialYearDay}" placeholder="Day (e.g. 30)" min="1" max="31">
+                    <select th:field="*{financialYearMonth}">
+                        <option value="June">June</option>
+                        <option value="December">December</option>
+                        <option value="March">March</option>
+                        <option value="September">September</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Website</label>
+                <input type="text" th:field="*{website}" placeholder="https://">
+            </div>
+
+            <div class="form-group">
+                <label>Company Email</label>
+                <input type="email" th:field="*{companyEmail}" placeholder="support@company.com">
+            </div>
+
+            <div class="form-group">
+                <label>Company Phone</label>
+                <input type="hidden" id="companyCountryCode" th:field="*{companyCountryCode}">
+                <input type="tel" id="companyPhone" th:field="*{companyPhone}"
+                       style="padding-left: 60px !important;">
+            </div>
+
+            <div class="form-group">
+                <label>Fax</label>
+                <input type="tel" th:field="*{fax}">
+            </div>
+
+            <div class="step-actions">
+                <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Back</button>
+                <button type="button" class="btn btn-primary" style="width: auto;" onclick="submitSignup()">Complete Sign Up</button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    // --------------------------------------------------------
+    // 1. intl-tel-input 초기화 (개인 전화번호)
+    // --------------------------------------------------------
+    const personalPhoneInput = document.querySelector("#personalPhone");
+    const personalHiddenInput = document.querySelector("#personalCountryCode");
+
+    const itiPersonal = window.intlTelInput(personalPhoneInput, {
+        initialCountry: "kr",
+        separateDialCode: true,
+        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/utils.js"
+    });
+
+    // 국가 변경 시 Hidden Field 업데이트
+    personalPhoneInput.addEventListener('countrychange', function() {
+        const countryData = itiPersonal.getSelectedCountryData();
+        personalHiddenInput.value = "+" + countryData.dialCode;
+    });
+    // 초기값 세팅
+    personalHiddenInput.value = "+" + itiPersonal.getSelectedCountryData().dialCode;
+
+
+    // --------------------------------------------------------
+    // 2. intl-tel-input 초기화 (회사 전화번호)
+    // --------------------------------------------------------
+    const companyPhoneInput = document.querySelector("#companyPhone");
+    const companyHiddenInput = document.querySelector("#companyCountryCode");
+
+    const itiCompany = window.intlTelInput(companyPhoneInput, {
+        initialCountry: "au", // 회사 기본값은 호주로 예시 설정 (변경 가능)
+        separateDialCode: true,
+        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/utils.js"
+    });
+
+    companyPhoneInput.addEventListener('countrychange', function() {
+        const countryData = itiCompany.getSelectedCountryData();
+        companyHiddenInput.value = "+" + countryData.dialCode;
+    });
+    companyHiddenInput.value = "+" + itiCompany.getSelectedCountryData().dialCode;
+
+
+    // --------------------------------------------------------
+    // 3. Wizard Form 및 유효성 검사 로직
+    // --------------------------------------------------------
+    let currentStep = 1;
+
+    function showStep(step) {
+        document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
+        document.getElementById('step' + step).classList.add('active');
+
+        const title = document.getElementById('pageTitle');
+        if (step === 2) title.innerText = "Verification";
+        else if (step === 4) title.innerText = "Business Details";
+        else title.innerText = "Sign up";
+
+        currentStep = step;
+    }
+
+    function nextStep(targetStep) {
+        const currentSection = document.getElementById('step' + currentStep);
+        // intl-tel-input이 생성한 요소 제외하고 input 검사
+        const inputs = currentSection.querySelectorAll('input[required], select[required]');
+        let valid = true;
+
+        inputs.forEach(input => {
+            // intl-tel-input 관련 hidden 필드 등은 건너뛰거나 체크
+            if (!input.value || (input.type === 'checkbox' && !input.checked)) {
+                valid = false;
+                input.style.borderColor = "red";
+                setTimeout(() => input.style.borderColor = "#E0E0E0", 2000);
+            }
+        });
+
+        if (valid) {
+            showStep(targetStep);
+        } else {
+            alert("Please fill in all required fields.");
+        }
+    }
+
+    function prevStep(targetStep) {
+        showStep(targetStep);
+    }
+
+    // 엔터키 제어
+    document.getElementById('signupForm').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const activeElement = document.activeElement;
+
+            if (activeElement.id === 'abnInput') {
+                searchAbn();
+            } else if (activeElement.id === 'username') {
+                checkUsername();
+            }
+        }
+    });
+
+    // --------------------------------------------------------
+    // 4. 아이디 중복 확인
+    // --------------------------------------------------------
+    let isUsernameChecked = false;
+
+    function checkUsername() {
+        const usernameInput = document.getElementById('username');
+        const usernameMsg = document.getElementById('usernameMsg');
+        const username = usernameInput.value.trim();
+
+        if (username.length < 4) {
+            usernameMsg.style.display = 'block';
+            usernameMsg.style.color = 'red';
+            usernameMsg.innerText = "Username must be at least 4 characters.";
+            return;
+        }
+
+        fetch(`/api/auth/check-username?username=${username}`)
+            .then(response => response.json())
+            .then(isAvailable => {
+                usernameMsg.style.display = 'block';
+                if (isAvailable) {
+                    usernameMsg.style.color = 'green';
+                    usernameMsg.innerText = "Username is available!";
+                    isUsernameChecked = true;
+                    usernameInput.style.borderColor = "green";
+                } else {
+                    usernameMsg.style.color = 'red';
+                    usernameMsg.innerText = "Username is already taken.";
+                    isUsernameChecked = false;
+                    usernameInput.style.borderColor = "red";
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Error checking username.");
+            });
+    }
+
+    function resetUsernameCheck() {
+        isUsernameChecked = false;
+        const usernameInput = document.getElementById('username');
+        const usernameMsg = document.getElementById('usernameMsg');
+        usernameInput.style.borderColor = "#E0E0E0";
+        usernameMsg.style.display = 'none';
+    }
+
+    function validateAndNextStep3() {
+        const usernameInput = document.getElementById('username');
+
+        if (!isUsernameChecked) {
+            alert("Please check username availability first.");
+            usernameInput.focus();
+            return;
+        }
+
+        const pw = document.getElementById('password').value;
+        const checkPw = document.getElementById('checkPassword').value;
+        const errorMsg = document.getElementById('pwError');
+
+        if (pw !== checkPw) {
+            errorMsg.style.display = 'block';
+            return;
+        } else {
+            errorMsg.style.display = 'none';
+        }
+
+        nextStep(4);
+    }
+
+    // --------------------------------------------------------
+    // 5. ABN 검색 및 검증
+    // --------------------------------------------------------
+    let isAbnVerified = false;
+
+    function searchAbn() {
+        const abnInput = document.getElementById('abnInput');
+        const resultMsg = document.getElementById('abnResultMsg');
+        const cleanAbn = abnInput.value.replace(/[^0-9]/g, '');
+
+        abnInput.value = cleanAbn;
+        resultMsg.style.display = 'none';
+
+        if (cleanAbn.length !== 11) {
+            resultMsg.innerText = "Please enter a valid 11-digit ABN.";
+            resultMsg.style.color = 'red';
+            resultMsg.style.display = 'block';
+            isAbnVerified = false;
+            return;
+        }
+
+        document.body.style.cursor = 'wait';
+
+        fetch(`/api/auth/abn-lookup?abn=${cleanAbn}`)
+            .then(response => {
+                if (response.status === 409) {
+                    throw new Error("DUPLICATE_ABN");
+                }
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.EntityName) {
+                    resultMsg.innerText = `ABN Found - ${data.EntityName}`;
+                    resultMsg.style.color = 'green';
+                    resultMsg.style.display = 'block';
+                    isAbnVerified = true;
+                } else {
+                    throw new Error("No entity found");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (error.message === "DUPLICATE_ABN") {
+                    resultMsg.innerText = "ABN already exists.";
+                    resultMsg.style.color = 'red';
+                } else {
+                    resultMsg.innerText = "Invalid ABN or Service Unavailable";
+                    resultMsg.style.color = 'red';
+                }
+                resultMsg.style.display = 'block';
+                isAbnVerified = false;
+            })
+            .finally(() => {
+                document.body.style.cursor = 'default';
+            });
+    }
+
+    function resetAbnResult() {
+        isAbnVerified = false;
+        const resultMsg = document.getElementById('abnResultMsg');
+        resultMsg.style.display = 'none';
+        resultMsg.innerText = '';
+    }
+
+    function submitSignup() {
+        const step4 = document.getElementById('step4');
+        const inputs = step4.querySelectorAll('input[required], select[required]');
+        let valid = true;
+
+        inputs.forEach(input => {
+            if (!input.value || (input.type === 'checkbox' && !input.checked)) {
+                valid = false;
+                input.style.borderColor = "red";
+                setTimeout(() => input.style.borderColor = "#E0E0E0", 2000);
+            }
+        });
+
+        if (!valid) {
+            alert("Please fill in all required fields.");
+            return;
+        }
+
+        if (!isAbnVerified) {
+            alert("Please search and verify your ABN first.");
+            document.getElementById('abnInput').focus();
+            return;
+        }
+
+        document.getElementById('signupForm').submit();
+    }
+</script>
+
+</body>
+</html>
