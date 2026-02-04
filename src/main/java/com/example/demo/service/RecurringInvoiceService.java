@@ -49,6 +49,12 @@ public class RecurringInvoiceService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 템플릿이 없습니다. id=" + id));
     }
 
+    // [조회] 주소로 탬플릿 조회
+    public RecurringInvoice getRecurringInvoiceByUuid(String uuid) {
+        return recurringRepository.findByUuid(uuid)
+                .orElseThrow(() -> new IllegalArgumentException("Invoice not found or access denied"));
+    }
+
     // ===================================================================================
     // 2. Create & Update Operations (생성 및 수정)
     // ===================================================================================
@@ -73,7 +79,7 @@ public class RecurringInvoiceService {
         // 1. 기본 정보 복사 (상태값, 날짜 등 제외)
         BeanUtils.copyProperties(original, copy,
                 "id", "templateNumber", "status", "startDate",
-                "nextInvoiceDate", "lastIssuedDate", "items", "endDate");
+                "nextInvoiceDate", "lastIssuedDate", "items", "endDate", "uuid");
 
         // 2. 초기값 재설정
         copy.setTemplateNumber(generateNextTemplateNumber());
@@ -106,7 +112,7 @@ public class RecurringInvoiceService {
 
         // 기본 정보 복사 (일부 날짜 필드 제외)
         BeanUtils.copyProperties(formTemplate, existingTemplate,
-                "id", "items", "lastIssuedDate", "nextInvoiceDate", "startDate");
+                "id", "items", "lastIssuedDate", "nextInvoiceDate", "startDate", "uuid");
 
         // 날짜 관련 로직 처리
         handleStartDateChange(existingTemplate, formTemplate.getStartDate());

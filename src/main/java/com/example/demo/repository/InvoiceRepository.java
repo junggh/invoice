@@ -27,6 +27,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
     // 마지막 번호 조회 (INV-0000# 생성용)
     Optional<Invoice> findTopByInvoiceNumberStartingWithOrderByInvoiceNumberDesc(String prefix);
 
+    // UUID 주소로 Invoice 조회
+    Optional<Invoice> findByUuid(String uuid);
+
     // ===================================================================================
     // 2. Dashboard Statistics (대시보드 차트/지표용 JPQL)
     // ===================================================================================

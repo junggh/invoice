@@ -17,6 +17,10 @@ public class RecurringInvoice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 외부 노출용 ID (URL에 사용)
+    @Column(nullable = false, unique = true, updatable = false)
+    private String uuid;
+
     @Column(unique = true)
     private String templateNumber; // 템플릿 번호 (예: INVT-00001)
 
@@ -70,5 +74,12 @@ public class RecurringInvoice {
             case MONTHLY -> this.nextInvoiceDate.plusMonths(interval);
             case YEARLY  -> this.nextInvoiceDate.plusYears(interval);
         };
+    }
+
+    @PrePersist
+    public void generateUuid() {
+        if (this.uuid == null) {
+            this.uuid = java.util.UUID.randomUUID().toString();
+        }
     }
 }

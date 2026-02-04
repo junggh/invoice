@@ -32,7 +32,13 @@ public class InvoiceService {
     // [조회] 단건 상세 조회
     public Invoice getInvoice(Long id) {
         return invoiceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 인보이스가 없습니다. id=" + id));
+                .orElseThrow(() -> new IllegalArgumentException("Invoice not found. id=" + id));
+    }
+
+    // [조회] 주소로 단건 조회
+    public Invoice getInvoiceByUuid(String uuid) {
+        return invoiceRepository.findByUuid(uuid)
+                .orElseThrow(() -> new IllegalArgumentException("Invoice not found or access denied"));
     }
 
     // [조회] 목록 조회 (필터 및 정렬)
@@ -139,8 +145,8 @@ public class InvoiceService {
 
         formInvoice.setBalanceDue(formInvoice.getTotal());
 
-        // 기본 정보 복사 (ID, Items 제외)
-        BeanUtils.copyProperties(formInvoice, existingInvoice, "id", "items");
+        // 기본 정보 복사 (ID, UUID, Items 제외)
+        BeanUtils.copyProperties(formInvoice, existingInvoice, "id", "items", "uuid");
 
         // 아이템 리스트 교체 (OrphanRemoval 활용)
         existingInvoice.getItems().clear();

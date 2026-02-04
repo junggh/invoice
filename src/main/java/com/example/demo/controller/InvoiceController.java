@@ -72,9 +72,9 @@ public class InvoiceController {
     // ===================================================================================
 
     // [조회] 인보이스 상세
-    @GetMapping("/invoices/{id}")
-    public String viewInvoice(@PathVariable Long id, Model model) {
-        Invoice invoice = invoiceService.getInvoice(id);
+    @GetMapping("/invoices/{uuid}")
+    public String viewInvoice(@PathVariable String uuid, Model model) {
+        Invoice invoice = invoiceService.getInvoiceByUuid(uuid);
 
         model.addAttribute("invoice", invoice);
         calculateAndAddSummary(model, invoice.getItems(), InvoiceItem::getAmount);
@@ -109,12 +109,12 @@ public class InvoiceController {
     }
 
     // [수정] 화면 이동
-    @GetMapping("/invoices/{id}/edit")
-    public String editInvoice(@PathVariable Long id, Model model) {
-        Invoice invoice = invoiceService.getInvoice(id);
+    @GetMapping("/invoices/{uuid}/edit")
+    public String editInvoice(@PathVariable String uuid, Model model) {
+        Invoice invoice = invoiceService.getInvoiceByUuid(uuid);
 
         if (invoice.getStatus() != InvoiceStatus.DRAFT) {
-            return "redirect:/invoices/" + id;
+            return "redirect:/invoices/" + uuid;
         }
 
         prepareFormModel(model, invoice);
@@ -158,9 +158,9 @@ public class InvoiceController {
     // ===================================================================================
 
     // [조회] 템플릿 상세
-    @GetMapping("/invoices/recurring/{id}")
-    public String viewRecurringInvoice(@PathVariable Long id, Model model) {
-        RecurringInvoice template = recurringService.getRecurringInvoice(id);
+    @GetMapping("/invoices/recurring/{uuid}")
+    public String viewRecurringInvoice(@PathVariable String uuid, Model model) {
+        RecurringInvoice template = recurringService.getRecurringInvoiceByUuid(uuid);
 
         model.addAttribute("invoice", template);
         calculateAndAddSummary(model, template.getItems(), RecurringInvoiceItem::getAmount);
@@ -195,12 +195,12 @@ public class InvoiceController {
     }
 
     // [수정] 화면 이동
-    @GetMapping("/invoices/recurring/{id}/edit")
-    public String editRecurringInvoiceForm(@PathVariable Long id, Model model) {
-        RecurringInvoice template = recurringService.getRecurringInvoice(id);
+    @GetMapping("/invoices/recurring/{uuid}/edit")
+    public String editRecurringInvoiceForm(@PathVariable String uuid, Model model) {
+        RecurringInvoice template = recurringService.getRecurringInvoiceByUuid(uuid);
 
         if (template.getStatus() != RecurringStatus.DRAFT) {
-            return "redirect:/invoices?status=Recurring";
+            return "redirect:/invoices/recurring/" + uuid;
         }
 
         prepareFormModel(model, template);

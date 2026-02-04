@@ -223,7 +223,7 @@
             <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${inv.id}" th:data-status="${inv.status}"></td>
             <td th:text="${#temporals.format(inv.issuedDate, 'dd/MM/yyyy')}">29/07/2025</td>
             <td>
-                <a th:href="${#strings.toString(inv.status) == 'DRAFT'} ? @{/invoices/{id}/edit(id=${inv.id})} : @{/invoices/{id}(id=${inv.id})}"
+                <a th:href="${#strings.toString(inv.status) == 'DRAFT'} ? @{/invoices/{id}/edit(id=${inv.uuid})} : @{/invoices/{id}(id=${inv.uuid})}"
                    class="invoice-link search-invoice-num"
                    th:text="${inv.invoiceNumber}">INV-00001</a>
             </td>
@@ -254,7 +254,7 @@
                 <span th:text="${#strings.capitalize(#strings.toLowerCase(tpl.frequency))}">Weekly</span>
             </td>
             <td>
-                <a th:href="${#strings.toString(tpl.status) == 'DRAFT'} ? @{/invoices/recurring/{id}/edit(id=${tpl.id})} : @{/invoices/recurring/{id}(id=${tpl.id})}"
+                <a th:href="${#strings.toString(tpl.status) == 'DRAFT'} ? @{/invoices/recurring/{id}/edit(id=${tpl.uuid})} : @{/invoices/recurring/{id}(id=${tpl.uuid})}"
                    class="invoice-link search-invoice-num"
                    th:text="${tpl.templateNumber}">INVT-00001</a>
             </td>

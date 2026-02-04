@@ -16,6 +16,10 @@ public class Invoice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 외부 노출용 ID (URL에 사용)
+    @Column(nullable = false, unique = true, updatable = false)
+    private String uuid;
+
     @Column(unique = true)
     private String invoiceNumber; // 인보이스 번호 (예: INV-00001)
 
@@ -47,4 +51,11 @@ public class Invoice {
     private String customerEmail;
     private String customerBillTo;
     private String customerCurrency;
+
+    @PrePersist
+    public void generateUuid() {
+        if (this.uuid == null) {
+            this.uuid = java.util.UUID.randomUUID().toString();
+        }
+    }
 }
