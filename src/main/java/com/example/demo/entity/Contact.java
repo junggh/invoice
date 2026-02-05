@@ -21,4 +21,8 @@ public class Contact {
     // --- 청구 정보 ---
     private String currency;    // 통화 단위 (예: USD, KRW)
     private String billTo;      // 청구 주소
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id", nullable = false)
+    private Company company;
 }

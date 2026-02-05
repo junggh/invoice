@@ -1,5 +1,6 @@
 package com.example.demo.repository;
 
+import com.example.demo.entity.Company;
 import com.example.demo.entity.Invoice;
 import com.example.demo.entity.InvoiceStatus;
 import org.springframework.data.domain.Sort;
@@ -26,6 +27,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
 
     // 마지막 번호 조회 (INV-0000# 생성용)
     Optional<Invoice> findTopByInvoiceNumberStartingWithOrderByInvoiceNumberDesc(String prefix);
+    Optional<Invoice> findTopByCompanyAndInvoiceNumberStartingWithOrderByInvoiceNumberDesc(Company company, String s);
 
     // UUID 주소로 Invoice 조회
     Optional<Invoice> findByUuid(String uuid);

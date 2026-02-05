@@ -3,15 +3,14 @@ package com.example.demo.controller;
 import com.example.demo.entity.*;
 import com.example.demo.repository.ContactRepository;
 import com.example.demo.repository.ProductRepository;
+import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.InvoiceService;
 import com.example.demo.service.RecurringInvoiceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -84,14 +83,14 @@ public class InvoiceController {
 
     // [등록] 화면 이동 (신규 및 복사)
     @GetMapping("/invoices/new")
-    public String createInvoiceForm(@RequestParam(required = false) Long copyId, Model model) {
+    public String createInvoiceForm(@RequestParam(required = false) Long copyId, Model model, @AuthenticationPrincipal CustomUserDetails user) {
         Invoice invoice;
 
         if (copyId != null) {
             invoice = invoiceService.copyInvoice(copyId);
         } else {
             invoice = new Invoice();
-            invoice.setInvoiceNumber(invoiceService.generateNextInvoiceNumber());
+            invoice.setInvoiceNumber(invoiceService.generateNextInvoiceNumber(user.getMember().getCompany()));
             invoice.setStatus(InvoiceStatus.DRAFT);
             invoice.setIssuedDate(LocalDate.now());
             invoice.getItems().add(new InvoiceItem());
@@ -103,8 +102,8 @@ public class InvoiceController {
 
     // [등록] 처리
     @PostMapping("/api/invoices")
-    public String createInvoice(Invoice invoice) {
-        invoiceService.createInvoice(invoice);
+    public String createInvoice(Invoice invoice, @AuthenticationPrincipal CustomUserDetails user) {
+        invoiceService.createInvoice(invoice, user.getMember());
         return "redirect:/invoices";
     }
 
@@ -141,8 +140,8 @@ public class InvoiceController {
 
     // [상태변경] 승인 (IN_REVIEW -> UNPAID)
     @PostMapping("/api/invoices/approve")
-    public String approveInvoices(@RequestParam List<Long> ids) {
-        if (ids != null && !ids.isEmpty()) invoiceService.approveInvoices(ids);
+    public String approveInvoices(@RequestParam List<Long> ids, @AuthenticationPrincipal CustomUserDetails user) {
+        if (ids != null && !ids.isEmpty()) invoiceService.approveInvoices(ids, user.getMember());
         return "redirect:/invoices?status=IN_REVIEW";
     }
 
@@ -170,14 +169,14 @@ public class InvoiceController {
 
     // [등록] 화면 이동 (신규 및 복사)
     @GetMapping("/invoices/new/recurring")
-    public String createRecurringInvoiceForm(@RequestParam(required = false) Long copyId, Model model) {
+    public String createRecurringInvoiceForm(@RequestParam(required = false) Long copyId, Model model, @AuthenticationPrincipal CustomUserDetails user) {
         RecurringInvoice template;
 
         if (copyId != null) {
             template = recurringService.copyRecurringInvoice(copyId);
         } else {
             template = new RecurringInvoice();
-            template.setTemplateNumber(recurringService.generateNextTemplateNumber());
+            template.setTemplateNumber(recurringService.generateNextTemplateNumber(user.getMember().getCompany()));
             template.setStatus(RecurringStatus.DRAFT);
             template.setStartDate(LocalDate.now());
             template.getItems().add(new RecurringInvoiceItem());
@@ -189,8 +188,8 @@ public class InvoiceController {
 
     // [등록] 처리
     @PostMapping("/api/invoices/recurring")
-    public String createRecurringInvoice(RecurringInvoice template) {
-        recurringService.createRecurringInvoice(template);
+    public String createRecurringInvoice(RecurringInvoice template, @AuthenticationPrincipal CustomUserDetails user) {
+        recurringService.createRecurringInvoice(template, user.getMember());
         return "redirect:/invoices?status=Recurring";
     }
 
@@ -220,8 +219,8 @@ public class InvoiceController {
 
     // [상태변경] 승인 (IN_REVIEW -> ACTIVE)
     @PostMapping("/api/invoices/recurring/approve")
-    public String approveRecurringInvoices(@RequestParam List<Long> ids) {
-        if (ids != null && !ids.isEmpty()) recurringService.approveRecurringInvoices(ids);
+    public String approveRecurringInvoices(@RequestParam List<Long> ids, @AuthenticationPrincipal CustomUserDetails user) {
+        if (ids != null && !ids.isEmpty()) recurringService.approveRecurringInvoices(ids, user.getMember());
         return "redirect:/invoices?status=Recurring";
     }
 

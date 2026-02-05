@@ -1,8 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.entity.Invoice;
-import com.example.demo.entity.InvoiceItem;
-import com.example.demo.entity.InvoiceStatus;
+import com.example.demo.entity.*;
 import com.example.demo.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -89,13 +87,25 @@ public class InvoiceService {
 
     // [생성] 신규 인보이스 저장
     @Transactional
-    public Long createInvoice(Invoice invoice) {
+    public void createInvoice(Invoice invoice, Member member) {
+        invoice.setBalanceDue(invoice.getTotal());
+        invoice.setCompany(member.getCompany());
+        // 양방향 연관관계 설정
+        if (invoice.getItems() != null) {
+            invoice.getItems().forEach(item -> item.setInvoice(invoice));
+        }
+        invoiceRepository.save(invoice);
+    }
+
+    // [생성] 탬플릿으로 인한 자동 인보이스 저장
+    @Transactional
+    public void autoCreateInvoice(Invoice invoice) {
         invoice.setBalanceDue(invoice.getTotal());
         // 양방향 연관관계 설정
         if (invoice.getItems() != null) {
             invoice.getItems().forEach(item -> item.setInvoice(invoice));
         }
-        return invoiceRepository.save(invoice).getId();
+        invoiceRepository.save(invoice);
     }
 
     // [생성] 기존 인보이스 복사 (메모리상 객체 생성)
@@ -104,7 +114,7 @@ public class InvoiceService {
         Invoice newInvoice = new Invoice();
 
         // 1. 기본 정보 리셋
-        newInvoice.setInvoiceNumber(generateNextInvoiceNumber());
+        newInvoice.setInvoiceNumber(generateNextInvoiceNumber(source.getCompany()));
         newInvoice.setStatus(InvoiceStatus.DRAFT);
         newInvoice.setIssuedDate(LocalDate.now());
 
@@ -178,7 +188,7 @@ public class InvoiceService {
 
     // [상태변경] 승인 (In Review -> Unpaid/Approved)
     @Transactional
-    public void approveInvoices(List<Long> ids) {
+    public void approveInvoices(List<Long> ids, Member member) {
         List<Invoice> invoices = invoiceRepository.findAllById(ids);
         LocalDate today = LocalDate.now();
 
@@ -187,7 +197,7 @@ public class InvoiceService {
             if (!invoice.getIssuedDate().isAfter(today)) {
                 invoice.setStatus(InvoiceStatus.UNPAID);
                 if (invoice.getInvoiceNumber() == null) {
-                    invoice.setInvoiceNumber(generateNextInvoiceNumber());
+                    invoice.setInvoiceNumber(generateNextInvoiceNumber(member.getCompany()));
                 }
                 // TODO: 이메일 발송 로직 추가
             } else {
@@ -220,9 +230,6 @@ public class InvoiceService {
 
         for (Invoice invoice : scheduledInvoices) {
             invoice.setStatus(InvoiceStatus.UNPAID);
-            if (invoice.getInvoiceNumber() == null) {
-                invoice.setInvoiceNumber(generateNextInvoiceNumber());
-            }
             // TODO: 이메일 발송 로직 추가
             System.out.println("Auto-sending Invoice ID: " + invoice.getId());
         }
@@ -243,8 +250,8 @@ public class InvoiceService {
     }
 
     // [유틸] 다음 인보이스 번호 생성 (INV-0000#)
-    public String generateNextInvoiceNumber() {
-        return invoiceRepository.findTopByInvoiceNumberStartingWithOrderByInvoiceNumberDesc("INV-")
+    public String generateNextInvoiceNumber(Company company) {
+        return invoiceRepository.findTopByCompanyAndInvoiceNumberStartingWithOrderByInvoiceNumberDesc(company, "INV-")
                 .map(lastInvoice -> {
                     int num = Integer.parseInt(lastInvoice.getInvoiceNumber().substring(4));
                     return String.format("INV-%05d", num + 1);

@@ -1,5 +1,6 @@
 package com.example.demo.repository;
 
+import com.example.demo.entity.Company;
 import com.example.demo.entity.Invoice;
 import com.example.demo.entity.RecurringInvoice;
 import com.example.demo.entity.RecurringStatus;
@@ -23,6 +24,7 @@ public interface RecurringInvoiceRepository extends JpaRepository<RecurringInvoi
 
     // 마지막 템플릿 번호 조회 (INVT-0000# 생성용)
     Optional<RecurringInvoice> findTopByTemplateNumberStartingWithOrderByTemplateNumberDesc(String prefix);
+    Optional<RecurringInvoice> findTopByCompanyAndTemplateNumberStartingWithOrderByTemplateNumberDesc(Company company, String s);
 
     // UUID 주소로 탬플릿 조회
     Optional<RecurringInvoice> findByUuid(String uuid);

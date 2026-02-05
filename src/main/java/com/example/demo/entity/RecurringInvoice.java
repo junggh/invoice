@@ -11,6 +11,14 @@ import java.util.List;
 
 @Entity
 @Getter @Setter
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_company_template_number",
+                        columnNames = {"company_id", "template_number"}
+                )
+        }
+)
 public class RecurringInvoice {
 
     @Id
@@ -57,6 +65,10 @@ public class RecurringInvoice {
 
     @OneToMany(mappedBy = "recurringInvoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecurringInvoiceItem> items = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id", nullable = false)
+    private Company company;
 
     // --- 도메인 로직: 다음 날짜 계산 ---
     public void calculateNextDate() {

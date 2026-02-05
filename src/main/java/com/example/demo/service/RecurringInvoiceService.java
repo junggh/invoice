@@ -61,14 +61,15 @@ public class RecurringInvoiceService {
 
     // [생성] 신규 템플릿 저장
     @Transactional
-    public Long createRecurringInvoice(RecurringInvoice template) {
+    public void createRecurringInvoice(RecurringInvoice template, Member member) {
         if (template.getNextInvoiceDate() == null) {
             template.setNextInvoiceDate(template.getStartDate());
         }
+        template.setCompany(member.getCompany());
         if (template.getItems() != null) {
             template.getItems().forEach(item -> item.setRecurringInvoice(template));
         }
-        return recurringRepository.save(template).getId();
+        recurringRepository.save(template);
     }
 
     // [생성] 템플릿 복사 (메모리상 객체 생성)
@@ -82,7 +83,7 @@ public class RecurringInvoiceService {
                 "nextInvoiceDate", "lastIssuedDate", "items", "endDate", "uuid");
 
         // 2. 초기값 재설정
-        copy.setTemplateNumber(generateNextTemplateNumber());
+        copy.setTemplateNumber(generateNextTemplateNumber(original.getCompany()));
         copy.setStatus(RecurringStatus.DRAFT);
         copy.setStartDate(LocalDate.now());
 
@@ -149,7 +150,7 @@ public class RecurringInvoiceService {
 
     // [상태변경] 승인 (Review -> Active) 및 즉시 발행 체크
     @Transactional
-    public void approveRecurringInvoices(List<Long> ids) {
+    public void approveRecurringInvoices(List<Long> ids, Member member) {
         List<RecurringInvoice> templates = recurringRepository.findAllById(ids);
         LocalDate today = LocalDate.now();
 
@@ -157,7 +158,7 @@ public class RecurringInvoiceService {
             if (template.getStatus() == RecurringStatus.IN_REVIEW) {
                 template.setStatus(RecurringStatus.ACTIVE);
                 if (template.getTemplateNumber() == null) {
-                    template.setTemplateNumber(generateNextTemplateNumber());
+                    template.setTemplateNumber(generateNextTemplateNumber(member.getCompany()));
                 }
 
                 // 승인 시점에 이미 예정일이 도래했다면 즉시 발행
@@ -205,8 +206,8 @@ public class RecurringInvoiceService {
     }
 
     // [유틸] 템플릿 번호 생성 (INVT-0000#)
-    public String generateNextTemplateNumber() {
-        return recurringRepository.findTopByTemplateNumberStartingWithOrderByTemplateNumberDesc("INVT-")
+    public String generateNextTemplateNumber(Company company) {
+        return recurringRepository.findTopByCompanyAndTemplateNumberStartingWithOrderByTemplateNumberDesc(company, "INVT-")
                 .map(last -> {
                     int num = Integer.parseInt(last.getTemplateNumber().substring(5));
                     return String.format("INVT-%05d", num + 1);
@@ -236,7 +237,12 @@ public class RecurringInvoiceService {
     private void createInvoiceFromTemplate(RecurringInvoice template) {
         Invoice newInvoice = new Invoice();
 
-        newInvoice.setInvoiceNumber(invoiceService.generateNextInvoiceNumber());
+        // [핵심] 템플릿의 주인이 곧 새 인보이스의 주인
+        Company ownerCompany = template.getCompany();
+        newInvoice.setCompany(ownerCompany);
+
+        // [핵심] 그 회사의 번호 체계에 맞춰 다음 번호 생성
+        newInvoice.setInvoiceNumber(invoiceService.generateNextInvoiceNumber(ownerCompany));
         newInvoice.setIssuedDate(LocalDate.now());
         newInvoice.setDueDate(newInvoice.getIssuedDate().plusDays(template.getDueDateDays()));
         newInvoice.setStatus(template.isAutoSend() ? InvoiceStatus.UNPAID : InvoiceStatus.DRAFT);
@@ -267,6 +273,6 @@ public class RecurringInvoiceService {
         newInvoice.setTotal(template.getTotal());
         newInvoice.setBalanceDue(template.getTotal());
 
-        invoiceService.createInvoice(newInvoice);
+        invoiceService.autoCreateInvoice(newInvoice);
     }
 }

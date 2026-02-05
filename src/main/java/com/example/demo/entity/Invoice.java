@@ -10,6 +10,15 @@ import java.util.List;
 
 @Entity
 @Getter @Setter
+// 회사ID + 인보이스번호 조합이 유니크해야 함 (회사별로 번호 따로 채번)
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_company_invoice_number",
+                        columnNames = {"company_id", "invoice_number"}
+                )
+        }
+)
 public class Invoice {
 
     @Id
@@ -20,7 +29,7 @@ public class Invoice {
     @Column(nullable = false, unique = true, updatable = false)
     private String uuid;
 
-    @Column(unique = true)
+    @Column(nullable = false)
     private String invoiceNumber; // 인보이스 번호 (예: INV-00001)
 
     private String reference;     // 참조 번호
@@ -44,6 +53,10 @@ public class Invoice {
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InvoiceItem> items = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id", nullable = false)
+    private Company company;
 
     // --- [스냅샷] 발행 시점의 고객 정보 저장 (고객 정보가 변경되어도 인보이스는 유지) ---
     private String customerName;
