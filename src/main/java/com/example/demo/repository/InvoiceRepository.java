@@ -19,14 +19,13 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
     // 1. Basic Lookups (화면 목록 조회 및 번호 생성)
     // ===================================================================================
 
-    // 상태별 조회 (정렬 포함)
-    List<Invoice> findByStatus(InvoiceStatus status, Sort sort);
+    // 회사별 상태별 조회 (정렬 포함)
+    List<Invoice> findByCompanyAndStatus(Company company, InvoiceStatus status, Sort sort);
 
-    // 특정 상태 제외 조회 (주로 DELETED 제외 용도)
-    List<Invoice> findByStatusNot(InvoiceStatus status, Sort sort);
+    // 회사별 특정 상태 제외 조회 (주로 DELETED 제외 용도)
+    List<Invoice> findByCompanyAndStatusNot(Company company, InvoiceStatus status, Sort sort);
 
     // 마지막 번호 조회 (INV-0000# 생성용)
-    Optional<Invoice> findTopByInvoiceNumberStartingWithOrderByInvoiceNumberDesc(String prefix);
     Optional<Invoice> findTopByCompanyAndInvoiceNumberStartingWithOrderByInvoiceNumberDesc(Company company, String s);
 
     // UUID 주소로 Invoice 조회
@@ -38,23 +37,29 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
 
     // 기간 내 유효한 상태(UNPAID, PAID, OVERDUE)의 Total 합계
     @Query("SELECT COALESCE(SUM(i.total), 0) FROM Invoice i " +
-            "WHERE i.issuedDate >= :startDate " +
+            "WHERE i.company = :company " + // 회사 조건 추가
+            "AND i.issuedDate >= :startDate " +
             "AND i.status IN :statuses")
-    BigDecimal sumTotalByDateAndStatus(@Param("startDate") LocalDate startDate,
-                                       @Param("statuses") List<InvoiceStatus> statuses);
+    BigDecimal sumTotalByCompanyAndDate(@Param("company") Company company,
+                                        @Param("startDate") LocalDate startDate,
+                                        @Param("statuses") List<InvoiceStatus> statuses);
 
     // 기간 내 유효한 상태(UNPAID, PAID, OVERDUE)의 Balance Due 합계
     @Query("SELECT COALESCE(SUM(i.balanceDue), 0) FROM Invoice i " +
-            "WHERE i.issuedDate >= :startDate " +
+            "WHERE i.company = :company " + // 회사 조건 추가
+            "AND i.issuedDate >= :startDate " +
             "AND i.status IN :statuses")
-    BigDecimal sumBalanceByDateAndStatus(@Param("startDate") LocalDate startDate,
-                                         @Param("statuses") List<InvoiceStatus> statuses);
+    BigDecimal sumBalanceByCompanyAndDate(@Param("company") Company company,
+                                          @Param("startDate") LocalDate startDate,
+                                          @Param("statuses") List<InvoiceStatus> statuses);
 
     // 기간 내 OVERDUE 상태인 것들의 Balance Due 합계 (순수 연체금)
     @Query("SELECT COALESCE(SUM(i.balanceDue), 0) FROM Invoice i " +
-            "WHERE i.issuedDate >= :startDate " +
+            "WHERE i.company = :company " + // 회사 조건 추가
+            "AND i.issuedDate >= :startDate " +
             "AND i.status = 'OVERDUE'")
-    BigDecimal sumOverdueBalanceByDate(@Param("startDate") LocalDate startDate);
+    BigDecimal sumOverdueByCompanyAndDate(@Param("company") Company company,
+                                          @Param("startDate") LocalDate startDate);
 
     // ===================================================================================
     // 3. Scheduler & System (자동화 작업용)

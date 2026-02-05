@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.initProductSelect2(newSelect);
         }
 
-        itemIndex++;
+        window.reindexRows();
     };
 
     // 행 삭제
@@ -105,7 +105,26 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("=== removeRow 실행 ===");
         const row = button.closest('tr');
         row.remove();
+        window.reindexRows();
         window.calculateTotal(); // 삭제 후 재계산
+    };
+
+    // [신규] 인덱스 재정렬 함수 (핵심 로직)
+    window.reindexRows = function() {
+        const rows = document.querySelectorAll('#invoiceItems .item-row');
+        rows.forEach((row, index) => {
+            // 해당 행 내부의 모든 input, select 태그 찾기
+            const inputs = row.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.name) {
+                    // items[3].price -> items[0].price 형태로 인덱스 교체
+                    input.name = input.name.replace(/items\[\d+\]/, `items[${index}]`);
+                }
+            });
+        });
+        // 글로벌 인덱스 변수도 현재 행 개수에 맞춰 업데이트
+        // (다음 addItem 클릭 시 번호가 꼬이지 않도록)
+        itemIndex = rows.length;
     };
 
     // ============================================================

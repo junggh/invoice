@@ -16,14 +16,13 @@ public interface RecurringInvoiceRepository extends JpaRepository<RecurringInvoi
     // 1. Basic Lookups (목록 조회 및 유틸)
     // ===================================================================================
 
-    // 목록 조회 (삭제된 것 제외, ID순 정렬)
-    List<RecurringInvoice> findByStatusNotOrderByIdAsc(RecurringStatus status);
+    // 회사별 목록 조회 (삭제된 것 제외, ID순 정렬)
+    List<RecurringInvoice> findByCompanyAndStatusNotOrderByIdAsc(Company company, RecurringStatus status);
 
-    // 상태별 필터링 조회 (정확히 일치하는 상태만)
-    List<RecurringInvoice> findByStatusOrderByIdAsc(RecurringStatus status);
+    // 회사별 상태별 필터링 조회 (정확히 일치하는 상태만)
+    List<RecurringInvoice> findByCompanyAndStatusOrderByIdAsc(Company company, RecurringStatus status);
 
     // 마지막 템플릿 번호 조회 (INVT-0000# 생성용)
-    Optional<RecurringInvoice> findTopByTemplateNumberStartingWithOrderByTemplateNumberDesc(String prefix);
     Optional<RecurringInvoice> findTopByCompanyAndTemplateNumberStartingWithOrderByTemplateNumberDesc(Company company, String s);
 
     // UUID 주소로 탬플릿 조회

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -34,13 +35,19 @@ public class InvoiceService {
     }
 
     // [조회] 주소로 단건 조회
-    public Invoice getInvoiceByUuid(String uuid) {
-        return invoiceRepository.findByUuid(uuid)
-                .orElseThrow(() -> new IllegalArgumentException("Invoice not found or access denied"));
+    public Invoice getInvoiceByUuid(String uuid, Company company) {
+        Invoice invoice = invoiceRepository.findByUuid(uuid)
+                .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
+
+        // 내 회사의 인보이스가 아니면 에러 발생
+        if (!invoice.getCompany().getId().equals(company.getId())) {
+            throw new AccessDeniedException("접근 권한이 없습니다.");
+        }
+        return invoice;
     }
 
     // [조회] 목록 조회 (필터 및 정렬)
-    public List<Invoice> getInvoices(String statusCondition, String sortField, String sortDir) {
+    public List<Invoice> getInvoices(String statusCondition, String sortField, String sortDir, Company company) {
         // 1. 정렬 설정 (기본값: ID 오름차순)
         Sort sort = Sort.by(Sort.Direction.ASC, "id");
         if (sortField != null && !sortField.isEmpty()) {
@@ -50,35 +57,40 @@ public class InvoiceService {
 
         // 2. 조회 (Overview는 삭제된 것 제외 전체, 그 외는 상태별 조회)
         if (statusCondition == null || statusCondition.isEmpty() || "Overview".equals(statusCondition)) {
-            return invoiceRepository.findByStatusNot(InvoiceStatus.DELETED, sort);
+            return invoiceRepository.findByCompanyAndStatusNot(company, InvoiceStatus.DELETED, sort);
         }
 
         try {
-            return invoiceRepository.findByStatus(InvoiceStatus.valueOf(statusCondition), sort);
+            return invoiceRepository.findByCompanyAndStatus(company, InvoiceStatus.valueOf(statusCondition), sort);
         } catch (IllegalArgumentException e) {
-            return invoiceRepository.findByStatusNot(InvoiceStatus.DELETED, sort);
+            return invoiceRepository.findByCompanyAndStatusNot(company, InvoiceStatus.DELETED, sort);
         }
     }
 
     // [대시보드] 기간별 총 매출 (Total Amount)
-    public BigDecimal calculateGlobalTotal(int days) {
-        return invoiceRepository.sumTotalByDateAndStatus(
+    public BigDecimal calculateGlobalTotal(int days, Company company) {
+        return invoiceRepository.sumTotalByCompanyAndDate(
+                company,
                 LocalDate.now().minusDays(days),
                 List.of(InvoiceStatus.UNPAID, InvoiceStatus.PAID, InvoiceStatus.OVERDUE)
         );
     }
 
     // [대시보드] 기간별 미수금 (Balance Due)
-    public BigDecimal calculateGlobalBalance(int days) {
-        return invoiceRepository.sumBalanceByDateAndStatus(
+    public BigDecimal calculateGlobalBalance(int days, Company company) {
+        return invoiceRepository.sumBalanceByCompanyAndDate(
+                company,
                 LocalDate.now().minusDays(days),
                 List.of(InvoiceStatus.UNPAID, InvoiceStatus.PAID, InvoiceStatus.OVERDUE)
         );
     }
 
     // [대시보드] 기간별 연체금 (Overdue)
-    public BigDecimal calculateGlobalOverdue(int days) {
-        return invoiceRepository.sumOverdueBalanceByDate(LocalDate.now().minusDays(days));
+    public BigDecimal calculateGlobalOverdue(int days, Company company) {
+        return invoiceRepository.sumOverdueByCompanyAndDate(
+                company,
+                LocalDate.now().minusDays(days)
+        );
     }
 
     // ===================================================================================

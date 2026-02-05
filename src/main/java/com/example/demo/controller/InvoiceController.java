@@ -39,7 +39,11 @@ public class InvoiceController {
                        @RequestParam(required = false) String sortField,
                        @RequestParam(required = false) String sortDir,
                        @RequestParam(required = false) String recurringStatus,
-                       Model model) {
+                       Model model,
+                       @AuthenticationPrincipal CustomUserDetails user) {
+
+        // 0. 로그인한 유저의 회사 정보 획득
+        Company company = user.getMember().getCompany();
 
         // 1. 상태 및 필터 설정
         String currentStatus = (status == null || status.isEmpty()) ? "Overview" : status;
@@ -50,16 +54,16 @@ public class InvoiceController {
         model.addAttribute("recurringStatus", recurringStatus);
 
         // 2. 상단 요약 정보 계산 (Total, Balance, Overdue)
-        model.addAttribute("totalAmount", invoiceService.calculateGlobalTotal(days));
-        model.addAttribute("totalBalance", invoiceService.calculateGlobalBalance(days));
-        model.addAttribute("totalOverdue", invoiceService.calculateGlobalOverdue(days));
+        model.addAttribute("totalAmount", invoiceService.calculateGlobalTotal(days, company));
+        model.addAttribute("totalBalance", invoiceService.calculateGlobalBalance(days, company));
+        model.addAttribute("totalOverdue", invoiceService.calculateGlobalOverdue(days, company));
 
         // 3. 탭별 리스트 조회
         if ("Recurring".equals(currentStatus)) {
-            model.addAttribute("recurringInvoices", recurringService.getTemplates(recurringStatus));
+            model.addAttribute("recurringInvoices", recurringService.getTemplates(recurringStatus, company));
             model.addAttribute("invoices", Collections.emptyList());
         } else {
-            model.addAttribute("invoices", invoiceService.getInvoices(status, sortField, sortDir));
+            model.addAttribute("invoices", invoiceService.getInvoices(status, sortField, sortDir, company));
             model.addAttribute("recurringInvoices", Collections.emptyList());
         }
 
@@ -72,8 +76,8 @@ public class InvoiceController {
 
     // [조회] 인보이스 상세
     @GetMapping("/invoices/{uuid}")
-    public String viewInvoice(@PathVariable String uuid, Model model) {
-        Invoice invoice = invoiceService.getInvoiceByUuid(uuid);
+    public String viewInvoice(@PathVariable String uuid, Model model, @AuthenticationPrincipal CustomUserDetails user) {
+        Invoice invoice = invoiceService.getInvoiceByUuid(uuid, user.getMember().getCompany());
 
         model.addAttribute("invoice", invoice);
         calculateAndAddSummary(model, invoice.getItems(), InvoiceItem::getAmount);
@@ -85,6 +89,7 @@ public class InvoiceController {
     @GetMapping("/invoices/new")
     public String createInvoiceForm(@RequestParam(required = false) Long copyId, Model model, @AuthenticationPrincipal CustomUserDetails user) {
         Invoice invoice;
+        Company company = user.getMember().getCompany();
 
         if (copyId != null) {
             invoice = invoiceService.copyInvoice(copyId);
@@ -96,7 +101,7 @@ public class InvoiceController {
             invoice.getItems().add(new InvoiceItem());
         }
 
-        prepareFormModel(model, invoice);
+        prepareFormModel(model, invoice, company);
         return "new-invoice";
     }
 
@@ -109,14 +114,15 @@ public class InvoiceController {
 
     // [수정] 화면 이동
     @GetMapping("/invoices/{uuid}/edit")
-    public String editInvoice(@PathVariable String uuid, Model model) {
-        Invoice invoice = invoiceService.getInvoiceByUuid(uuid);
+    public String editInvoice(@PathVariable String uuid, Model model, @AuthenticationPrincipal CustomUserDetails user) {
+        Company company = user.getMember().getCompany();
+        Invoice invoice = invoiceService.getInvoiceByUuid(uuid, company);
 
         if (invoice.getStatus() != InvoiceStatus.DRAFT) {
             return "redirect:/invoices/" + uuid;
         }
 
-        prepareFormModel(model, invoice);
+        prepareFormModel(model, invoice, company);
         return "edit-invoice";
     }
 
@@ -158,8 +164,8 @@ public class InvoiceController {
 
     // [조회] 템플릿 상세
     @GetMapping("/invoices/recurring/{uuid}")
-    public String viewRecurringInvoice(@PathVariable String uuid, Model model) {
-        RecurringInvoice template = recurringService.getRecurringInvoiceByUuid(uuid);
+    public String viewRecurringInvoice(@PathVariable String uuid, Model model, @AuthenticationPrincipal CustomUserDetails user) {
+        RecurringInvoice template = recurringService.getRecurringInvoiceByUuid(uuid, user.getMember().getCompany());
 
         model.addAttribute("invoice", template);
         calculateAndAddSummary(model, template.getItems(), RecurringInvoiceItem::getAmount);
@@ -171,6 +177,7 @@ public class InvoiceController {
     @GetMapping("/invoices/new/recurring")
     public String createRecurringInvoiceForm(@RequestParam(required = false) Long copyId, Model model, @AuthenticationPrincipal CustomUserDetails user) {
         RecurringInvoice template;
+        Company company = user.getMember().getCompany();
 
         if (copyId != null) {
             template = recurringService.copyRecurringInvoice(copyId);
@@ -182,7 +189,7 @@ public class InvoiceController {
             template.getItems().add(new RecurringInvoiceItem());
         }
 
-        prepareFormModel(model, template);
+        prepareFormModel(model, template, company);
         return "new-template";
     }
 
@@ -195,14 +202,15 @@ public class InvoiceController {
 
     // [수정] 화면 이동
     @GetMapping("/invoices/recurring/{uuid}/edit")
-    public String editRecurringInvoiceForm(@PathVariable String uuid, Model model) {
-        RecurringInvoice template = recurringService.getRecurringInvoiceByUuid(uuid);
+    public String editRecurringInvoiceForm(@PathVariable String uuid, Model model, @AuthenticationPrincipal CustomUserDetails user) {
+        Company company = user.getMember().getCompany();
+        RecurringInvoice template = recurringService.getRecurringInvoiceByUuid(uuid, company);
 
         if (template.getStatus() != RecurringStatus.DRAFT) {
             return "redirect:/invoices/recurring/" + uuid;
         }
 
-        prepareFormModel(model, template);
+        prepareFormModel(model, template, company);
         return "edit-template";
     }
 
@@ -245,10 +253,10 @@ public class InvoiceController {
     /**
      * 폼 화면(작성/수정)에 필요한 공통 Model 속성 설정
      */
-    private void prepareFormModel(Model model, Object invoiceEntity) {
+    private void prepareFormModel(Model model, Object invoiceEntity, Company company) {
         model.addAttribute("invoice", invoiceEntity);
-        model.addAttribute("products", productRepository.findAll());
-        model.addAttribute("contacts", contactRepository.findAll());
+        model.addAttribute("products", productRepository.findByCompany(company));
+        model.addAttribute("contacts", contactRepository.findByCompany(company));
     }
 
     /**

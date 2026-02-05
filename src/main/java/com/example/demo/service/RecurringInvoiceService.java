@@ -5,6 +5,7 @@ import com.example.demo.repository.RecurringInvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -27,19 +28,19 @@ public class RecurringInvoiceService {
     // ===================================================================================
 
     // [조회] 선택된 Status 템플릿 목록 (삭제된 것 제외)
-    public List<RecurringInvoice> getTemplates(String statusFilter) {
+    public List<RecurringInvoice> getTemplates(String statusFilter, Company company) {
         // 1. 필터가 없거나 'ALL'이면 기존대로 삭제된 것 빼고 전체 조회
         if (statusFilter == null || statusFilter.isEmpty() || "ALL".equals(statusFilter)) {
-            return recurringRepository.findByStatusNotOrderByIdAsc(RecurringStatus.DELETED);
+            return recurringRepository.findByCompanyAndStatusNotOrderByIdAsc(company, RecurringStatus.DELETED);
         }
 
         // 2. 특정 상태 필터링
         try {
             RecurringStatus status = RecurringStatus.valueOf(statusFilter);
-            return recurringRepository.findByStatusOrderByIdAsc(status);
+            return recurringRepository.findByCompanyAndStatusOrderByIdAsc(company, status);
         } catch (IllegalArgumentException e) {
             // 잘못된 값이 들어오면 전체 조회 (안전장치)
-            return recurringRepository.findByStatusNotOrderByIdAsc(RecurringStatus.DELETED);
+            return recurringRepository.findByCompanyAndStatusNotOrderByIdAsc(company, RecurringStatus.DELETED);
         }
     }
 
@@ -50,9 +51,15 @@ public class RecurringInvoiceService {
     }
 
     // [조회] 주소로 탬플릿 조회
-    public RecurringInvoice getRecurringInvoiceByUuid(String uuid) {
-        return recurringRepository.findByUuid(uuid)
+    public RecurringInvoice getRecurringInvoiceByUuid(String uuid, Company company) {
+        RecurringInvoice invoice = recurringRepository.findByUuid(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("Invoice not found or access denied"));
+
+        // 내 회사의 인보이스가 아니면 에러 발생
+        if (!invoice.getCompany().getId().equals(company.getId())) {
+            throw new AccessDeniedException("접근 권한이 없습니다.");
+        }
+        return invoice;
     }
 
     // ===================================================================================
