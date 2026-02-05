@@ -196,10 +196,11 @@
                 <div style="display: flex; gap: 10px;">
                     <input type="number" th:field="*{financialYearDay}" placeholder="Day (e.g. 30)" min="1" max="31">
                     <select th:field="*{financialYearMonth}">
-                        <option value="June">June</option>
-                        <option value="December">December</option>
-                        <option value="March">March</option>
-                        <option value="September">September</option>
+                        <option th:each="month : ${months}"
+                                th:value="${month}"
+                                th:text="${#strings.capitalize(#strings.toLowerCase(month))}">
+                            January
+                        </option>
                     </select>
                 </div>
             </div>

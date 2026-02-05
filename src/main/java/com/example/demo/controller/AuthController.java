@@ -13,6 +13,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Month;
+
 @Controller
 @RequiredArgsConstructor
 public class AuthController {
@@ -26,6 +28,7 @@ public class AuthController {
     public String signupForm(Model model) {
         model.addAttribute("signupForm", new SignupForm());
         model.addAttribute("timezones", Timezone.values());
+        model.addAttribute("months", Month.values());
         return "signup"; // signup.html (Wizard 형식의 뷰)
     }
 
@@ -48,6 +51,7 @@ public class AuthController {
             model.addAttribute("errorMessage", e.getMessage());
             model.addAttribute("signupForm", signupForm); // 입력했던 정보 유지
             model.addAttribute("timezones", Timezone.values());
+            model.addAttribute("months", Month.values());
             return "signup";
         }
     }
