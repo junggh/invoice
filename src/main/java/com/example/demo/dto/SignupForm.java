@@ -9,7 +9,15 @@ public class SignupForm {
 
     // === Step 1: 기본 정보 & 개인 정보 ===
     private String businessName;   // 회사명
-    private String abn;            // ABN (수동 입력)
+    private String abn;            // ABN
+
+    // ABN Lookup에서 받아올 Hidden 데이터
+    private String abnStatus;
+    private String addressPostcode;
+    private String addressState;
+    private String entityName;     // businessName과 별도로 원본 EntityName 저장
+    private String entityTypeName;
+    private String gst;
 
     private String firstName;
     private String middleName;     // Optional

@@ -19,6 +19,14 @@ public class Company {
     @Column(unique = true) // ABN은 고유해야 함
     private String abn;
 
+    // [추가] ABN API 연동 정보
+    private String entityName;      // API에서 받은 원본 Entity Name
+    private String entityTypeName;  // 예: Australian Private Company
+    private String abnStatus;       // 예: Active
+    private String addressPostcode; // 예: 2025
+    private String addressState;    // 예: NSW
+    private String gst;             // 예: 2000-07-01 (Null일 수 있음)
+
     // --- Set your business 화면의 상세 정보 ---
     private String industry;           // Business industry
     private String country;            // Country

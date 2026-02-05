@@ -142,6 +142,13 @@
                 <div id="abnResultMsg" style="font-size: 13px; margin-top: 5px; display: none;"></div>
             </div>
 
+            <input type="hidden" id="hiddenEntityName" th:field="*{entityName}">
+            <input type="hidden" id="hiddenEntityTypeName" th:field="*{entityTypeName}">
+            <input type="hidden" id="hiddenAbnStatus" th:field="*{abnStatus}">
+            <input type="hidden" id="hiddenAddressPostcode" th:field="*{addressPostcode}">
+            <input type="hidden" id="hiddenAddressState" th:field="*{addressState}">
+            <input type="hidden" id="hiddenGst" th:field="*{gst}">
+
             <div class="form-group">
                 <label>Business Name</label>
                 <input type="text" id="businessName" th:field="*{businessName}" required>
@@ -404,6 +411,14 @@
     function searchAbn() {
         const abnInput = document.getElementById('abnInput');
         const resultMsg = document.getElementById('abnResultMsg');
+        // Hidden Inputs 가져오기
+        const hEntityName = document.getElementById('hiddenEntityName');
+        const hEntityTypeName = document.getElementById('hiddenEntityTypeName');
+        const hAbnStatus = document.getElementById('hiddenAbnStatus');
+        const hPostcode = document.getElementById('hiddenAddressPostcode');
+        const hState = document.getElementById('hiddenAddressState');
+        const hGst = document.getElementById('hiddenGst');
+
         const cleanAbn = abnInput.value.replace(/[^0-9]/g, '');
 
         abnInput.value = cleanAbn;
@@ -435,6 +450,14 @@
                     resultMsg.style.color = 'green';
                     resultMsg.style.display = 'block';
                     isAbnVerified = true;
+
+                    // API 응답 데이터를 Hidden Input에 바인딩
+                    hEntityName.value = data.EntityName || '';
+                    hEntityTypeName.value = data.EntityTypeName || '';
+                    hAbnStatus.value = data.AbnStatus || '';
+                    hPostcode.value = data.AddressPostcode || '';
+                    hState.value = data.AddressState || '';
+                    hGst.value = data.Gst || ''; // GST가 없으면 빈 문자열
                 } else {
                     throw new Error("No entity found");
                 }
@@ -449,6 +472,12 @@
                     resultMsg.style.color = 'red';
                 }
                 resultMsg.style.display = 'block';
+                hEntityName.value = '';
+                hEntityTypeName.value = '';
+                hAbnStatus.value = '';
+                hPostcode.value = '';
+                hState.value = '';
+                hGst.value = '';
                 isAbnVerified = false;
             })
             .finally(() => {
@@ -461,6 +490,14 @@
         const resultMsg = document.getElementById('abnResultMsg');
         resultMsg.style.display = 'none';
         resultMsg.innerText = '';
+
+        // Hidden 값 초기화
+        document.getElementById('hiddenEntityName').value = '';
+        document.getElementById('hiddenEntityTypeName').value = '';
+        document.getElementById('hiddenAbnStatus').value = '';
+        document.getElementById('hiddenAddressPostcode').value = '';
+        document.getElementById('hiddenAddressState').value = '';
+        document.getElementById('hiddenGst').value = '';
     }
 
     function submitSignup() {

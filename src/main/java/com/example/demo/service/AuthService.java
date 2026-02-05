@@ -34,6 +34,14 @@ public class AuthService {
         company.setBusinessName(form.getBusinessName());
         company.setAbn(form.getAbn());
 
+        // [추가] ABN 추가 정보 저장
+        company.setEntityName(form.getEntityName());
+        company.setEntityTypeName(form.getEntityTypeName());
+        company.setAbnStatus(form.getAbnStatus());
+        company.setAddressPostcode(form.getAddressPostcode());
+        company.setAddressState(form.getAddressState());
+        company.setGst(form.getGst());
+
         // 상세 정보
         company.setIndustry(form.getIndustry());
         company.setCountry(form.getCountry());

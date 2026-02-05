@@ -20,4 +20,16 @@ public class AbnApiResponse {
 
     @JsonProperty("Message") // 에러 메시지용
     private String message;
+
+    @JsonProperty("AbnStatus")
+    private String abnStatus;
+
+    @JsonProperty("AddressPostcode")
+    private String addressPostcode;
+
+    @JsonProperty("AddressState")
+    private String addressState;
+
+    @JsonProperty("Gst")
+    private String gst;
 }
