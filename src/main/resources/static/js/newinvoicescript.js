@@ -4,6 +4,18 @@ document.addEventListener('DOMContentLoaded', function() {
     let itemIndex = (typeof window.itemIndex !== 'undefined') ? window.itemIndex : 1;
 
     // ============================================================
+    // 0. DatePicker (Flatpickr) 초기화 [추가됨]
+    // ============================================================
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr(".date-picker", {
+            dateFormat: "Y-m-d", // 서버로 전송될 실제 값 형식 (Java LocalDate와 일치)
+            altInput: true,      // 사용자에게 보여질 별도의 입력창 생성
+            altFormat: "d/m/Y",  // 사용자에게 보여질 날짜 형식 (dd/MM/yyyy)
+            allowInput: true     // 사용자가 직접 타이핑도 가능하게 설정
+        });
+    }
+
+    // ============================================================
     // 1. Select2 초기화 및 이벤트 연결
     // ============================================================
 
