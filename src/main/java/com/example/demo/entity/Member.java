@@ -25,8 +25,7 @@ public class Member {
 
     private String phone;    // 개인 휴대폰
 
-    @Enumerated(EnumType.STRING)
-    private Timezone timezone;
+    private String country;
 
     // --- 약관 및 마케팅 동의 여부 ---
     @Column(nullable = false)

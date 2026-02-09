@@ -20,7 +20,7 @@ public class SignupForm {
 
     private String personalCountryCode;
     private String personalPhone;
-    private Timezone memberTimezone;
+    private String memberCountry;
 
     private boolean agreeTerms;
     private boolean marketingConsent;

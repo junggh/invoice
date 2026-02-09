@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
-    <link rel="stylesheet" href="/css/authstyle.css"> </head>
+    <link rel="stylesheet" href="/css/authstyle.css">
+</head>
 <body>
 
-<div class="auth-container">
-    <h2>Welcome Back</h2>
+<div class="auth-container small"> <h2>Welcome Back</h2>
 
     <div th:if="${param.error}" style="color: red; margin-bottom: 15px; text-align: center;">
-        Invalid username or password.
+        Invalid email or password.
     </div>
     <div th:if="${param.logout}" style="color: green; margin-bottom: 15px; text-align: center;">
         You have been logged out.
@@ -19,14 +19,16 @@
     <form action="/login" method="post">
 
         <div class="form-group">
-            <label>Username</label>
-            <input type="text" name="username" required placeholder="Enter ID"
-                   th:value="${lastUsername}">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required
+                   placeholder="name@example.com"
+                   th:value="${lastEmail}">
         </div>
 
         <div class="form-group">
-            <label>Password</label>
-            <input type="password" name="password" required placeholder="Enter Password">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required
+                   placeholder="Enter Password">
         </div>
 
         <div class="step-actions">

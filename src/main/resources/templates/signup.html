@@ -48,20 +48,17 @@
             </div>
 
             <div class="form-group">
+                <label>Country</label>
+                <select th:field="*{memberCountry}" id="memberCountrySelect" required style="width: 100%; padding: 10px;">
+                    <option value="">Select Country</option>
+                </select>
+            </div>
+
+            <div class="form-group">
                 <label>Phone (Personal)</label>
                 <input type="hidden" id="personalCountryCode" th:field="*{personalCountryCode}">
                 <input type="tel" id="personalPhone" th:field="*{personalPhone}"
                        style="padding-left: 60px !important;">
-            </div>
-
-            <div class="form-group">
-                <label>Your Timezone</label>
-                <select th:field="*{memberTimezone}" required>
-                    <option value="">Select Timezone</option>
-                    <option th:each="tz : ${timezones}"
-                            th:value="${tz}"
-                            th:text="${tz.displayValue}">UTC+09:00</option>
-                </select>
             </div>
 
             <div style="margin-top: 20px; font-size: 14px;">
@@ -218,6 +215,47 @@
     });
     // 초기값 세팅
     personalHiddenInput.value = "+" + itiPersonal.getSelectedCountryData().dialCode;
+    // --------------------------------------------------------
+    // [추가] 2. Country Select 박스 자동 생성 및 연동
+    // --------------------------------------------------------
+    const addressDropdown = document.querySelector("#memberCountrySelect");
+
+    // (1) intl-tel-input의 내장 국가 데이터 가져오기
+    const countryData = window.intlTelInputGlobals.getCountryData();
+
+    // (2) 국가 데이터로 <option> 태그 생성하여 추가
+    for (let i = 0; i < countryData.length; i++) {
+        const country = countryData[i];
+
+        const optionNode = document.createElement("option");
+        optionNode.value = country.iso2; // 예: 'kr', 'us'
+        // 국가명 (영어)
+        const textNode = document.createTextNode(country.name);
+
+        optionNode.appendChild(textNode);
+        addressDropdown.appendChild(optionNode);
+    }
+
+    // (3) 기본값 설정 (예: 한국)
+    addressDropdown.value = "kr";
+
+    // (4) Country Select 변경 시 -> Phone Input 국가 변경 연동
+    addressDropdown.addEventListener('change', function() {
+        const selectedCountryCode = this.value;
+        if (selectedCountryCode) {
+            itiPersonal.setCountry(selectedCountryCode);
+
+            // Hidden Input 업데이트 (국가번호 동기화)
+            const newCountryData = itiPersonal.getSelectedCountryData();
+            personalHiddenInput.value = "+" + newCountryData.dialCode;
+        }
+    });
+
+    // (5) [역방향 연동] 사용자가 Phone 국기를 직접 바꿨을 때 -> Country Select도 같이 바뀌게 하려면
+    personalPhoneInput.addEventListener('countrychange', function() {
+        const newCountryData = itiPersonal.getSelectedCountryData();
+        personalHiddenInput.value = "+" + newCountryData.dialCode;
+    });
 
 
     // --------------------------------------------------------
@@ -289,7 +327,7 @@
             if (!input.value || (input.type === 'checkbox' && !input.checked)) {
                 valid = false;
                 input.style.borderColor = "red";
-                setTimeout(() => input.style.borderColor = "#E0E0E0", 2000);
+                //setTimeout(() => input.style.borderColor = "#E0E0E0", 2000);
             }
         });
 

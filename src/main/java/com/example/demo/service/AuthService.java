@@ -71,7 +71,7 @@ public class AuthService {
         member.setEmail(form.getPersonalEmail()); // 개인 이메일
         String fullPhone = combinePhoneNumber(form.getPersonalCountryCode(), form.getPersonalPhone());
         member.setPhone(fullPhone);
-        member.setTimezone(form.getMemberTimezone());
+        member.setCountry(form.getMemberCountry());
         member.setAgreeTerms(form.isAgreeTerms());
         member.setMarketingConsent(form.isMarketingConsent());
         member.setRole("ADMIN"); // 최초 가입자는 관리자 권한 부여
