@@ -6,6 +6,7 @@ import com.example.demo.entity.Timezone;
 import com.example.demo.repository.CompanyRepository;
 import com.example.demo.service.AbnLookupService;
 import com.example.demo.service.AuthService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -95,7 +96,16 @@ public class AuthController {
 
     // 로그인 페이지 (시큐리티 설정에 따라 달라질 수 있음)
     @GetMapping("/login")
-    public String loginForm() {
+    public String loginForm(Model model, HttpSession session) { // HttpSession 파라미터 추가
+        // 1. 세션에서 실패했을 때 저장한 아이디 가져오기
+        String lastUsername = (String) session.getAttribute("lastUsername");
+
+        // 2. 값이 있다면 모델에 담고, 세션에서는 제거 (새로고침 시 계속 남는 것 방지)
+        if (lastUsername != null) {
+            model.addAttribute("lastUsername", lastUsername);
+            session.removeAttribute("lastUsername");
+        }
+
         return "login";
     }
 }

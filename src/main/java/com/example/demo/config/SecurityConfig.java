@@ -29,6 +29,13 @@ public class SecurityConfig {
                         .loginPage("/login")             // 우리가 만든 로그인 페이지 경로
                         .loginProcessingUrl("/login")    // HTML Form의 action 경로 (스프링이 알아서 처리함)
                         .defaultSuccessUrl("/invoices", true) // 로그인 성공 시 이동할 곳
+                        .failureHandler((request, response, exception) -> {
+                            String username = request.getParameter("username");
+                            // 세션에 입력했던 아이디를 잠시 저장 ('lastUsername' 이라는 이름으로)
+                            request.getSession().setAttribute("lastUsername", username);
+                            // 에러 파라미터와 함께 리다이렉트
+                            response.sendRedirect("/login?error");
+                        })
                         .permitAll()
                 )
                 .logout(logout -> logout
