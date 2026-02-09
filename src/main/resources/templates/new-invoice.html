@@ -11,19 +11,6 @@
     <div class="container">
         <div th:replace="~{fragments/invoice-form :: invoiceForm('/api/invoices', 'New Invoice')}"></div>
     </div>
-
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        // 서버에서 넘어온 아이템 개수로 인덱스 초기화 (복사 기능 대응)
-        window.itemIndex = /*[[${invoice.items.size()}]]*/ 0;
-
-        // 아이템이 하나도 없으면 1부터 시작 (기본값)
-        if (window.itemIndex === 0) {
-            window.itemIndex = 1;
-        }
-        /*]]>*/
-    </script>
-
     <script src="/js/newinvoicescript.js?v=12"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>

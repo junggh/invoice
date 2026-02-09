@@ -120,7 +120,7 @@ public class RecurringInvoiceService {
 
         // 기본 정보 복사 (일부 날짜 필드 제외)
         BeanUtils.copyProperties(formTemplate, existingTemplate,
-                "id", "items", "lastIssuedDate", "nextInvoiceDate", "startDate", "uuid");
+                "id", "items", "lastIssuedDate", "nextInvoiceDate", "startDate", "uuid", "company", "templateNumber");
 
         // 날짜 관련 로직 처리
         handleStartDateChange(existingTemplate, formTemplate.getStartDate());

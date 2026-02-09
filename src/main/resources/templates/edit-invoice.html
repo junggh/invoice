@@ -11,30 +11,8 @@
     <div class="container">
         <div th:replace="~{fragments/invoice-form :: invoiceForm('/api/invoices/update', 'Edit Invoice')}"></div>
     </div>
-
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        // IDE 에러 해결: 주석 처리된 부분은 Thymeleaf가 처리하고, 뒤의 0은 기본값(fallback)입니다.
-        // 결과적으로 브라우저에는 window.itemIndex = 3; 처럼 숫자로 렌더링됩니다.
-        window.itemIndex = /*[[${invoice.items.size()}]]*/ 0;
-
-        // 만약 사이즈가 0이면(새 글 등), 기본값 1로 설정
-        if (window.itemIndex === 0) {
-            window.itemIndex = 1;
-        }
-        /*]]>*/
-    </script>
-
     <script src="/js/newinvoicescript.js?v=12"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if(window.calculateTotal) {
-                window.calculateTotal();
-            }
-        });
-    </script>
 </body>
 </html>

@@ -168,7 +168,7 @@ public class InvoiceService {
         formInvoice.setBalanceDue(formInvoice.getTotal());
 
         // 기본 정보 복사 (ID, UUID, Items 제외)
-        BeanUtils.copyProperties(formInvoice, existingInvoice, "id", "items", "uuid");
+        BeanUtils.copyProperties(formInvoice, existingInvoice, "id", "items", "uuid", "company", "invoiceNumber");
 
         // 아이템 리스트 교체 (OrphanRemoval 활용)
         existingInvoice.getItems().clear();
