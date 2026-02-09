@@ -34,7 +34,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return member.getUsername(); // 로그인 ID
+        return member.getEmail(); // 로그인 ID
     }
 
     // 계정 만료/잠금 여부 등은 단순하게 true(정상)로 설정

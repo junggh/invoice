@@ -82,30 +82,27 @@ public class AuthController {
         return ResponseEntity.ok(result);
     }
 
-    // [추가] 아이디 중복 확인 API
-    @GetMapping("/api/auth/check-username")
+    // 이메일 중복 확인 API
+    @GetMapping("/api/auth/check-email")
     @ResponseBody
-    public ResponseEntity<Boolean> checkUsername(@RequestParam String username) {
-        if (username == null || username.trim().isEmpty()) {
+    public ResponseEntity<Boolean> checkEmail(@RequestParam String email) {
+        if (email == null || email.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(false);
         }
-
-        boolean isAvailable = authService.isUsernameAvailable(username.trim());
+        boolean isAvailable = authService.isEmailAvailable(email.trim());
         return ResponseEntity.ok(isAvailable);
     }
 
-    // 로그인 페이지 (시큐리티 설정에 따라 달라질 수 있음)
+    // 로그인 페이지
     @GetMapping("/login")
-    public String loginForm(Model model, HttpSession session) { // HttpSession 파라미터 추가
-        // 1. 세션에서 실패했을 때 저장한 아이디 가져오기
-        String lastUsername = (String) session.getAttribute("lastUsername");
+    public String loginForm(Model model, HttpSession session) {
+        // 세션에서 실패했던 이메일 가져오기
+        String lastEmail = (String) session.getAttribute("lastEmail");
 
-        // 2. 값이 있다면 모델에 담고, 세션에서는 제거 (새로고침 시 계속 남는 것 방지)
-        if (lastUsername != null) {
-            model.addAttribute("lastUsername", lastUsername);
-            session.removeAttribute("lastUsername");
+        if (lastEmail != null) {
+            model.addAttribute("lastEmail", lastEmail); // 뷰에서 th:value="${lastEmail}"로 사용
+            session.removeAttribute("lastEmail");
         }
-
         return "login";
     }
 }

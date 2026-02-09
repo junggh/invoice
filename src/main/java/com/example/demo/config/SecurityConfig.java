@@ -28,11 +28,12 @@ public class SecurityConfig {
                 .formLogin(login -> login
                         .loginPage("/login")             // 우리가 만든 로그인 페이지 경로
                         .loginProcessingUrl("/login")    // HTML Form의 action 경로 (스프링이 알아서 처리함)
+                        .usernameParameter("email")     // 로그인 폼의 name="email"을 아이디로 인식
                         .defaultSuccessUrl("/invoices", true) // 로그인 성공 시 이동할 곳
                         .failureHandler((request, response, exception) -> {
-                            String username = request.getParameter("username");
+                            String email = request.getParameter("email");
                             // 세션에 입력했던 아이디를 잠시 저장 ('lastUsername' 이라는 이름으로)
-                            request.getSession().setAttribute("lastUsername", username);
+                            request.getSession().setAttribute("lastEmail", email);
                             // 에러 파라미터와 함께 리다이렉트
                             response.sendRedirect("/login?error");
                         })

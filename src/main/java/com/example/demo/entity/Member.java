@@ -14,18 +14,14 @@ public class Member {
 
     // --- 로그인 정보 ---
     @Column(unique = true, nullable = false)
-    private String username; // ID
+    private String email;    // 개인 이메일 및 ID
 
     @Column(nullable = false)
     private String password; // 암호화된 비밀번호
 
     // --- 개인 정보 ---
     private String firstName;
-    private String middleName;
     private String lastName;
-
-    @Column(nullable = false)
-    private String email;    // 개인 이메일
 
     private String phone;    // 개인 휴대폰
 

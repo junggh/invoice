@@ -5,7 +5,6 @@
     <title>Sign Up</title>
     <link rel="stylesheet" href="/css/authstyle.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/css/intlTelInput.css">
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/intlTelInput.min.js"></script>
 </head>
@@ -25,20 +24,27 @@
                 <label>First Name</label>
                 <input type="text" th:field="*{firstName}" required>
             </div>
-
-            <div class="form-group">
-                <label>Middle Name (optional)</label>
-                <input type="text" th:field="*{middleName}">
-            </div>
-
             <div class="form-group">
                 <label>Last Name</label>
                 <input type="text" th:field="*{lastName}" required>
             </div>
 
             <div class="form-group">
-                <label>Email (Personal)</label>
-                <input type="email" th:field="*{personalEmail}" required>
+                <label>Email (Username)</label>
+                <input type="email" th:field="*{personalEmail}" id="personalEmail" required
+                       placeholder="you@example.com" oninput="resetEmailError()">
+                <div id="emailErrorMsg" style="font-size: 13px; margin-top: 5px; display: none; color: red;"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" th:field="*{password}" id="password" required>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" th:field="*{checkPassword}" id="checkPassword" required oninput="resetPasswordError()">
+                <div id="pwError" style="font-size: 13px; margin-top: 5px; display: none; color: red;">Passwords do not match.</div>
             </div>
 
             <div class="form-group">
@@ -70,7 +76,7 @@
             </div>
 
             <div class="step-actions">
-                <button type="button" class="btn btn-primary" style="width: auto;" onclick="nextStep(2)">Next</button>
+                <button type="button" class="btn btn-primary" style="width: auto;" onclick="validateStep1AndNext()">Next</button>
             </div>
         </div>
 
@@ -78,12 +84,9 @@
             <div style="text-align: center; padding: 40px 0;">
                 <h3>Verification</h3>
                 <p style="color: #666; margin-bottom: 30px;">We sent a verification code to your email.</p>
-
                 <input type="text" placeholder="Enter Code" style="width: 200px; text-align: center; letter-spacing: 5px; font-size: 20px;">
                 <span style="display: block; margin-top: 10px; color: #888;">00:00</span>
-
                 <a href="#" style="display: block; margin-top: 20px; color: var(--primary-color); text-decoration: none;">Resend Code</a>
-                <a href="#" style="display: block; margin-top: 20px; color: var(--primary-color); text-decoration: none;">Choose other way to verification</a>
             </div>
 
             <div class="step-actions">
@@ -93,52 +96,13 @@
         </div>
 
         <div class="step-section" id="step3">
-            <h3 style="margin-top: 0; color: #666; font-size: 18px; margin-bottom: 20px;">Account Security</h3>
-
-            <div class="form-group">
-                <label>Username (ID)</label>
-                <div style="position: relative;">
-                    <input type="text" th:field="*{username}" id="username" required
-                           placeholder="Enter your ID" style="padding-right: 80px;" oninput="resetUsernameCheck()">
-
-                    <button type="button" onclick="checkUsername()"
-                            style="position: absolute; right: 5px; top: 5px; bottom: 5px;
-                                   background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px;
-                                   cursor: pointer; padding: 0 10px; font-size: 13px;">
-                        Check
-                    </button>
-                </div>
-                <div id="usernameMsg" style="font-size: 13px; margin-top: 5px; display: none;"></div>
-            </div>
-
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" th:field="*{password}" required>
-            </div>
-
-            <div class="form-group">
-                <label>Confirm Password</label>
-                <input type="password" th:field="*{checkPassword}" required>
-                <div id="pwError" class="error-msg">Passwords do not match.</div>
-            </div>
-
-            <div class="step-actions">
-                <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>
-                <button type="button" class="btn btn-primary" style="width: auto;" onclick="validateAndNextStep3()">Next</button>
-            </div>
-        </div>
-
-        <div class="step-section" id="step4">
             <h3 style="margin-top: 0;">Set your business</h3>
-
             <div class="form-group" style="position: relative;">
                 <label>ABN</label>
                 <input type="text" id="abnInput" th:field="*{abn}" placeholder="Search ABN..."
                        style="padding-right: 40px;" oninput="resetAbnResult()">
-
                 <i class="bi bi-search" onclick="searchAbn()"
                    style="position: absolute; right: 12px; top: 38px; color: #999; cursor: pointer;"></i>
-
                 <div id="abnResultMsg" style="font-size: 13px; margin-top: 5px; display: none;"></div>
             </div>
 
@@ -159,8 +123,6 @@
                 <select th:field="*{industry}">
                     <option value="">Select Industry</option>
                     <option value="IT">IT & Software</option>
-                    <option value="Retail">Retail</option>
-                    <option value="Construction">Construction</option>
                 </select>
             </div>
 
@@ -228,7 +190,7 @@
             </div>
 
             <div class="step-actions">
-                <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Back</button>
+                <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>
                 <button type="button" class="btn btn-primary" style="width: auto;" onclick="submitSignup()">Complete Sign Up</button>
             </div>
         </div>
@@ -288,20 +250,42 @@
 
         const title = document.getElementById('pageTitle');
         if (step === 2) title.innerText = "Verification";
-        else if (step === 4) title.innerText = "Business Details";
+        else if (step === 3) title.innerText = "Business Details";
         else title.innerText = "Sign up";
 
         currentStep = step;
     }
 
     function nextStep(targetStep) {
-        const currentSection = document.getElementById('step' + currentStep);
-        // intl-tel-input이 생성한 요소 제외하고 input 검사
-        const inputs = currentSection.querySelectorAll('input[required], select[required]');
+        showStep(targetStep);
+    }
+
+    function prevStep(targetStep) {
+        showStep(targetStep);
+    }
+
+    // --------------------------------------------------------
+    // 4. 아이디 중복 확인
+    // --------------------------------------------------------
+    function resetEmailError() {
+        const emailMsg = document.getElementById('emailErrorMsg');
+        const emailInput = document.getElementById('personalEmail');
+        emailMsg.style.display = 'none';
+        emailInput.style.borderColor = "#E0E0E0";
+    }
+
+    function resetPasswordError() {
+        document.getElementById('pwError').style.display = 'none';
+    }
+
+    // [핵심] Step 1에서 Next 버튼 누를 때 실행되는 함수
+    async function validateStep1AndNext() {
+        const step1 = document.getElementById('step1');
+        const inputs = step1.querySelectorAll('input[required], select[required]');
         let valid = true;
 
+        // 1. 기본 필드 채워졌는지 확인
         inputs.forEach(input => {
-            // intl-tel-input 관련 hidden 필드 등은 건너뛰거나 체크
             if (!input.value || (input.type === 'checkbox' && !input.checked)) {
                 valid = false;
                 input.style.borderColor = "red";
@@ -309,99 +293,46 @@
             }
         });
 
-        if (valid) {
-            showStep(targetStep);
-        } else {
+        if (!valid) {
             alert("Please fill in all required fields.");
-        }
-    }
-
-    function prevStep(targetStep) {
-        showStep(targetStep);
-    }
-
-    // 엔터키 제어
-    document.getElementById('signupForm').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const activeElement = document.activeElement;
-
-            if (activeElement.id === 'abnInput') {
-                searchAbn();
-            } else if (activeElement.id === 'username') {
-                checkUsername();
-            }
-        }
-    });
-
-    // --------------------------------------------------------
-    // 4. 아이디 중복 확인
-    // --------------------------------------------------------
-    let isUsernameChecked = false;
-
-    function checkUsername() {
-        const usernameInput = document.getElementById('username');
-        const usernameMsg = document.getElementById('usernameMsg');
-        const username = usernameInput.value.trim();
-
-        if (username.length < 4) {
-            usernameMsg.style.display = 'block';
-            usernameMsg.style.color = 'red';
-            usernameMsg.innerText = "Username must be at least 4 characters.";
             return;
         }
 
-        fetch(`/api/auth/check-username?username=${username}`)
-            .then(response => response.json())
-            .then(isAvailable => {
-                usernameMsg.style.display = 'block';
-                if (isAvailable) {
-                    usernameMsg.style.color = 'green';
-                    usernameMsg.innerText = "Username is available!";
-                    isUsernameChecked = true;
-                    usernameInput.style.borderColor = "green";
-                } else {
-                    usernameMsg.style.color = 'red';
-                    usernameMsg.innerText = "Username is already taken.";
-                    isUsernameChecked = false;
-                    usernameInput.style.borderColor = "red";
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Error checking username.");
-            });
-    }
-
-    function resetUsernameCheck() {
-        isUsernameChecked = false;
-        const usernameInput = document.getElementById('username');
-        const usernameMsg = document.getElementById('usernameMsg');
-        usernameInput.style.borderColor = "#E0E0E0";
-        usernameMsg.style.display = 'none';
-    }
-
-    function validateAndNextStep3() {
-        const usernameInput = document.getElementById('username');
-
-        if (!isUsernameChecked) {
-            alert("Please check username availability first.");
-            usernameInput.focus();
-            return;
-        }
-
+        // 2. 비밀번호 일치 확인
         const pw = document.getElementById('password').value;
         const checkPw = document.getElementById('checkPassword').value;
-        const errorMsg = document.getElementById('pwError');
-
         if (pw !== checkPw) {
-            errorMsg.style.display = 'block';
+            document.getElementById('pwError').style.display = 'block';
+            document.getElementById('checkPassword').focus();
             return;
-        } else {
-            errorMsg.style.display = 'none';
         }
 
-        nextStep(4);
+        // 3. 이메일 중복 확인 (AJAX)
+        const emailInput = document.getElementById('personalEmail');
+        const emailVal = emailInput.value.trim();
+        const emailMsg = document.getElementById('emailErrorMsg');
+
+        try {
+            document.body.style.cursor = 'wait';
+            const response = await fetch(`/api/auth/check-email?email=${encodeURIComponent(emailVal)}`);
+            const isAvailable = await response.json();
+
+            if (isAvailable) {
+                // 통과 -> 다음 단계로
+                nextStep(2);
+            } else {
+                // 중복 -> 에러 표시
+                emailMsg.innerText = "Email is already registered.";
+                emailMsg.style.display = 'block';
+                emailInput.style.borderColor = "red";
+                emailInput.focus();
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error checking email availability.");
+        } finally {
+            document.body.style.cursor = 'default';
+        }
     }
 
     // --------------------------------------------------------
@@ -502,20 +433,19 @@
     }
 
     function submitSignup() {
-        const step4 = document.getElementById('step4');
-        const inputs = step4.querySelectorAll('input[required], select[required]');
+        const step3 = document.getElementById('step3');
+        const inputs = step3.querySelectorAll('input[required], select[required]');
         let valid = true;
 
         inputs.forEach(input => {
-            if (!input.value || (input.type === 'checkbox' && !input.checked)) {
+            if (!input.value) { // checkbox 없으면 단순 value 체크
                 valid = false;
                 input.style.borderColor = "red";
-                setTimeout(() => input.style.borderColor = "#E0E0E0", 2000);
             }
         });
 
         if (!valid) {
-            alert("Please fill in all required fields.");
+            alert("Please fill in all business details.");
             return;
         }
 
@@ -527,6 +457,15 @@
 
         document.getElementById('signupForm').submit();
     }
+
+    // 엔터키 처리
+    document.getElementById('signupForm').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (e.target.id === 'abnInput') searchAbn();
+            // password 필드 등에서 엔터 치면 validateStep1AndNext 호출하도록 처리 가능
+        }
+    });
 </script>
 
 </body>

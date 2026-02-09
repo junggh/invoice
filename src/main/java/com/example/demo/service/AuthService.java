@@ -22,8 +22,8 @@ public class AuthService {
     @Transactional
     public Long processSignup(SignupForm form) {
         // 1. 중복 검증 (ID, ABN 등)
-        if (memberRepository.existsByUsername(form.getUsername())) {
-            throw new IllegalArgumentException("Username is already taken.");
+        if (memberRepository.existsByEmail(form.getPersonalEmail())) {
+            throw new IllegalArgumentException("Email is already registered.");
         }
         if (form.getAbn() != null && !form.getAbn().isEmpty() && companyRepository.existsByAbn(form.getAbn())) {
             throw new IllegalArgumentException("ABN already exists.");
@@ -61,13 +61,12 @@ public class AuthService {
 
         // 3. 회원(Member) 저장
         Member member = new Member();
-        member.setUsername(form.getUsername());
+        member.setEmail(form.getPersonalEmail());
 
         // 비밀번호 암호화
         member.setPassword(passwordEncoder.encode(form.getPassword()));
 
         member.setFirstName(form.getFirstName());
-        member.setMiddleName(form.getMiddleName());
         member.setLastName(form.getLastName());
         member.setEmail(form.getPersonalEmail()); // 개인 이메일
         String fullPhone = combinePhoneNumber(form.getPersonalCountryCode(), form.getPersonalPhone());
@@ -100,8 +99,8 @@ public class AuthService {
     }
 
     // [추가] 아이디 중복 확인용 메서드
-    public boolean isUsernameAvailable(String username) {
-        return !memberRepository.existsByUsername(username);
+    public boolean isEmailAvailable(String email) {
+        return !memberRepository.existsByEmail(email);
     }
     // [추가] ABN 중복 확인용
     public boolean isAbnAvailable(String abn) {
