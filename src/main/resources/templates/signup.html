@@ -94,6 +94,42 @@
 
         <div class="step-section" id="step3">
             <h3 style="margin-top: 0;">Set your business</h3>
+
+            <div class="form-group">
+                <label>Country</label>
+                <select th:field="*{country}" id="businessCountry" required>
+                    <option value="">Select Country</option>
+                    <option value="Australia">Australia</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="flex: 2;">
+                    <label>Business Timezone</label>
+                    <select th:field="*{companyTimezone}" id="companyTimezone">
+                        <option value="">Select Timezone</option>
+                        <option th:each="tz : ${timezones}"
+                                th:value="${tz}"
+                                th:text="${tz.displayValue}">UTC+09:00</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="flex: 1;">
+                    <label>Currency</label>
+                    <select th:field="*{currency}" id="companyCurrency">
+                        <option value="">Select</option>
+                        <option value="AUD">AUD</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Business Name</label>
+                <input type="text" id="businessName" th:field="*{businessName}" required>
+            </div>
+
             <div class="form-group" style="position: relative;">
                 <label>ABN</label>
                 <input type="text" id="abnInput" th:field="*{abn}" placeholder="Search ABN..."
@@ -111,42 +147,12 @@
             <input type="hidden" id="hiddenGst" th:field="*{gst}">
 
             <div class="form-group">
-                <label>Business Name</label>
-                <input type="text" id="businessName" th:field="*{businessName}" required>
-            </div>
-
-            <div class="form-group">
                 <label>Business Industry</label>
                 <select th:field="*{industry}">
                     <option value="">Select Industry</option>
                     <option value="IT">IT & Software</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Country</label>
-                <select th:field="*{country}">
-                    <option value="Australia">Australia</option>
-                    <option value="South Korea">South Korea</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Currency</label>
-                <select th:field="*{currency}">
-                    <option value="AUD">Australian Dollar (AUD)</option>
-                    <option value="KRW">Korean Won (KRW)</option>
-                    <option value="USD">US Dollar (USD)</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Business Timezone</label>
-                <select th:field="*{companyTimezone}">
-                    <option value="">Select Timezone</option>
-                    <option th:each="tz : ${timezones}"
-                            th:value="${tz}"
-                            th:text="${tz.displayValue}">UTC+09:00</option>
+                    <option value="Retail">Retail</option>
+                    <option value="Consulting">Consulting</option>
                 </select>
             </div>
 
@@ -276,6 +282,62 @@
     });
     companyHiddenInput.value = "+" + itiCompany.getSelectedCountryData().dialCode;
 
+    // --------------------------------------------------------
+    // [핵심 로직] Business Country 변경 시 -> Timezone, Currency, Phone 자동 설정
+    // --------------------------------------------------------
+    const businessCountrySelect = document.getElementById('businessCountry');
+    const companyTimezoneSelect = document.getElementById('companyTimezone');
+    const companyCurrencySelect = document.getElementById('companyCurrency');
+
+    // 국가별 프리셋 데이터
+    const countryPresets = {
+        "Australia": {
+            // Timezone.java의 UTC_PLUS_10 ("UTC+10:00 (Sydney)")
+            timezone: "UTC_PLUS_10",
+            currency: "AUD",
+            iso: "au"
+        },
+        "United Kingdom": {
+            // Timezone.java의 UTC_PLUS_00 ("UTC+00:00 (GMT/London)")
+            timezone: "UTC_PLUS_00",
+            currency: "GBP",
+            iso: "gb"
+        }
+    };
+
+    businessCountrySelect.addEventListener('change', function() {
+        const selectedCountry = this.value; // "Australia" or "United Kingdom"
+        const preset = countryPresets[selectedCountry];
+
+        if (preset) {
+            // 1. Timezone 자동 선택
+            // (값이 select option에 존재할 때만 변경)
+            if (querySelectorContainsValue(companyTimezoneSelect, preset.timezone)) {
+                companyTimezoneSelect.value = preset.timezone;
+            }
+
+            // 2. Currency 자동 선택
+            companyCurrencySelect.value = preset.currency;
+
+            // 3. Company Phone 국가 자동 변경
+            itiCompany.setCountry(preset.iso);
+
+            // 4. Hidden Input(국가번호) 업데이트
+            const newCountryData = itiCompany.getSelectedCountryData();
+            companyHiddenInput.value = "+" + newCountryData.dialCode;
+        }
+    });
+
+    // 헬퍼 함수: Select 박스 안에 해당 value가 있는지 확인
+    function querySelectorContainsValue(selectElement, value) {
+        for (let i = 0; i < selectElement.options.length; i++) {
+            if (selectElement.options[i].value === value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     // --------------------------------------------------------
     // 3. Wizard Form 및 유효성 검사 로직
@@ -327,7 +389,7 @@
             if (!input.value || (input.type === 'checkbox' && !input.checked)) {
                 valid = false;
                 input.style.borderColor = "red";
-                //setTimeout(() => input.style.borderColor = "#E0E0E0", 2000);
+                setTimeout(() => input.style.borderColor = "#E0E0E0", 3000);
             }
         });
 
