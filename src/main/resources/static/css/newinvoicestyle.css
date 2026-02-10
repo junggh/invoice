@@ -8,231 +8,216 @@
 /* ==========================================================================
    1. Global & Layout
    ========================================================================== */
-html {
-    overflow-y: scroll;
-}
+html { overflow-y: scroll; }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background-color: var(--bg-color);
-    margin: 0;
-    padding: 40px;
-    color: var(--text-color);
+    margin: 0; padding: 40px; color: var(--text-color);
+    font-size: 14px; /* 기본 폰트 크기 복구 */
 }
 
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: white;
-    padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    max-width: 1400px; /* 테이블 컬럼이 많으므로 전체 너비는 넓게 유지 */
+    margin: 0 auto; background: white; padding: 40px;
+    border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px;
 }
 
 h1 { margin: 0; font-size: 24px; }
 
 /* ==========================================================================
-   2. Form Styles
+   2. Form Styles (Original Style Restored)
    ========================================================================== */
-/* 2단 그리드 레이아웃 */
 .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    margin-bottom: 30px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;
 }
 
 .form-group {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 15px;
+    display: flex; flex-direction: column; margin-bottom: 15px;
 }
 
 label {
-    font-weight: 600;
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: #666;
+    font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #666;
 }
 
+/* [기본 스타일] 상단 Invoice Details에 적용됨 */
 input, select, textarea {
-    padding: 10px 12px;
+    padding: 10px 12px; /* 원래 패딩 복구 */
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    font-size: 15px;
+    font-size: 15px;    /* 원래 폰트 크기 복구 */
+    width: 100%;
+    box-sizing: border-box;
     transition: border-color 0.2s;
 }
 
 input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
+    outline: none; border-color: var(--primary-color);
 }
 
 textarea { resize: vertical; height: 80px; }
 
 /* ==========================================================================
-   3. Table Styles (Items)
+   3. Table Styles (Compact & Dynamic)
    ========================================================================== */
 .items-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    table-layout: fixed;
+    width: 100%; border-collapse: collapse;
+    margin-top: 20px; margin-bottom: 20px;
+    table-layout: auto;
 }
 
-.items-table th, .items-table td {
+/* (1) 데이터 셀(td) 스타일: 기존 Compact 스타일 유지 */
+.items-table td {
     border-bottom: 1px solid var(--border-color);
-    padding: 12px;
-    text-align: left;
+    padding: 6px 4px; /* 입력칸 주변은 좁게 유지 */
+    vertical-align: middle;
 }
 
+/* (2) [수정됨] 헤더(th) 스타일: 글자 키우고 간격 넓힘 */
 .items-table th {
-    background-color: #f9f9f9;
-    color: #555;
-    font-size: 14px;
+    background-color: #f8f9fa;      /* 배경색 조금 더 밝게 */
+    color: #444;                    /* 글자색 진하게 */
+    font-size: 14px;                /* 13px -> 14px로 확대 */
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+
+    /* [핵심] 패딩을 늘려서 헤더 글자끼리 붙어보이는 현상 해결 */
+    padding: 12px 15px;
+
+    /* 헤더 구분선 */
+    border-bottom: 2px solid #dcdcdc;
 }
+
+/* 테이블 내부의 Input/Select: Compact 크기 유지 */
+.items-table input, .items-table select {
+    padding: 5px 8px !important;
+    height: 32px !important;
+    font-size: 13px !important;
+    border-radius: 4px;
+}
+
+/* 동적 숨김 처리 클래스 */
+.d-none { display: none !important; }
 
 /* ==========================================================================
-   4. Buttons & Actions
+   4. Column Toggle Dropdown
    ========================================================================== */
-.actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 40px;
+.table-actions {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 15px; position: relative;
 }
+.dropdown-content {
+    display: none; position: absolute; top: 40px; left: 50px;
+    background-color: #fff; min-width: 200px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    border: 1px solid #eee; border-radius: 6px; padding: 10px; z-index: 100;
+}
+.dropdown-content.show { display: block; }
+.dropdown-content label {
+    display: block; padding: 6px; cursor: pointer;
+    font-size: 14px; font-weight: normal; margin: 0;
+}
+.dropdown-content label:hover { background-color: #f5f5f5; }
 
+/* ==========================================================================
+   5. Buttons & Utilities
+   ========================================================================== */
+.actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 40px; }
 .btn {
-    padding: 12px 24px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    font-size: 14px;
+    padding: 10px 20px; border-radius: 6px;
+    font-weight: 600; cursor: pointer; border: none; font-size: 14px;
 }
+.btn-secondary { background-color: white; border: 1px solid var(--border-color); color: #555; }
+.btn-primary { background-color: var(--primary-color); color: white; }
 
-.btn-secondary {
-    background-color: white;
-    border: 1px solid var(--border-color);
-    color: #555;
-}
-.btn-secondary:hover { filter: brightness(90%); }
-.btn-secondary:active { filter: brightness(80%); border-color: rgba(0,0,0,0.1); }
-
-.btn-primary {
-    background-color: var(--primary-color);
-    color: white;
-    border: 1px solid transparent;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-.btn-primary:hover { filter: brightness(90%); }
-.btn-primary:active { filter: brightness(80%); border-color: rgba(0,0,0,0.1); }
+.text-right { text-align: right !important; }
+.amount-display { font-size: 13px; font-weight: 600; display: block; text-align: right; padding-right: 5px;}
+.delete-cell button { font-size: 18px; line-height: 1; }
 
 /* ==========================================================================
-   5. Select2 Overrides (Custom Styling)
+   6. Select2 Overrides (Dual Style)
    ========================================================================== */
-/* 컨테이너: 높이 및 기준점 설정 */
+
+/* (A) 상단 Form용 기본 Select2 (큰 사이즈) */
 .select2-container .select2-selection--single {
     height: 42px !important;
-    display: flex !important;
-    align-items: center !important;
+    display: flex !important; align-items: center !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 6px !important;
-    position: relative !important;
 }
-
-/* 텍스트 영역: 여백 확보 */
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    display: block !important;
-    width: 100% !important;
     line-height: 42px !important;
+    font-size: 15px !important;
     padding-left: 12px !important;
-    padding-right: 50px !important; /* X버튼과 화살표 공간 */
     color: #333 !important;
-    /* 텍스트가 길 경우 자동으로 ... 처리하여 박스 깨짐 방지 */
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
 }
-
-/* 삭제(X) 버튼: 절대 위치 배치 */
-.select2-container--default .select2-selection--single .select2-selection__clear {
-    position: absolute !important;
-    right: 35px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    float: none !important;
-    margin: 0 !important;
-    font-size: 18px !important;
-    color: #999 !important;
-    cursor: pointer !important;
-    z-index: 10 !important;
-}
-
-/* 화살표(▼) 버튼: 절대 위치 배치 */
 .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 40px !important;
-    position: absolute !important;
-    top: 1px !important;
-    right: 1px !important;
-    width: 30px !important;
+    height: 40px !important; top: 1px !important; right: 1px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__clear {
+    line-height: 42px !important; right: 30px !important; font-size: 18px;
+}
+
+/* (B) 테이블 내부용 Compact Select2 (작은 사이즈) */
+.items-table .select2-container .select2-selection--single {
+    height: 32px !important;
+    border-radius: 4px !important;
+}
+.items-table .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 30px !important;
+    font-size: 13px !important;
+    padding-left: 8px !important;
+}
+.items-table .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 30px !important;
+}
+.items-table .select2-container--default .select2-selection--single .select2-selection__clear {
+    line-height: 30px !important; right: 25px !important; font-size: 14px;
 }
 
 /* ==========================================================================
-   6. View Details (Read-only Pages)
+   8. Remove Number Input Spinners (화살표 제거)
    ========================================================================== */
-.details-container {
-    display: flex;
-    gap: 50px;
-    margin-bottom: 40px;
-    background-color: #fff;
+/* Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
-.details-column {
-    flex: 1;
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
 }
 
-.details-header {
-    font-size: 16px;
-    font-weight: bold;
+/* ==========================================================================
+   9. Totals Section (Large Style)
+   ========================================================================== */
+.totals-container {
+    width: 280px; /* 너비 확장 (200px -> 280px) */
+    font-size: 15px; /* 기본 글자 크기 확대 (13px -> 15px) */
     color: #333;
-    margin-bottom: 15px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #eee;
 }
 
-.info-row {
-    display: grid;
-    grid-template-columns: 140px 1fr;
-    margin-bottom: 12px;
-    align-items: baseline;
+.totals-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    align-items: center;
 }
 
-.info-label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #666;
+.total-final {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 2px solid #333; /* 얇은 회색선 -> 진한 두꺼운 선 */
+    padding-top: 15px;
+    margin-top: 10px;
+    font-size: 20px; /* 합계 글자 대폭 확대 (15px -> 20px) */
+    font-weight: bold;
 }
-
-.info-value {
-    font-size: 14px;
-    color: #000;
-    font-weight: 400;
-}
-
-/* ==========================================================================
-   7. Utilities
-   ========================================================================== */
-.text-right { text-align: right !important; }
-.width-sm { width: 100px; }
-.width-pd { width: 230px; }

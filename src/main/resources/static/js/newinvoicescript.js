@@ -16,6 +16,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ============================================================
+    // [신규 기능] 컬럼 토글 (Column Visibility)
+    // ============================================================
+
+    // 1. 드롭다운 메뉴 열기/닫기
+    window.toggleDropdown = function() {
+        document.getElementById("columnDropdown").classList.toggle("show");
+    };
+
+    // 2. 화면 클릭 시 드롭다운 닫기
+    window.onclick = function(event) {
+        if (!event.target.matches('.btn-secondary') && !event.target.closest('.dropdown-content')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+
+    // 3. 체크박스 변경 시 컬럼 Show/Hide
+    window.toggleCol = function(colClass, checkbox) {
+        const isVisible = checkbox.checked;
+        const elements = document.querySelectorAll('.' + colClass);
+
+        elements.forEach(el => {
+            if (isVisible) {
+                el.classList.remove('d-none');
+            } else {
+                el.classList.add('d-none');
+            }
+        });
+    };
+
+    // ============================================================
     // 1. Select2 초기화 및 이벤트 연결
     // ============================================================
 

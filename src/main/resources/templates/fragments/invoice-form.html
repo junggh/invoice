@@ -5,9 +5,7 @@
 <div th:fragment="invoiceForm(actionUrl, title)">
 
     <form th:action="${actionUrl}" method="POST">
-
         <input type="hidden" name="id" th:if="${invoice.id != null}" th:value="${invoice.id}">
-
         <input type="hidden" id="hiddenStatus" name="status" th:value="${invoice.status}">
         <input type="hidden" id="hiddenCompanyName" name="customerCompanyName" th:value="${invoice.customerCompanyName}">
         <input type="hidden" id="hiddenEmail" name="customerEmail" th:value="${invoice.customerEmail}">
@@ -18,153 +16,172 @@
             <span style="color: #888;" th:text="'# ' + (${invoice.invoiceNumber} ?: '-')"></span>
         </div>
 
-        <h3 style="margin-top:0;">Invoice Details</h3>
+        <h3 style="margin-top:0; font-size: 16px;">Invoice Details</h3>
         <div class="form-grid">
             <div class="section-left">
                 <div class="form-group">
                     <label for="contactSelect">Contact Name <span style="color:red">*</span></label>
                     <select id="contactSelect" name="contact.id" required style="width: 100%;">
                         <option value="">Select Client</option>
-                        <option th:each="c : ${contacts}"
-                                th:value="${c.id}"
+                        <option th:each="c : ${contacts}" th:value="${c.id}"
                                 th:text="${c.companyName != null ? c.companyName + ' (' + c.name + ')' : c.name}"
                                 th:selected="${invoice.contact != null and c.id == invoice.contact.id}"
-                                th:data-name="${c.name}"
-                                th:data-address="${c.billTo}"
-                                th:data-currency="${c.currency}"
-                                th:data-company="${c.companyName}"
-                                th:data-email="${c.email}">
-                            Samsung Electronics
-                        </option>
+                                th:data-name="${c.name}" th:data-address="${c.billTo}"
+                                th:data-currency="${c.currency}" th:data-company="${c.companyName}"
+                                th:data-email="${c.email}"></option>
                     </select>
                 </div>
-
-                <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0px;">
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0;">
                     <div class="form-group">
-                        <label for="customerCurrency">Currency</label>
-                        <input type="text" id="customerCurrency" name="customerCurrency"
-                               th:value="${invoice.customerCurrency}" placeholder="KRW" readonly>
+                        <label>Currency</label>
+                        <input type="text" id="customerCurrency" name="customerCurrency" th:value="${invoice.customerCurrency}" readonly>
                     </div>
-
                     <div class="form-group">
-                        <label for="customerBillTo">Bill To</label>
-                        <input type="text" id="customerBillTo" name="customerBillTo"
-                               th:value="${invoice.customerBillTo}" placeholder="City" readonly>
+                        <label>Bill To</label>
+                        <input type="text" id="customerBillTo" name="customerBillTo" th:value="${invoice.customerBillTo}" readonly>
                     </div>
-
                     <div class="form-group">
-                        <label for="salesPerson">Salesperson</label>
-                        <input type="text" id="salesPerson" name="salesPerson"
-                               th:value="${invoice.salesPerson}">
+                        <label>Salesperson</label>
+                        <input type="text" id="salesPerson" name="salesPerson" th:value="${invoice.salesPerson}">
                     </div>
                 </div>
             </div>
-
             <div class="section-right">
-                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0px">
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
                     <div class="form-group">
-                        <label for="invoiceNumber">Invoice #</label>
-                        <input type="text" id="invoiceNumber" name="invoiceNumber"
-                               th:value="${invoice.invoiceNumber} ?: '-'"
-                               readonly style="background-color: #f0f0f0;">
+                        <label>Invoice #</label>
+                        <input type="text" name="invoiceNumber" th:value="${invoice.invoiceNumber} ?: '-'" readonly style="background-color: #f9f9f9;">
                     </div>
-
                     <div class="form-group">
-                        <label for="reference">Reference</label>
-                        <input type="number" id="reference" name="reference"
-                               th:value="${invoice.reference}">
+                        <label>Reference</label>
+                        <input type="number" name="reference" th:value="${invoice.reference}">
                     </div>
                 </div>
-
-                <div class="form-grid" style="margin-bottom: 0; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
                     <div class="form-group">
-                        <label for="issuedDate">Issued Date <span style="color:red">*</span></label>
-                        <input type="text" id="issuedDate" name="issuedDate" class="date-picker"
-                               th:value="${invoice.issuedDate}" required placeholder="dd/MM/yyyy">
+                        <label>Issued Date <span style="color:red">*</span></label>
+                        <input type="text" name="issuedDate" class="date-picker" th:value="${invoice.issuedDate}" required>
                     </div>
                     <div class="form-group">
-                        <label for="dueDate">Due Date <span style="color:red">*</span></label>
-                        <input type="text" id="dueDate" name="dueDate" class="date-picker"
-                               th:value="${invoice.dueDate}" required placeholder="dd/MM/yyyy">
+                        <label>Due Date <span style="color:red">*</span></label>
+                        <input type="text" name="dueDate" class="date-picker" th:value="${invoice.dueDate}" required>
                     </div>
                 </div>
             </div>
         </div>
 
-        <h3>Items</h3>
-        <button type="button" class="btn btn-secondary" onclick="addItem()" style="padding: 5px 10px; font-size: 16px;">+</button>
+        <h3 style="font-size: 16px; margin-top: 20px;">Items</h3>
+
+        <div class="table-actions">
+            <button type="button" class="btn btn-secondary" onclick="addItem()" style="font-size: 18px; line-height: 1; padding: 4px 10px;">+</button>
+
+            <div style="position: relative;">
+                <button type="button" class="btn btn-secondary" onclick="toggleDropdown()" style="padding: 6px 12px; font-size: 12px;">
+                    Columns <i class="bi bi-caret-down-fill" style="font-size: 10px;"></i>
+                </button>
+                <div id="columnDropdown" class="dropdown-content">
+                    <label style="color: #999;"><input type="checkbox" checked disabled> Product/Service</label>
+                    <label style="color: #999;"><input type="checkbox" checked disabled> Description</label>
+                    <label style="color: #999;"><input type="checkbox" checked disabled> Price</label>
+                    <label style="color: #999;"><input type="checkbox" checked disabled> Quantity</label>
+                    <label style="color: #999;"><input type="checkbox" checked disabled> Discount</label>
+                    <label style="color: #999;"><input type="checkbox" checked disabled> GST</label>
+                    <label style="color: #999;"><input type="checkbox" checked disabled> Amount</label>
+
+                    <hr style="margin: 5px 0; border: 0; border-top: 1px solid #eee;">
+
+                    <label><input type="checkbox" onchange="toggleCol('col-dept', this)"> Department</label>
+                    <label><input type="checkbox" onchange="toggleCol('col-project', this)"> Project</label>
+                    <label><input type="checkbox" onchange="toggleCol('col-location', this)"> Location</label>
+                    <label><input type="checkbox" onchange="toggleCol('col-uom', this)"> UOM</label>
+                    <label><input type="checkbox" onchange="toggleCol('col-margin', this)"> Margin</label>
+                    <label><input type="checkbox" onchange="toggleCol('col-serial', this)"> Serial No.</label>
+                </div>
+            </div>
+        </div>
+
         <table class="items-table">
             <thead>
             <tr>
-                <th class="width-pd">Product</th>
-                <th>Description</th>
-                <th class="width-sm text-right">Price</th>
-                <th class="width-sm text-right">Quantity</th>
-                <th class="width-sm text-right">Discount</th>
-                <th class="width-sm text-right">Amount</th>
-                <th style="width: 20px;"></th>
+                <th class="col-product">Product/Service</th>
+                <th class="col-desc">Description</th>
+                <th class="col-price text-right">Price</th>
+                <th class="col-qty text-right">Quantity</th>
+                <th class="col-discount text-right">Discount</th>
+                <th class="col-gst text-right">GST</th> <th class="col-dept d-none">Department</th>
+                <th class="col-project d-none">Project</th>
+                <th class="col-location d-none">Location</th>
+                <th class="col-uom d-none">UOM</th>
+                <th class="col-margin text-right d-none">Margin</th>
+                <th class="col-serial d-none">Serial No.</th>
+
+                <th class="col-amount text-right">Amount</th>
+                <th style="width: 25px;"></th>
             </tr>
             </thead>
             <tbody id="invoiceItems">
             <tr th:each="item, stat : ${invoice.items}" class="item-row">
-
-                <td>
-                    <select th:name="|items[${stat.index}].product.id|" class="product-select" style="width: 95%;" required>
-                        <option value="">Select Product</option>
-                        <option th:each="prod : ${products}"
-                                th:value="${prod.id}"
-                                th:text="${prod.name}"
+                <input type="hidden" th:name="|items[${stat.index}].id|" th:value="${item.id}">
+                <td class="col-product">
+                    <select th:name="|items[${stat.index}].product.id|" class="product-select" required>
+                        <option value="">Select</option>
+                        <option th:each="prod : ${products}" th:value="${prod.id}" th:text="${prod.name}"
                                 th:selected="${item.product != null and prod.id == item.product.id}"
-                                th:data-price="${prod.price}"
-                                th:data-desc="${prod.description}">
-                            Apple
-                        </option>
+                                th:data-price="${prod.price}" th:data-desc="${prod.description}"></option>
                     </select>
                 </td>
-                <td>
+                <td class="col-desc">
                     <input type="text" th:name="|items[${stat.index}].description|"
-                           th:value="${item.product != null ? item.product.description : ''}"
-                           placeholder="product description" style="width: 95%;" readonly>
+                           th:value="${item.product != null ? item.product.description : ''}" readonly>
                 </td>
-                <td>
+                <td class="col-price">
                     <input type="number" th:name="|items[${stat.index}].price|"
                            th:value="${item.product != null ? item.product.price : ''}"
-                           placeholder="0" class="text-right calc-input" style="width: 95%;" readonly>
+                           class="text-right calc-input" readonly>
                 </td>
-                <td>
+                <td class="col-qty">
                     <input type="number" th:name="|items[${stat.index}].quantity|"
-                           th:value="${item.quantity}"
-                           placeholder="0" class="text-right calc-input" style="width: 95%;">
+                           th:value="${item.quantity}" class="text-right calc-input">
                 </td>
-                <td>
+                <td class="col-discount">
                     <input type="number" th:name="|items[${stat.index}].discount|"
-                           th:value="${item.discount}"
-                           placeholder="0" class="text-right calc-input" style="width: 95%;">
+                           th:value="${item.discount}" class="text-right calc-input">
                 </td>
-                <td class="text-right" style="vertical-align: middle;">
+                <td class="col-gst">
+                    <input type="number" name="tempGst" class="text-right calc-input" placeholder="0">
+                </td>
+
+                <td class="col-dept d-none"><input type="text" name="tempDept"></td>
+                <td class="col-project d-none"><input type="text" name="tempProject"></td>
+                <td class="col-location d-none"><input type="text" name="tempLocation"></td>
+                <td class="col-uom d-none"><input type="text" name="tempUom"></td>
+                <td class="col-margin d-none"><input type="text" name="tempMargin" class="text-right"></td>
+                <td class="col-serial d-none"><input type="text" name="tempSerial"></td>
+
+                <td class="col-amount text-right">
                     <span class="amount-display" th:text="${item.amount}">0.00</span>
-                    <input type="hidden" th:name="|items[${stat.index}].amount|"
-                           th:value="${item.amount}" class="row-amount">
+                    <input type="hidden" th:name="|items[${stat.index}].amount|" th:value="${item.amount}" class="row-amount">
                 </td>
+
                 <td class="delete-cell">
-                    <button type="button" th:if="${!stat.first}" onclick="removeRow(this)" style="color:red; border:none; background:none; cursor:pointer;">&times;</button>
+                    <button type="button" th:if="${!stat.first}" onclick="removeRow(this)" style="color:red; background:none; border:none;">&times;</button>
                 </td>
             </tr>
             </tbody>
         </table>
 
-        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-            <div style="width: 250px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: flex-end; margin-top: 30px;">
+            <div class="totals-container">
+                <div class="totals-row">
                     <span>Subtotal</span>
                     <span id="subtotal" style="font-weight: bold;">0.00</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
+                <div class="totals-row" style="color: #666;">
                     <span>Tax (10%)</span>
                     <span id="tax">0.00</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; border-top: 2px solid #333; padding-top: 10px; font-size: 18px; font-weight: bold;">
-                    <span>Total Amount</span>
+                <div class="total-final">
+                    <span>Total</span>
                     <input type="hidden" name="total" id="hiddenTotal" th:value="${invoice.total}">
                     <span id="totalAmount" style="color: var(--primary-color);" th:text="${invoice.total}">0.00</span>
                 </div>
@@ -172,21 +189,13 @@
         </div>
 
         <div class="actions">
-            <button type="button" class="btn btn-secondary" style="margin-right: auto;">
-                Create payment link
-            </button>
-
+            <button type="button" class="btn btn-secondary" style="margin-right: auto;">Create payment link</button>
             <button type="button" onclick="location.href='/invoices'" class="btn btn-secondary">Cancel</button>
-            <button type="submit" class="btn btn-primary" onclick="setStatusAndSubmit('DRAFT')">
-                Save Changes
-            </button>
-            <button type="submit" class="btn btn-primary" onclick="setStatusAndSubmit('IN_REVIEW')">
-                Save & Submit
-            </button>
+            <button type="submit" class="btn btn-primary" onclick="setStatusAndSubmit('DRAFT')">Save Changes</button>
+            <button type="submit" class="btn btn-primary" onclick="setStatusAndSubmit('IN_REVIEW')">Save & Submit</button>
         </div>
 
     </form>
 </div>
-
 </body>
 </html>
