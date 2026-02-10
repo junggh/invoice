@@ -23,7 +23,8 @@ public class Member {
     private String firstName;
     private String lastName;
 
-    private String phone;    // 개인 휴대폰
+    private String phoneCountryCode;
+    private String phoneNumber;
 
     private String country;
 

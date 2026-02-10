@@ -53,8 +53,8 @@ public class AuthService {
 
         // 회사 연락처
         company.setCompanyEmail(form.getCompanyEmail());
-        String fullCompanyPhone = combinePhoneNumber(form.getCompanyCountryCode(), form.getCompanyPhone());
-        company.setCompanyPhone(fullCompanyPhone);
+        company.setCompanyPhoneCountryCode(form.getCompanyCountryCode()); //
+        company.setCompanyPhoneNumber(cleanPhoneNumber(form.getCompanyPhone()));
         company.setFax(form.getFax());
 
         Company savedCompany = companyRepository.save(company);
@@ -69,8 +69,8 @@ public class AuthService {
         member.setFirstName(form.getFirstName());
         member.setLastName(form.getLastName());
         member.setEmail(form.getPersonalEmail()); // 개인 이메일
-        String fullPhone = combinePhoneNumber(form.getPersonalCountryCode(), form.getPersonalPhone());
-        member.setPhone(fullPhone);
+        member.setPhoneCountryCode(form.getPersonalCountryCode());
+        member.setPhoneNumber(cleanPhoneNumber(form.getPersonalPhone()));
         member.setCountry(form.getMemberCountry());
         member.setAgreeTerms(form.isAgreeTerms());
         member.setMarketingConsent(form.isMarketingConsent());
@@ -84,18 +84,23 @@ public class AuthService {
         return member.getId();
     }
 
-    private String combinePhoneNumber(String code, String rawNumber) {
-        // 1. 하이픈, 공백 제거
-        String cleanNumber = rawNumber.replaceAll("[^0-9]", "");
-
-        // 2. 맨 앞 '0' 제거 (한국 010 -> 10, 호주 04xx -> 4xx)
-        // 국가번호가 있을 때만 제거하는 것이 안전합니다.
-        if (cleanNumber.startsWith("0")) {
-            cleanNumber = cleanNumber.substring(1);
+    // 전화번호 포맷팅 메서드
+    private String cleanPhoneNumber(String rawNumber) {
+        if (rawNumber == null || rawNumber.trim().isEmpty()) {
+            return "";
         }
 
-        // 3. 합치기 (+82 + 1012345678)
-        return code + cleanNumber;
+        // 1. 하이픈(-)을 공백( )으로 치환
+        String str = rawNumber.replace("-", " ");
+
+        // 2. 숫자, '+', 공백만 남기고 나머지 제거 (괄호 등 제거)
+        str = str.replaceAll("[^0-9+ ]", "");
+
+        // 3. 여러 개의 공백을 하나의 공백으로 치환 ("   " -> " ")
+        str = str.replaceAll("\\s+", " ");
+
+        // 4. 양끝 공백 제거
+        return str.trim();
     }
 
     // [추가] 아이디 중복 확인용 메서드

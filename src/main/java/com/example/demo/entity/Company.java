@@ -42,6 +42,7 @@ public class Company {
 
     // --- 회사의 연락처 (직원 연락처와 구별됨) ---
     private String companyEmail;       // Email (회사 대표)
-    private String companyPhone;       // Phone (회사 대표)
+    private String companyPhoneCountryCode;
+    private String companyPhoneNumber; // Phone (회사 대표)
     private String fax;                // Fax
 }

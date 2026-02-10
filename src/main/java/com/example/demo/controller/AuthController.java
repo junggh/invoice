@@ -22,7 +22,6 @@ public class AuthController {
 
     private final AuthService authService;
     private final AbnLookupService abnLookupService;
-    private final CompanyRepository companyRepository;
 
     // 회원가입 페이지 이동
     @GetMapping("/signup")
@@ -37,20 +36,13 @@ public class AuthController {
     @PostMapping("/signup")
     public String processSignup(@ModelAttribute SignupForm signupForm, Model model) {
         try {
-            // 비밀번호 확인 로직
-            if (!signupForm.getPassword().equals(signupForm.getCheckPassword())) {
-                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-            }
-
             authService.processSignup(signupForm);
-
-            // 가입 성공 시 로그인 페이지나 웰컴 페이지로 리다이렉트
             return "redirect:/login";
 
         } catch (IllegalArgumentException e) {
             // 에러 발생 시 다시 가입 페이지로 (에러 메시지 전달)
             model.addAttribute("errorMessage", e.getMessage());
-            model.addAttribute("signupForm", signupForm); // 입력했던 정보 유지
+            //model.addAttribute("signupForm", signupForm); // 입력했던 정보 유지
             model.addAttribute("timezones", Timezone.values());
             model.addAttribute("months", Month.values());
             return "signup";
