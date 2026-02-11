@@ -56,6 +56,16 @@ input, select, textarea {
     transition: border-color 0.2s;
 }
 
+/* 컬럼 체크박스용 */
+input[type="checkbox"] {
+    width: auto !important;       /* 가로 꽉 참 방지 */
+    display: inline-block;
+    vertical-align: middle;       /* 텍스트와 높이 정렬 */
+    margin: 0 8px 0 0 !important; /* 체크박스와 라벨 사이 간격 */
+    height: 16px !important;      /* 높이 강제 고정 */
+    cursor: pointer;
+}
+
 input:focus, select:focus, textarea:focus {
     outline: none; border-color: var(--primary-color);
 }
@@ -67,8 +77,8 @@ textarea { resize: vertical; height: 80px; }
    ========================================================================== */
 .items-table {
     width: 100%; border-collapse: collapse;
-    margin-top: 20px; margin-bottom: 20px;
-    table-layout: auto;
+    margin-bottom: 20px;
+    table-layout: fixed;
 }
 
 /* (1) 데이터 셀(td) 스타일: 기존 Compact 스타일 유지 */
@@ -109,7 +119,7 @@ textarea { resize: vertical; height: 80px; }
    4. Column Toggle Dropdown
    ========================================================================== */
 .table-actions {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 15px; position: relative;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px; position: relative;
 }
 .dropdown-content {
     display: none; position: absolute; top: 40px; left: 50px;
@@ -119,10 +129,36 @@ textarea { resize: vertical; height: 80px; }
 }
 .dropdown-content.show { display: block; }
 .dropdown-content label {
-    display: block; padding: 6px; cursor: pointer;
-    font-size: 14px; font-weight: normal; margin: 0;
+    display: flex !important;     /* 라벨 내부를 Flex로 만들어 정렬 */
+    align-items: center;          /* 수직 중앙 정렬 */
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 0;
+    width: 100%;                  /* 라벨 자체는 꽉 차게 */
+    box-sizing: border-box;
 }
-.dropdown-content label:hover { background-color: #f5f5f5; }
+
+.dropdown-content label:hover {
+    background-color: #f5f5f5;
+}
+
+.compact-select {
+    height: 30px !important;       /* 버튼 높이와 비슷하게 축소 (기존 42px -> 30px) */
+    padding: 2px 8px !important;   /* 내부 여백 축소 */
+    font-size: 13px !important;    /* 글자 크기 축소 */
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+    color: #333;
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.compact-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
 
 /* ==========================================================================
    5. Buttons & Utilities
@@ -142,7 +178,6 @@ textarea { resize: vertical; height: 80px; }
 /* ==========================================================================
    6. Select2 Overrides (Dual Style)
    ========================================================================== */
-
 /* (A) 상단 Form용 기본 Select2 (큰 사이즈) */
 .select2-container .select2-selection--single {
     height: 42px !important;
@@ -151,16 +186,23 @@ textarea { resize: vertical; height: 80px; }
     border-radius: 6px !important;
 }
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: 42px !important;
-    font-size: 15px !important;
-    padding-left: 12px !important;
-    color: #333 !important;
+    padding-right: 40px !important; /* x 버튼 공간 확보 */
 }
 .select2-container--default .select2-selection--single .select2-selection__arrow {
     height: 40px !important; top: 1px !important; right: 1px !important;
 }
 .select2-container--default .select2-selection--single .select2-selection__clear {
-    line-height: 42px !important; right: 30px !important; font-size: 18px;
+    position: absolute !important; /* 흐름에서 제거 */
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    right: 35px !important;        /* 화살표(약 20~30px) 왼쪽으로 배치 */
+    height: auto !important;
+    line-height: 1 !important;
+    font-size: 18px !important;
+    color: #999;
+    z-index: 10;                   /* 텍스트보다 위에 오도록 */
+    margin-right: 0 !important;    /* 불필요한 여백 제거 */
+    display: inline-block !important; /* Flex Item이 아닌 블록으로 처리 */
 }
 
 /* (B) 테이블 내부용 Compact Select2 (작은 사이즈) */
@@ -220,4 +262,36 @@ input[type=number] {
     margin-top: 10px;
     font-size: 20px; /* 합계 글자 대폭 확대 (15px -> 20px) */
     font-weight: bold;
+}
+
+/* ==========================================================================
+   10. Flatpickr Custom Buttons (Quick Select) [신규 추가]
+   ========================================================================== */
+.flatpickr-quick-select {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e6e6e6;
+    gap: 5px;
+}
+
+.flatpickr-quick-select .quick-btn {
+    flex: 1; /* 버튼 너비 균등 분배 */
+    padding: 6px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.flatpickr-quick-select .quick-btn:hover {
+    background-color: var(--primary-color); /* 기존 CSS 변수 활용 (#00A3FF) */
+    color: white;
+    border-color: var(--primary-color);
 }

@@ -13,6 +13,60 @@ document.addEventListener('DOMContentLoaded', function() {
             altFormat: "d/m/Y",  // 사용자에게 보여질 날짜 형식 (dd/MM/yyyy)
             allowInput: true     // 사용자가 직접 타이핑도 가능하게 설정
         });
+
+        // (2) Due Date: 상단에 단축 버튼 추가
+        flatpickr("input[name='dueDate']", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d/m/Y",
+            allowInput: true,
+            onReady: function(selectedDates, dateStr, instance) {
+                // 1. 버튼들을 담을 컨테이너 생성
+                const container = document.createElement("div");
+                container.className = "flatpickr-quick-select";
+
+                // 2. 버튼 생성 헬퍼 함수
+                // days: 추가할 일수 (null이면 '다음 달' 로직 수행)
+                const createBtn = (label, days) => {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.innerText = label;
+                    btn.className = "quick-btn"; // 스타일용 클래스
+
+                    btn.onclick = function() {
+                        // 기준일 가져오기 (Issued Date가 있으면 그것을 기준, 없으면 오늘 기준)
+                        const issuedInput = document.querySelector("input[name='issuedDate']");
+                        let baseDate = new Date(); // 기본: 오늘
+
+                        if (issuedInput && issuedInput.value) {
+                            baseDate = new Date(issuedInput.value);
+                        }
+
+                        // 날짜 계산
+                        if (days !== null) {
+                            // 일수 더하기
+                            baseDate.setDate(baseDate.getDate() + days);
+                        } else {
+                            // 다음 달 (같은 날짜)
+                            baseDate.setMonth(baseDate.getMonth() + 1);
+                        }
+
+                        // Flatpickr에 값 설정 (두 번째 인자 true는 input 값 업데이트 트리거)
+                        instance.setDate(baseDate, true);
+                        instance.close(); // 선택 후 달력 닫기
+                    };
+                    return btn;
+                };
+
+                // 3. 버튼 추가 (7일, 14일, 다음 달)
+                container.appendChild(createBtn("Next 7 Days", 7));
+                container.appendChild(createBtn("Next 14 Days", 14));
+                container.appendChild(createBtn("Next Month", null));
+
+                // 4. 달력 컨테이너 최상단에 삽입
+                instance.calendarContainer.prepend(container);
+            }
+        });
     }
 
     // ============================================================
@@ -179,50 +233,106 @@ document.addEventListener('DOMContentLoaded', function() {
     // 3. 계산 함수 (행 계산 / 전체 합계)
     // ============================================================
 
-    // 개별 행 계산
     window.calculateRow = function(row) {
-        // console.log("=== calculateRow 실행 ===");
         const priceInput = row.querySelector('input[name$=".price"]');
         const qtyInput = row.querySelector('input[name$=".quantity"]');
         const discountInput = row.querySelector('input[name$=".discount"]');
+
+        // [추가] GST 요소 가져오기
+        const gstSelect = row.querySelector('.gst-select');
+        const taxTypeSelect = document.getElementById('taxTypeSelect');
+
         const amountInput = row.querySelector('input[name$=".amount"]');
         const amountDisplay = row.querySelector('.amount-display');
+        const taxInput = row.querySelector('.row-tax');
 
         const price = parseFloat(priceInput.value) || 0;
         const qty = parseFloat(qtyInput.value) || 0;
         const discount = parseFloat(discountInput.value) || 0;
 
-        let amount = (price * qty) - discount;
-        if (amount < 0) amount = 0;
+        // GST 세율 가져오기 (data-rate 속성 활용)
+        const selectedGstOption = gstSelect.options[gstSelect.selectedIndex];
+        const taxRate = parseFloat(selectedGstOption.getAttribute('data-rate')) || 0;
 
-        if (amountInput) amountInput.value = amount.toFixed(2);
-        if (amountDisplay) amountDisplay.textContent = amount.toFixed(2);
+        const taxType = taxTypeSelect.value; // TAX_INCLUSIVE, TAX_EXCLUSIVE, NO_TAX
+
+        // 1. 기본 라인 합계 (할인 적용 후)
+        let lineTotal = (price * qty) - discount;
+        if (lineTotal < 0) lineTotal = 0;
+
+        let calculatedTax = 0;
+        let finalAmount = lineTotal;
+
+        // 2. 세금 계산 로직
+        if (taxType === 'NO_TAX') {
+            calculatedTax = 0;
+            finalAmount = lineTotal;
+        }
+        else if (taxType === 'TAX_INCLUSIVE') {
+            // 세금 포함: 110원(10%) -> 세금은 110 * (0.1 / 1.1) = 10원
+            // Amount 필드는 보통 세전 금액이 아니라 '표시 금액'을 그대로 둡니다.
+            calculatedTax = lineTotal * (taxRate / (1 + taxRate));
+            finalAmount = lineTotal;
+        }
+        else { // TAX_EXCLUSIVE (기본)
+            // 세금 별도: 100원(10%) -> 세금은 100 * 0.1 = 10원
+            calculatedTax = lineTotal * taxRate;
+            finalAmount = lineTotal; // 보통 Invoice 라인에는 세전 금액을 표시하고, Total에서 합산
+        }
+
+        // 값 업데이트
+        if (amountInput) amountInput.value = finalAmount.toFixed(2);
+        if (amountDisplay) amountDisplay.textContent = finalAmount.toFixed(2);
+        if (taxInput) taxInput.value = calculatedTax.toFixed(2); // 숨겨진 필드에 세금 저장
 
         window.calculateTotal();
     };
 
-    // 전체 합계 계산
     window.calculateTotal = function() {
         let subtotal = 0;
+        let totalTax = 0;
+        const taxType = document.getElementById('taxTypeSelect').value;
 
-        document.querySelectorAll('.row-amount').forEach(input => {
-            let val = parseFloat(input.value) || 0;
-            subtotal += Math.round(val * 100);
+        // 모든 행을 돌면서 Amount와 Tax를 합산
+        const rows = document.querySelectorAll('#invoiceItems .item-row');
+
+        rows.forEach(row => {
+            const amtVal = parseFloat(row.querySelector('.row-amount').value) || 0;
+            const taxVal = parseFloat(row.querySelector('.row-tax').value) || 0;
+
+            if (taxType === 'TAX_INCLUSIVE') {
+                // Inclusive면 Amount에 이미 세금이 포함되어 있음.
+                // Subtotal(세전) = Amount - Tax
+                subtotal += (amtVal - taxVal);
+            } else {
+                // Exclusive나 No Tax면 Amount가 곧 세전 금액
+                subtotal += amtVal;
+            }
+            totalTax += taxVal;
         });
 
-        const taxRate = 0.10;
-        const tax = Math.round(subtotal * taxRate);
-        const total = subtotal + tax;
+        const total = subtotal + totalTax;
 
         // 화면 업데이트
-        document.getElementById('subtotal').textContent = (subtotal/100).toFixed(2);
-        document.getElementById('tax').textContent = (tax/100).toFixed(2);
-        document.getElementById('totalAmount').textContent = (total/100).toFixed(2);
+        document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+        document.getElementById('tax').textContent = totalTax.toFixed(2);
+        document.getElementById('totalAmount').textContent = total.toFixed(2);
 
-        // Hidden Input 업데이트
         const hiddenTotal = document.getElementById('hiddenTotal');
-        if(hiddenTotal) hiddenTotal.value = (total/100).toFixed(2);
+        if(hiddenTotal) hiddenTotal.value = total.toFixed(2);
+
+        const hiddenSubtotal = document.getElementById('hiddenSubtotal');
+        if(hiddenSubtotal) hiddenSubtotal.value = subtotal.toFixed(2);
+
+        const hiddenTax = document.getElementById('hiddenTax');
+        if(hiddenTax) hiddenTax.value = totalTax.toFixed(2);
     };
+
+    // [추가] "Amounts are" 변경 시 모든 행 재계산 필요
+    document.getElementById('taxTypeSelect').addEventListener('change', function() {
+        const rows = document.querySelectorAll('#invoiceItems .item-row');
+        rows.forEach(row => window.calculateRow(row));
+    });
 
     // ============================================================
     // 4. 정보 업데이트 함수 (Product / Contact)
@@ -306,6 +416,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 페이지 로드 시 최초 전체 계산
+    // ============================================================
+    // [수정] 페이지 로드 시 초기화 로직
+    // ============================================================
+
+    // 1. 모든 기존 행에 대해 '개별 계산(calculateRow)'을 강제로 수행
+    // 이유: DB에서 불러온 데이터에는 계산된 Tax 값이 히든 필드에 없거나 0일 수 있음.
+    // 따라서 화면이 열리자마자 Price, Qty, GST, TaxType을 보고 세금을 다시 계산해서 채워넣어야 함.
+    const existingRows = document.querySelectorAll('#invoiceItems .item-row');
+    existingRows.forEach(row => {
+        // Select2가 적용된 경우 데이터가 늦게 로딩될 수 있으므로 안전하게 처리
+        window.calculateRow(row);
+    });
+
+    // 2. 각 행의 계산이 끝난 후 전체 합계 계산
     window.calculateTotal();
 });

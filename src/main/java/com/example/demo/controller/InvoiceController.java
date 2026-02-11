@@ -80,7 +80,8 @@ public class InvoiceController {
         Invoice invoice = invoiceService.getInvoiceByUuid(uuid, user.getMember().getCompany());
 
         model.addAttribute("invoice", invoice);
-        calculateAndAddSummary(model, invoice.getItems(), InvoiceItem::getAmount);
+        model.addAttribute("subtotal", invoice.getSubtotal());
+        model.addAttribute("tax", invoice.getTax());
 
         return "view-invoice";
     }
@@ -168,7 +169,8 @@ public class InvoiceController {
         RecurringInvoice template = recurringService.getRecurringInvoiceByUuid(uuid, user.getMember().getCompany());
 
         model.addAttribute("invoice", template);
-        calculateAndAddSummary(model, template.getItems(), RecurringInvoiceItem::getAmount);
+        model.addAttribute("subtotal", template.getSubtotal());
+        model.addAttribute("tax", template.getTax());
 
         return "view-template";
     }

@@ -139,6 +139,9 @@ public class InvoiceService {
         newInvoice.setCustomerCurrency(source.getCustomerCurrency());
         newInvoice.setSalesPerson(source.getSalesPerson());
         newInvoice.setReference(source.getReference());
+        newInvoice.setTaxType(source.getTaxType());
+        newInvoice.setTax(source.getTax());
+        newInvoice.setSubtotal(source.getSubtotal());
 
         // 3. 아이템 딥 카피 (Deep Copy)
         List<InvoiceItem> newItems = new ArrayList<>();
@@ -148,6 +151,9 @@ public class InvoiceService {
             newItem.setQuantity(sourceItem.getQuantity());
             newItem.setDiscount(sourceItem.getDiscount());
             newItem.setAmount(sourceItem.getAmount());
+            newItem.setGstCode(sourceItem.getGstCode());
+            newItem.setTaxAmount(sourceItem.getTaxAmount());
+
             newItem.setInvoice(newInvoice); // 연관관계 설정
             newItems.add(newItem);
         }

@@ -103,6 +103,9 @@ public class RecurringInvoiceService {
                 newItem.setQuantity(originalItem.getQuantity());
                 newItem.setDiscount(originalItem.getDiscount());
                 newItem.setAmount(originalItem.getAmount());
+                newItem.setGstCode(originalItem.getGstCode());
+                newItem.setTaxAmount(originalItem.getTaxAmount());
+
                 newItem.setRecurringInvoice(copy);
                 newItems.add(newItem);
             }
@@ -264,6 +267,9 @@ public class RecurringInvoiceService {
         newInvoice.setCustomerCurrency(c.getCurrency());
         newInvoice.setSalesPerson(template.getSalesPerson());
         newInvoice.setReference(template.getReference());
+        newInvoice.setTaxType(template.getTaxType());
+        newInvoice.setTax(template.getTax());
+        newInvoice.setSubtotal(template.getSubtotal());
 
         // 아이템 복사
         List<InvoiceItem> newItems = new ArrayList<>();
@@ -273,6 +279,9 @@ public class RecurringInvoiceService {
             item.setQuantity(tItem.getQuantity());
             item.setDiscount(tItem.getDiscount());
             item.setAmount(tItem.getAmount());
+            item.setGstCode(tItem.getGstCode());
+            item.setTaxAmount(tItem.getTaxAmount());
+
             item.setInvoice(newInvoice);
             newItems.add(item);
         }

@@ -41,6 +41,11 @@ public class Invoice {
     // --- 금액 정보 ---
     private BigDecimal total;      // 총 청구 금액
     private BigDecimal balanceDue; // 미수금 (남은 금액)
+    private BigDecimal subtotal; // 공급가액 합계
+    private BigDecimal tax;      // 세금 합계
+
+    @Enumerated(EnumType.STRING)
+    private TaxType taxType = TaxType.TAX_EXCLUSIVE; // 기본값: 세금 별도
 
     // --- 날짜 정보 ---
     private LocalDate issuedDate; // 발행일

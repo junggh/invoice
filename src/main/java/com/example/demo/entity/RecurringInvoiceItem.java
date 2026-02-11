@@ -16,7 +16,10 @@ public class RecurringInvoiceItem {
     // --- 아이템 상세 ---
     private Integer quantity;
     private BigDecimal discount;
+    @Enumerated(EnumType.STRING)
+    private GstCode gstCode = GstCode.GST_ON_INCOME; // 기본값: 10%
     private BigDecimal amount;
+    private BigDecimal taxAmount;
 
     // --- 연관 관계 ---
     @ManyToOne(fetch = FetchType.LAZY)

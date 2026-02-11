@@ -57,6 +57,11 @@ public class RecurringInvoice {
     private String salesPerson;
     private String reference;
     private BigDecimal total;
+    private BigDecimal subtotal; // 공급가액 합계
+    private BigDecimal tax;      // 세금 합계
+
+    @Enumerated(EnumType.STRING)
+    private TaxType taxType = TaxType.TAX_EXCLUSIVE; // 기본값: 세금 별도
 
     // --- 연관 관계 ---
     @ManyToOne(fetch = FetchType.LAZY)

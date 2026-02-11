@@ -92,40 +92,43 @@
         </div>
     </div>
 
-    <h3>Items</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 15px;">
+        <h3 style="margin: 0;">Items</h3>
+        <span style="font-size: 13px; color: #666;">
+            Amounts are (<span style="font-weight: 600; color: #333;"
+                               th:text="${invoice.taxType != null ? invoice.taxType.displayValue : '-'}">Tax Exclusive</span>)
+        </span>
+    </div>
     <table class="items-table">
         <thead>
         <tr>
             <th>Product</th>
             <th>Description</th>
-            <th class="width-sm text-right">Price</th>
-            <th class="width-sm text-right">Quantity</th>
-            <th class="width-sm text-right">Discount</th>
-            <th class="width-sm text-right">Amount</th>
-            <th style="width: 20px;"></th>
+            <th class="text-right">Price</th>
+            <th class="text-right">Quantity</th>
+            <th class="text-right">Discount</th>
+            <th>GST</th>
+            <th class="text-right">Amount</th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="invoiceItems">
         <tr th:each="item : ${invoice.items}" class="item-row">
-            <td>
-                <input type="text" th:value="${item.product.name}" style="width: 95%;" readonly>
-            </td>
-            <td>
-                <input type="text" th:value="${item.product.description}" style="width: 95%;" readonly>
-            </td>
-            <td>
-                <input type="number" th:value="${item.product.price}" class="text-right" style="width: 95%;" readonly>
-            </td>
-            <td>
-                <input type="number" th:value="${item.quantity}" class="text-right" style="width: 95%;" readonly>
-            </td>
-            <td>
-                <input type="number" th:value="${item.discount}" class="text-right" style="width: 95%;" readonly>
-            </td>
-            <td class="text-right" style="vertical-align: middle;">
+            <td th:text="${item.product.name}">Product Name</td>
+
+            <td th:text="${item.product.description}" style="color: #666;">Description</td>
+
+            <td class="text-right" th:text="${item.product.price}">0</td>
+
+            <td class="text-right" th:text="${item.quantity}">0</td>
+
+            <td class="text-right" th:text="${item.discount}">0</td>
+
+            <td th:text="${item.gstCode != null ? item.gstCode.displayValue : '-'}">GST on Income</td>
+
+            <td class="text-right" style="font-weight: 600;">
                 <span th:text="${item.amount}">0.00</span>
             </td>
-            <td></td> </tr>
+        </tr>
         </tbody>
     </table>
 

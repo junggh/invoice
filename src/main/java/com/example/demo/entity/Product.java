@@ -18,7 +18,6 @@ public class Product {
 
     // --- 가격 정보 ---
     private BigDecimal price;   // 기본 단가
-    private Double taxRate;     // 세율 (예: 0.1)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false)
