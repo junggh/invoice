@@ -43,4 +43,8 @@ public class Member {
 
     // 권한 (USER, ADMIN 등 - 추후 확장용)
     private String role;
+
+    // 구독 정보
+    private String subscriptionId; // PayPal에서 받은 구독 ID
+    private boolean isPremium;     // 유료 회원 여부
 }

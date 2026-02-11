@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ERP Service Subscription</title>
+    <link rel="stylesheet" th:href="@{/css/homestyle.css}">
+
+    <script src="https://www.paypal.com/sdk/js?client-id=AenizELkr11mR8bak__02MatabQdxIBpSIlFQyo41c1AiRHzP4kTlgr3-g6ZD8TWJznLnmSQntC_SQ0n&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
+
+    <style>
+        .subscription-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 30px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .price-tag {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+        }
+        .features {
+            text-align: left;
+            margin-bottom: 30px;
+            color: #666;
+        }
+        .subscribed-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #c3e6cb;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="/invoices" class="logo">Back</a>
+</div>
+
+<div class="subscription-container">
+    <h2>Basic Subscription</h2>
+
+    <div th:if="${isPremium}">
+        <div class="subscribed-message">
+            <h3>🎉 Already Basic!</h3>
+            <p>Using premium plan</p>
+        </div>
+        <br>
+        <a href="/invoices" class="btn">Main</a>
+    </div>
+    <div th:unless="${isPremium}">
+        <p>Invoice System</p>
+
+        <div class="price-tag">
+            USD$10.00 / m
+        </div>
+
+        <ul class="features">
+            <li>✅ Unlimited Invoice generation</li>
+        </ul>
+
+        <div id="paypal-button-container-P-89690056N4435424SNGF5RTQ"></div>
+    </div>
+</div>
+
+<script>
+    var isPremium = [[${isPremium}]];
+
+    if (!isPremium) {
+        // [변경됨] 새로운 Plan ID 상수화
+        const PLAN_ID = 'P-89690056N4435424SNGF5RTQ';
+        // [변경됨] 새로운 Container ID 상수화
+        const CONTAINER_ID = '#paypal-button-container-P-89690056N4435424SNGF5RTQ';
+
+        paypal.Buttons({
+            style: {
+                shape: 'rect',
+                color: 'blue',
+                layout: 'vertical',
+                label: 'subscribe'
+            },
+
+            // 구독 생성 요청
+            createSubscription: function (data, actions) {
+                return actions.subscription.create({
+                    plan_id: PLAN_ID
+                });
+            },
+
+            // 결제 승인(성공) 시 실행되는 함수 (백엔드 연동)
+            onApprove: function (data, actions) {
+                console.log('PayPal 구독 성공 ID:', data.subscriptionID);
+
+                // 우리 백엔드 서버로 "구독 완료" 정보 전송
+                fetch('/api/subscription/success', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // 'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content
+                    },
+                    body: JSON.stringify({
+                        subscriptionId: data.subscriptionID,
+                        planId: PLAN_ID
+                    })
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('구독이 성공적으로 완료되었습니다!');
+                            window.location.href = '/invoices'; // 메인 페이지로 이동
+                        } else {
+                            alert('결제는 되었으나 서버 등록 중 오류가 발생했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch Error:', error);
+                        alert('서버 통신 오류가 발생했습니다.');
+                    });
+            },
+
+            // 에러 처리
+            onError: function (err) {
+                console.error('PayPal Error:', err);
+                alert('결제 창을 불러오는 중 오류가 발생했습니다.');
+            }
+
+        }).render(CONTAINER_ID); // [변경됨] 새로운 ID에 렌더링
+    }
+</script>
+
+</body>
+</html>
