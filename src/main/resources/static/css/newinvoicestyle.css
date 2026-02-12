@@ -295,3 +295,10 @@ input[type=number] {
     color: white;
     border-color: var(--primary-color);
 }
+
+/* 상단 단축 버튼이 추가된 달력(has-quick-select)의 화살표 위치 조정 */
+.flatpickr-calendar.has-quick-select .flatpickr-prev-month,
+.flatpickr-calendar.has-quick-select .flatpickr-next-month {
+    /* 버튼 영역(약 50~55px)만큼 아래로 밀어냄 */
+    top: 50px !important;
+}

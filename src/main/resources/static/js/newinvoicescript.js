@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
             altFormat: "d/m/Y",
             allowInput: true,
             onReady: function(selectedDates, dateStr, instance) {
+                // [추가] CSS에서 화살표 위치를 조절할 수 있도록 식별 클래스 추가
+                instance.calendarContainer.classList.add('has-quick-select');
                 // 1. 버튼들을 담을 컨테이너 생성
                 const container = document.createElement("div");
                 container.className = "flatpickr-quick-select";
