@@ -70,4 +70,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
 
     // [연체 스케줄러] 미납 상태(UNPAID)이면서, 납기일이 지난 인보이스 찾기
     List<Invoice> findByStatusAndDueDateBefore(InvoiceStatus status, LocalDate date);
+
+    boolean existsByCompanyAndInvoiceNumber(Company company, String invoiceNumber);
 }

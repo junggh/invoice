@@ -276,4 +276,9 @@ public class InvoiceService {
                 })
                 .orElse("INV-00001");
     }
+
+    // [중복 체크] 해당 번호가 이미 존재하는지 확인
+    public boolean isInvoiceNumberExists(String invoiceNumber, Company company) {
+        return invoiceRepository.existsByCompanyAndInvoiceNumber(company, invoiceNumber);
+    }
 }

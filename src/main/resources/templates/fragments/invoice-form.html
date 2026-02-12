@@ -210,7 +210,13 @@
             </div>
         </div>
 
-        <div class="actions">
+        <div th:if="${warningMessage}"
+             style="color: #d9534f; background-color: #fdf7f7; border: 1px solid #d9534f;
+                    padding: 10px; margin-top: 20px; border-radius: 6px; text-align: center; font-weight: bold;">
+            <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${warningMessage}"></span>
+        </div>
+
+        <div class="actions" style="margin-top: 20px;">
             <button type="button" class="btn btn-secondary" onclick="openPaymentModal()" style="margin-right: auto;">Create payment link</button>
             <button type="button" onclick="location.href='/invoices'" class="btn btn-secondary">Cancel</button>
             <button type="submit" class="btn btn-primary" onclick="setStatusAndSubmit('DRAFT')">Save Changes</button>

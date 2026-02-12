@@ -280,6 +280,12 @@
             </div>
         </div>
 
+        <div th:if="${warningMessage}"
+             style="color: #d9534f; background-color: #fdf7f7; border: 1px solid #d9534f;
+                    padding: 10px; margin-top: 20px; border-radius: 6px; text-align: center; font-weight: bold;">
+            <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${warningMessage}"></span>
+        </div>
+
         <div class="actions">
             <button type="button" class="btn btn-secondary" style="margin-right: auto;">
                 Create payment link

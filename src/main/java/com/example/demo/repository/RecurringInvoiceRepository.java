@@ -34,4 +34,6 @@ public interface RecurringInvoiceRepository extends JpaRepository<RecurringInvoi
 
     // [자동생성] 상태가 ACTIVE이고, 다음 예정일이 오늘 이전(포함)인 템플릿 조회
     List<RecurringInvoice> findByStatusAndNextInvoiceDateLessThanEqual(RecurringStatus status, LocalDate date);
+
+    boolean existsByCompanyAndTemplateNumber(Company company, String templateNumber);
 }

@@ -96,7 +96,7 @@ public class InvoiceController {
             invoice = invoiceService.copyInvoice(copyId);
         } else {
             invoice = new Invoice();
-            invoice.setInvoiceNumber(invoiceService.generateNextInvoiceNumber(user.getMember().getCompany()));
+            invoice.setInvoiceNumber(invoiceService.generateNextInvoiceNumber(company));
             invoice.setStatus(InvoiceStatus.DRAFT);
             invoice.setIssuedDate(LocalDate.now());
             invoice.getItems().add(new InvoiceItem());
@@ -108,8 +108,43 @@ public class InvoiceController {
 
     // [등록] 처리
     @PostMapping("/api/invoices")
-    public String createInvoice(Invoice invoice, @AuthenticationPrincipal CustomUserDetails user) {
-        invoiceService.createInvoice(invoice, user.getMember());
+    public String createInvoice(Invoice invoice, Model model, @AuthenticationPrincipal CustomUserDetails user) {
+        Member member = user.getMember();
+        Company company = member.getCompany();
+
+        // 1. 중복 체크: 사용자가 보고 있는 번호가 그새 DB에 저장되었는지 확인
+        if (invoiceService.isInvoiceNumberExists(invoice.getInvoiceNumber(), company)) {
+
+            // 2. 새 번호 생성 (로직 다시 실행)
+            String nextNum = invoiceService.generateNextInvoiceNumber(company);
+            String oldNum = invoice.getInvoiceNumber();
+
+            // 3. 인보이스 객체에 새 번호 적용
+            invoice.setInvoiceNumber(nextNum);
+
+            // 4. 경고 메시지 & 데이터 유지 (저장 안 하고 폼으로 돌아감)
+            model.addAttribute("warningMessage",
+                    "Invoice # " + oldNum + " already exists, auto generated to " + nextNum);
+
+            // [추가] 리로드 시 Product 상세 정보(설명, 가격 등)가 소실되는 문제 해결
+            if (invoice.getItems() != null) {
+                for (InvoiceItem item : invoice.getItems()) {
+                    if (item.getProduct() != null && item.getProduct().getId() != null) {
+                        // DB에서 상품 정보를 다시 조회하여 Item에 채워넣음
+                        productRepository.findById(item.getProduct().getId())
+                                .ifPresent(item::setProduct);
+                    }
+                }
+            }
+
+            // 드롭다운 메뉴 등 폼 데이터 복구
+            prepareFormModel(model, invoice, company);
+
+            return "new-invoice"; // 리다이렉트가 아니라 뷰를 다시 보여줌 (입력값 유지됨)
+        }
+
+        // 중복이 아니면 정상 저장
+        invoiceService.createInvoice(invoice, member);
         return "redirect:/invoices";
     }
 
@@ -185,7 +220,7 @@ public class InvoiceController {
             template = recurringService.copyRecurringInvoice(copyId);
         } else {
             template = new RecurringInvoice();
-            template.setTemplateNumber(recurringService.generateNextTemplateNumber(user.getMember().getCompany()));
+            template.setTemplateNumber(recurringService.generateNextTemplateNumber(company));
             template.setStatus(RecurringStatus.DRAFT);
             template.setStartDate(LocalDate.now());
             template.getItems().add(new RecurringInvoiceItem());
@@ -197,8 +232,46 @@ public class InvoiceController {
 
     // [등록] 처리
     @PostMapping("/api/invoices/recurring")
-    public String createRecurringInvoice(RecurringInvoice template, @AuthenticationPrincipal CustomUserDetails user) {
-        recurringService.createRecurringInvoice(template, user.getMember());
+    public String createRecurringInvoice(RecurringInvoice template, Model model, @AuthenticationPrincipal CustomUserDetails user) {
+        Member member = user.getMember();
+        Company company = member.getCompany();
+
+        // 1. 중복 체크: 사용자가 보고 있는 번호가 이미 DB에 있는지 확인
+        if (recurringService.isTemplateNumberExists(template.getTemplateNumber(), company)) {
+
+            // 2. 새 번호 생성
+            String nextNum = recurringService.generateNextTemplateNumber(company);
+            String oldNum = template.getTemplateNumber();
+
+            // 3. 템플릿 객체에 새 번호 적용
+            template.setTemplateNumber(nextNum);
+
+            // 4. 경고 메시지 설정
+            model.addAttribute("warningMessage",
+                    "Template # " + oldNum + " already exists, auto generated to " + nextNum);
+
+            // Product, Contact 정보 복구
+            if (template.getItems() != null) {
+                for (RecurringInvoiceItem item : template.getItems()) {
+                    if (item.getProduct() != null && item.getProduct().getId() != null) {
+                        productRepository.findById(item.getProduct().getId())
+                                .ifPresent(item::setProduct);
+                    }
+                }
+            }
+            if (template.getContact() != null && template.getContact().getId() != null) {
+                contactRepository.findById(template.getContact().getId())
+                        .ifPresent(template::setContact);
+            }
+
+            // 6. 폼 데이터 복구 (드롭다운 등)
+            prepareFormModel(model, template, company);
+
+            return "new-template"; // 뷰 다시 렌더링 (입력값 유지)
+        }
+
+        // 중복이 아니면 정상 저장
+        recurringService.createRecurringInvoice(template, member);
         return "redirect:/invoices?status=Recurring";
     }
 

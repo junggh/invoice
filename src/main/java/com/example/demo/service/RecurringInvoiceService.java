@@ -291,4 +291,9 @@ public class RecurringInvoiceService {
 
         invoiceService.autoCreateInvoice(newInvoice);
     }
+
+    // [추가] 템플릿 번호 중복 체크
+    public boolean isTemplateNumberExists(String templateNumber, Company company) {
+        return recurringRepository.existsByCompanyAndTemplateNumber(company, templateNumber);
+    }
 }
