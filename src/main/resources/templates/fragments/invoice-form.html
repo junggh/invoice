@@ -211,13 +211,70 @@
         </div>
 
         <div class="actions">
-            <button type="button" class="btn btn-secondary" style="margin-right: auto;">Create payment link</button>
+            <button type="button" class="btn btn-secondary" onclick="openPaymentModal()" style="margin-right: auto;">Create payment link</button>
             <button type="button" onclick="location.href='/invoices'" class="btn btn-secondary">Cancel</button>
             <button type="submit" class="btn btn-primary" onclick="setStatusAndSubmit('DRAFT')">Save Changes</button>
             <button type="submit" class="btn btn-primary" onclick="setStatusAndSubmit('IN_REVIEW')">Save & Submit</button>
         </div>
-
     </form>
+
+    <div id="paymentLinkModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create payment link</h3>
+                <span class="close-btn" onclick="closePaymentModal()">&times;</span>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Customer <span style="color:red">*</span></label>
+                    <input type="text" id="modalCustomerName" readonly>
+                    <input type="hidden" id="modalCustomerId">
+                </div>
+
+                <div class="form-group">
+                    <label>Note</label>
+                    <input type="text" id="modalNote" placeholder="Enter a note for the customer">
+                </div>
+
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 0;">
+                    <div class="form-group">
+                        <label>Amount <span style="color:red">*</span></label>
+                        <input type="text" id="modalAmount" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Due date</label>
+                        <input type="text" id="modalDueDate" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Online payments <span style="color:red">*</span></label>
+                    <select id="modalPaymentMethod">
+                        <option value="PAYPAL">PayPal Checkout</option>
+                    </select>
+                </div>
+
+                <div id="generatedLinkArea" class="link-result-area">
+                    <label style="color: #007bff; font-weight: bold;">Generated Link:</label>
+                    <div class="link-box">
+                        <input type="text" id="resultLink" readonly>
+                        <button type="button" class="btn btn-secondary" onclick="copyLink()" style="padding: 0 15px; font-size: 12px;">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="left-action">
+                    <a href="#" style="font-size: 13px; color: #00A3FF; text-decoration: none;">⚙ Setting</a>
+                </div>
+                <div class="right-actions" style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">Cancel</button>
+                    <button type="button" id="btnGenerate" class="btn btn-primary">Create payment link</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>

@@ -433,4 +433,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 2. 각 행의 계산이 끝난 후 전체 합계 계산
     window.calculateTotal();
+
+    // ============================================================
+    // 6. Payment Link Modal Logic [신규 추가]
+    // ============================================================
+
+    // 모달 열기
+    window.openPaymentModal = function() {
+        // 1. 현재 폼 데이터 가져오기
+        const contactSelect = document.getElementById('contactSelect');
+        let customerName = '';
+        let customerId = '';
+
+        // Select2 값을 안전하게 가져오기 (jQuery 사용)
+        if (typeof $ !== 'undefined') {
+            const data = $('#contactSelect').select2('data')[0];
+            if (data && data.element) {
+                customerName = data.text; // "회사명 (이름)"
+                customerId = data.id;
+            } else if (contactSelect.options.length > 0 && contactSelect.selectedIndex >= 0) {
+                 // Select2가 아직 로드 안되었거나 fallback
+                const opt = contactSelect.options[contactSelect.selectedIndex];
+                customerName = opt.text;
+                customerId = opt.value;
+            }
+        }
+
+        if (!customerId) {
+            alert("Please select a Client first.");
+            return;
+        }
+
+        const totalAmount = document.getElementById('totalAmount').textContent;
+        const dueDate = document.querySelector('input[name="dueDate"]').value;
+
+        // 2. 모달에 값 주입
+        document.getElementById('modalCustomerName').value = customerName;
+        document.getElementById('modalCustomerId').value = customerId;
+        document.getElementById('modalAmount').value = totalAmount;
+        document.getElementById('modalDueDate').value = dueDate;
+        document.getElementById('modalNote').value = ''; // 노트 초기화
+
+        // 3. UI 초기화
+        document.getElementById('generatedLinkArea').style.display = 'none';
+        document.getElementById('resultLink').value = '';
+        const btn = document.getElementById('btnGenerate');
+        btn.disabled = false;
+        btn.textContent = 'Create payment link';
+
+        // 4. 모달 보이기
+        document.getElementById('paymentLinkModal').style.display = 'flex';
+    };
+
+    // 모달 닫기
+    window.closePaymentModal = function() {
+        document.getElementById('paymentLinkModal').style.display = 'none';
+    };
+
+    // 모달 배경 클릭 시 닫기
+    window.onclick = function(event) {
+        const modal = document.getElementById('paymentLinkModal');
+        if (event.target == modal) {
+            window.closePaymentModal();
+        }
+        // 기존 드롭다운 닫기 로직 유지
+        if (!event.target.matches('.btn-secondary') && !event.target.closest('.dropdown-content')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    };
 });
