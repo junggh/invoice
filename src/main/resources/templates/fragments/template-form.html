@@ -60,6 +60,12 @@
 
                 <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                     <div class="form-group">
+                        <label for="frequencyInterval">Interval <span style="color:red">*</span></label>
+                        <input type="number" id="frequencyInterval" name="frequencyInterval"
+                               th:value="${invoice.frequencyInterval}" min="1" required>
+                    </div>
+
+                    <div class="form-group">
                         <label for="frequency">Frequency <span style="color:red">*</span></label>
                         <select id="frequency" name="frequency" required style="width: 100%; height: 42px;"> <option value="" disabled th:selected="${invoice.frequency == null}">Select</option>
                             <option value="DAILY" th:selected="${invoice.frequency != null and invoice.frequency.name() == 'DAILY'}">Daily</option>
@@ -67,12 +73,6 @@
                             <option value="MONTHLY" th:selected="${invoice.frequency != null and invoice.frequency.name() == 'MONTHLY'}">Monthly</option>
                             <option value="YEARLY" th:selected="${invoice.frequency != null and invoice.frequency.name() == 'YEARLY'}">Yearly</option>
                         </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="frequencyInterval">Interval <span style="color:red">*</span></label>
-                        <input type="number" id="frequencyInterval" name="frequencyInterval"
-                               th:value="${invoice.frequencyInterval}" min="1" required>
                     </div>
 
                     <div class="form-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
@@ -109,7 +109,7 @@
                                th:value="${invoice.startDate}" required placeholder="dd/MM/yyyy">
                     </div>
                     <div class="form-group">
-                        <label for="dueDateDays">Due Date (+Days)<span style="color:red">*</span></label>
+                        <label for="dueDateDays">Due Date (+Days After)<span style="color:red">*</span></label>
                         <input type="number" id="dueDateDays" name="dueDateDays"
                                th:value="${invoice.dueDateDays}" required>
                     </div>
