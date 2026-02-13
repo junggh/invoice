@@ -3,9 +3,9 @@ package com.example.demo.controller;
 import com.example.demo.dto.AbnApiResponse;
 import com.example.demo.dto.SignupForm;
 import com.example.demo.entity.Timezone;
-import com.example.demo.repository.CompanyRepository;
 import com.example.demo.service.AbnLookupService;
 import com.example.demo.service.AuthService;
+import com.example.demo.service.EmailService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +15,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Month;
+import java.util.Map;
+import java.util.Random;
 
 @Controller
 @RequiredArgsConstructor
@@ -22,6 +24,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final AbnLookupService abnLookupService;
+    private final EmailService emailService;
 
     // 회원가입 페이지 이동
     @GetMapping("/signup")
@@ -72,6 +75,69 @@ public class AuthController {
 
         // 성공 시 JSON 객체 반환
         return ResponseEntity.ok(result);
+    }
+
+    // 1. 인증번호 발송 API
+    @PostMapping("/api/auth/send-verification")
+    public ResponseEntity<?> sendVerification(@RequestParam String email, HttpSession session) {
+        // (1) 6자리 랜덤 코드 생성
+        String code = String.valueOf(new Random().nextInt(900000) + 100000);
+
+        // (2) 세션에 저장 (유효시간 검증용)
+        session.setAttribute("verifyCode", code);
+        session.setAttribute("verifyEmail", email);
+        // 현재시간 + 3분(180초 * 1000ms)
+        session.setAttribute("verifyExpiry", System.currentTimeMillis() + (3 * 60 * 1000));
+
+        // (3) 이메일 본문 생성 (HTML)
+        String subject = "[Service Name] Your verification code";
+        String content = "<div style='text-align:center; border:1px solid #ddd; padding:20px;'>"
+                + "<h2>Your Verification Code</h2>"
+                + "<h1 style='color:#00A3FF; letter-spacing:5px;'>" + code + "</h1>"
+                + "<p>This code will expire in 3 minutes.</p>"
+                + "</div>";
+
+        // (4) 발송
+        emailService.sendEmail(email, subject, content);
+
+        return ResponseEntity.ok().body(Map.of("message", "Sent successfully"));
+    }
+
+    // 2. 인증번호 확인 API
+    @PostMapping("/api/auth/verify-code")
+    public ResponseEntity<Boolean> verifyCode(@RequestParam String email,
+                                              @RequestParam String code,
+                                              HttpSession session) {
+
+        String savedCode = (String) session.getAttribute("verifyCode");
+        String savedEmail = (String) session.getAttribute("verifyEmail");
+        Long expiryTime = (Long) session.getAttribute("verifyExpiry");
+
+        // (1) 세션에 정보가 없는 경우 (만료되었거나 발송 안 함)
+        if (savedCode == null || expiryTime == null) {
+            return ResponseEntity.ok(false);
+        }
+
+        // (2) 이메일 불일치
+        if (!email.equals(savedEmail)) {
+            return ResponseEntity.ok(false);
+        }
+
+        // (3) 시간 만료 확인 (현재시간이 만료시간보다 크면 실패)
+        if (System.currentTimeMillis() > expiryTime) {
+            session.removeAttribute("verifyCode"); // 만료된 코드 삭제
+            return ResponseEntity.ok(false);
+        }
+
+        // (4) 코드 일치 확인
+        if (savedCode.equals(code)) {
+            // 인증 성공! 세션에서 코드 삭제 (재사용 방지)
+            session.removeAttribute("verifyCode");
+            session.removeAttribute("verifyExpiry");
+            return ResponseEntity.ok(true);
+        }
+
+        return ResponseEntity.ok(false);
     }
 
     // 이메일 중복 확인 API

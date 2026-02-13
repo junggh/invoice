@@ -17,3 +17,19 @@ spring:
     properties:
       hibernate:
         format_sql: true # 실행되는 SQL을 보기 좋게 정렬
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: zenibooksnewzen@gmail.com  # [변경] 본인 구글 이메일
+    password: mabjckymmnixwtal   # [변경] 발급받은 16자리 앱 비밀번호 (띄어쓰기 없이 붙여서 입력 권장)
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
