@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.AbnApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -14,11 +15,13 @@ public class AbnLookupService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // ★ 발급받은 GUID를 여기에 넣으세요
-    private static final String GUID = "4ce52402-df10-43a4-94e2-75c50807d9ef";
+    @Value("${abn.guid}")
+    private String guid;
+    //private static final String GUID = "4ce52402-df10-43a4-94e2-75c50807d9ef";
 
     public AbnApiResponse lookupAbn(String abn) {
         // 호주 정부 API URL (callback 파라미터를 빼면 순수 JSON이 나옵니다)
-        String url = "https://abr.business.gov.au/json/AbnDetails.aspx?abn=" + abn + "&guid=" + GUID + "&callback=";
+        String url = "https://abr.business.gov.au/json/AbnDetails.aspx?abn=" + abn + "&guid=" + guid + "&callback=";
 
         try {
             // 1. API 호출 (문자열로 받음)

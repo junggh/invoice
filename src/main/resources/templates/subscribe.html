@@ -8,27 +8,32 @@
     <script src="https://www.paypal.com/sdk/js?client-id=AenizELkr11mR8bak__02MatabQdxIBpSIlFQyo41c1AiRHzP4kTlgr3-g6ZD8TWJznLnmSQntC_SQ0n&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
 
     <style>
-        .subscription-container {
-            max-width: 500px;
+        .page-container {
+            max-width: 1200px;
             margin: 50px auto;
+            text-align: center;
+        }
+        .plans-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .plan-card {
+            width: 300px;
             padding: 30px;
             border: 1px solid #ddd;
             border-radius: 10px;
-            text-align: center;
             background-color: #fff;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-        .price-tag {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-            margin: 20px 0;
-        }
-        .features {
-            text-align: left;
-            margin-bottom: 30px;
-            color: #666;
-        }
+        .plan-title { font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #333; }
+        .price-tag { font-size: 28px; font-weight: bold; color: #007bff; margin: 20px 0; }
+        .features { text-align: left; margin-bottom: 30px; color: #666; list-style: none; padding: 0; }
+        .features li { margin-bottom: 10px; }
         .subscribed-message {
             background-color: #d4edda;
             color: #155724;
@@ -36,6 +41,9 @@
             border-radius: 5px;
             border: 1px solid #c3e6cb;
             margin-top: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
     </style>
 </head>
@@ -45,94 +53,104 @@
     <a href="/invoices" class="logo">Back</a>
 </div>
 
-<div class="subscription-container">
-    <h2>Basic Subscription</h2>
+<div class="page-container">
+    <h2>Choose Your Plan</h2>
 
-    <div th:if="${isPremium}">
+    <div th:if="${currentPlan != null and currentPlan.name() == 'PRO'}">
         <div class="subscribed-message">
-            <h3>🎉 Already Basic!</h3>
-            <p>Using premium plan</p>
+            <h3>🎉 You are a PRO member!</h3>
+            <p>You have access to all features.</p>
         </div>
         <br>
-        <a href="/invoices" class="btn">Main</a>
+        <a href="/invoices" class="btn">Go to Dashboard</a>
     </div>
-    <div th:unless="${isPremium}">
-        <p>Invoice System</p>
 
-        <div class="price-tag">
-            USD$10.00 / m
+    <div class="plans-wrapper" th:unless="${currentPlan != null and currentPlan.name() == 'PRO'}">
+
+        <div class="plan-card" th:if="${currentPlan == null}">
+            <div class="plan-title">Lite</div>
+            <div class="price-tag">$5.00 / m</div>
+            <ul class="features">
+                <li>✅ Basic Access</li>
+                <li>✅ Single User</li>
+            </ul>
+            <div id="paypal-button-container-LITE"></div>
         </div>
 
-        <ul class="features">
-            <li>✅ Unlimited Invoice generation</li>
-        </ul>
+        <div class="plan-card" th:if="${currentPlan == null or currentPlan.name() == 'LITE'}">
+            <div class="plan-title">Basic</div>
+            <div class="price-tag">$10.00 / m</div>
+            <ul class="features">
+                <li>✅ Unlimited Invoices</li>
+                <li>✅ Company-wide Access</li>
+            </ul>
+            <div id="paypal-button-container-BASIC"></div>
+        </div>
 
-        <div id="paypal-button-container-P-89690056N4435424SNGF5RTQ"></div>
+        <div class="plan-card">
+            <div class="plan-title">Pro</div>
+            <div class="price-tag">$20.00 / m</div>
+            <ul class="features">
+                <li>✅ All Basic Features</li>
+                <li>✅ Advanced Reports</li>
+                <li>✅ Priority Support</li>
+            </ul>
+            <div id="paypal-button-container-PRO"></div>
+        </div>
+
     </div>
 </div>
 
 <script>
-    var isPremium = [[${isPremium}]];
+    var currentPlan = /*[[${currentPlan}]]*/ null;
 
-    if (!isPremium) {
-        // [변경됨] 새로운 Plan ID 상수화
-        const PLAN_ID = 'P-89690056N4435424SNGF5RTQ';
-        // [변경됨] 새로운 Container ID 상수화
-        const CONTAINER_ID = '#paypal-button-container-P-89690056N4435424SNGF5RTQ';
+    // 플랜별 ID 상수
+    const PLANS = {
+        LITE:  'P-48N26722YD0754634NGHLV5Y',
+        BASIC: 'P-89690056N4435424SNGF5RTQ',
+        PRO:   'P-1BY31527JL143202MNGHLXEQ'
+    };
 
-        paypal.Buttons({
-            style: {
-                shape: 'rect',
-                color: 'blue',
-                layout: 'vertical',
-                label: 'subscribe'
-            },
+    // 버튼 렌더링 함수
+    function renderPayPalButton(containerId, planId) {
+        // 화면에 해당 컨테이너(div)가 존재할 때만 버튼 렌더링
+        if (document.getElementById(containerId)) {
+            paypal.Buttons({
+                style: { shape: 'rect', color: 'blue', layout: 'vertical', label: 'subscribe' },
+                createSubscription: function (data, actions) {
+                    return actions.subscription.create({ plan_id: planId });
+                },
+                onApprove: function (data, actions) {
+                    console.log('PayPal 구독 성공:', data.subscriptionID);
 
-            // 구독 생성 요청
-            createSubscription: function (data, actions) {
-                return actions.subscription.create({
-                    plan_id: PLAN_ID
-                });
-            },
-
-            // 결제 승인(성공) 시 실행되는 함수 (백엔드 연동)
-            onApprove: function (data, actions) {
-                console.log('PayPal 구독 성공 ID:', data.subscriptionID);
-
-                // 우리 백엔드 서버로 "구독 완료" 정보 전송
-                fetch('/api/subscription/success', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                        // 'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content
-                    },
-                    body: JSON.stringify({
-                        subscriptionId: data.subscriptionID,
-                        planId: PLAN_ID
+                    // 서버로 데이터 전송
+                    fetch('/api/subscription/success', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            subscriptionId: data.subscriptionID,
+                            planId: planId
+                        })
                     })
-                })
                     .then(response => {
                         if (response.ok) {
                             alert('구독이 성공적으로 완료되었습니다!');
-                            window.location.href = '/invoices'; // 메인 페이지로 이동
+                            window.location.href = '/invoices';
                         } else {
-                            alert('결제는 되었으나 서버 등록 중 오류가 발생했습니다.');
+                            alert('서버 등록 중 오류가 발생했습니다.');
                         }
                     })
-                    .catch(error => {
-                        console.error('Fetch Error:', error);
-                        alert('서버 통신 오류가 발생했습니다.');
-                    });
-            },
-
-            // 에러 처리
-            onError: function (err) {
-                console.error('PayPal Error:', err);
-                alert('결제 창을 불러오는 중 오류가 발생했습니다.');
-            }
-
-        }).render(CONTAINER_ID); // [변경됨] 새로운 ID에 렌더링
+                    .catch(error => { console.error('Error:', error); alert('통신 오류 발생'); });
+                },
+                onError: function (err) { console.error('PayPal Error:', err); }
+            }).render('#' + containerId);
+        }
     }
+
+    // 각 플랜 버튼 렌더링 시도 (HTML에 div가 없으면 무시됨)
+    renderPayPalButton('paypal-button-container-LITE', PLANS.LITE);
+    renderPayPalButton('paypal-button-container-BASIC', PLANS.BASIC);
+    renderPayPalButton('paypal-button-container-PRO', PLANS.PRO);
 </script>
 
 </body>

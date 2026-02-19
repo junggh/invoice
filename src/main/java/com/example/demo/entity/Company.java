@@ -45,4 +45,13 @@ public class Company {
     private String companyPhoneCountryCode;
     private String companyPhoneNumber; // Phone (회사 대표)
     private String fax;                // Fax
+
+    // --- 구독 및 결제 정보 ---
+    // 초기 생성 시에는 null (결제 안 함)
+    // 결제 후 LITE, BASIC, PRO 중 하나로 설정됨
+    @Enumerated(EnumType.STRING)
+    private PlanType plan;
+
+    // PayPal 구독 ID (결제 전에는 null)
+    private String subscriptionId;
 }

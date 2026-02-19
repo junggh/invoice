@@ -3,6 +3,7 @@ package com.example.demo.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 public class EmailService {
 
     private final JavaMailSender javaMailSender;
+    @Value("${mail.user}")
+    private String senderEmail;
 
     @Async // 비동기 처리 (이메일 보내느라 화면이 멈추지 않게 함)
     public void sendEmail(String to, String subject, String text) {
@@ -23,7 +26,7 @@ public class EmailService {
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(text, true); // true = HTML 허용
-            helper.setFrom("zenibooksnewzen@gmail.com"); // [변경] 보내는 사람 (설정파일과 동일하게)
+            helper.setFrom(senderEmail); // [변경] 보내는 사람 (설정파일과 동일하게)
 
             javaMailSender.send(message);
         } catch (MessagingException e) {
