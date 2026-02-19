@@ -4,285 +4,295 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice Dashboard</title>
-    <link rel="stylesheet" href="/css/homestyle.css">
+    <link rel="stylesheet" th:href="@{/css/homestyle.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+<div th:replace="~{fragments/nav :: sidebar}"></div>
 
-<div class="container">
-    <h1>Invoice      <a href="/logout">Logout</a></h1>
+<div class="main-wrapper">
 
+    <div th:replace="~{fragments/nav :: topbar}"></div>
 
-    <div class="tabs-container">
-        <ul class="tabs">
-            <li><a th:href="@{/invoices(status='Overview', days=${selectedDays})}"
-                   th:classappend="${currentStatus == 'Overview'} ? 'active'">Overview</a></li>
-            <li><a th:href="@{/invoices(status='DRAFT', days=${selectedDays})}"
-                   th:classappend="${currentStatus == 'DRAFT'} ? 'active'">Draft</a></li>
-            <li><a th:href="@{/invoices(status='IN_REVIEW', days=${selectedDays})}"
-                   th:classappend="${currentStatus == 'IN_REVIEW'} ? 'active'">In Review</a></li>
-            <li><a th:href="@{/invoices(status='APPROVED', days=${selectedDays})}"
-                   th:classappend="${currentStatus == 'APPROVED'} ? 'active'">Approved</a></li>
-            <li><a th:href="@{/invoices(status='UNPAID', days=${selectedDays})}"
-                   th:classappend="${currentStatus == 'UNPAID'} ? 'active'">Unpaid</a></li>
-            <li><a th:href="@{/invoices(status='PAID', days=${selectedDays})}"
-                   th:classappend="${currentStatus == 'PAID'} ? 'active'">Paid</a></li>
-            <li><a th:href="@{/invoices(status='OVERDUE', days=${selectedDays})}"
-                   th:classappend="${currentStatus == 'OVERDUE'} ? 'active'">Overdue</a></li>
-            <li><a th:href="@{/invoices(status='Recurring', days=${selectedDays})}"
-                   th:classappend="${currentStatus == 'Recurring'} ? 'active'">Recurring</a></li>
-        </ul>
+    <div class="content-area">
 
-        <div class="dropdown" style="margin-bottom: 10px;">
-            <button class="btn btn-primary dropbtn">
-                New <i class="bi bi-caret-down-fill" style="font-size: 10px; margin-left: 5px; margin-top: 3px;"></i>
-            </button>
-            <div class="dropdown-content">
-                <a href="/invoices/new">Invoice</a>
-                <a href="/invoices/new/recurring">Recurring Invoice</a>
-            </div>
-        </div>
-    </div>
+        <div class="container">
+            <h1>Invoice</h1>
 
-    <div th:if="${currentStatus == 'Overview'}" class="dashboard-header">
-        <div class="summary-metrics">
-            <div class="metric-item">
-                <label>Total</label>
-                <span th:text="'A$' + ${#numbers.formatDecimal(totalAmount, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
-            </div>
-            <div class="metric-item">
-                <a th:href="@{/invoices(status='UNPAID', days=${selectedDays})}" style="text-decoration: none; display: block; cursor: pointer; color: inherit;">
-                    <label style="cursor: pointer;">Balance Due</label>
-                    <span th:text="'A$' + ${#numbers.formatDecimal(totalBalance, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
-                </a>
-            </div>
-            <div class="metric-item">
-                <a th:href="@{/invoices(status='OVERDUE', days=${selectedDays})}" style="text-decoration: none; display: block; cursor: pointer;">
-                    <label class="text-red" style="cursor: pointer;">Overdue</label>
-                    <span class="text-red" th:text="'A$' + ${#numbers.formatDecimal(totalOverdue, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
-                </a>
-            </div>
-        </div>
+            <div class="tabs-container">
+                <ul class="tabs">
+                    <li><a th:href="@{/invoices(status='Overview', days=${selectedDays})}"
+                           th:classappend="${currentStatus == 'Overview'} ? 'active'">Overview</a></li>
+                    <li><a th:href="@{/invoices(status='DRAFT', days=${selectedDays})}"
+                           th:classappend="${currentStatus == 'DRAFT'} ? 'active'">Draft</a></li>
+                    <li><a th:href="@{/invoices(status='IN_REVIEW', days=${selectedDays})}"
+                           th:classappend="${currentStatus == 'IN_REVIEW'} ? 'active'">In Review</a></li>
+                    <li><a th:href="@{/invoices(status='APPROVED', days=${selectedDays})}"
+                           th:classappend="${currentStatus == 'APPROVED'} ? 'active'">Approved</a></li>
+                    <li><a th:href="@{/invoices(status='UNPAID', days=${selectedDays})}"
+                           th:classappend="${currentStatus == 'UNPAID'} ? 'active'">Unpaid</a></li>
+                    <li><a th:href="@{/invoices(status='PAID', days=${selectedDays})}"
+                           th:classappend="${currentStatus == 'PAID'} ? 'active'">Paid</a></li>
+                    <li><a th:href="@{/invoices(status='OVERDUE', days=${selectedDays})}"
+                           th:classappend="${currentStatus == 'OVERDUE'} ? 'active'">Overdue</a></li>
+                    <li><a th:href="@{/invoices(status='Recurring', days=${selectedDays})}"
+                           th:classappend="${currentStatus == 'Recurring'} ? 'active'">Recurring</a></li>
+                </ul>
 
-        <div class="period-selector-wrapper">
-            <select id="periodSelect" class="period-select" onchange="changePeriod()">
-                <option value="30" th:selected="${selectedDays == 30}">Last 30 Days</option>
-                <option value="60" th:selected="${selectedDays == 60}">Last 60 Days</option>
-                <option value="365" th:selected="${selectedDays == 365}">Last 365 Days</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="toolbar">
-        <div class="search-bar" style="display: flex; gap: 5px;">
-            <input type="text" id="searchInput" placeholder="Search by name, invoice #, company...">
-            <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays})}"
-               class="btn btn-icon"
-               title="Reset Filters & Sort"
-               style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-arrow-counterclockwise"></i>
-            </a>
-
-            <div class="dropdown dropdown-click" th:if="${currentStatus == 'Recurring'}" style="position: relative;">
-                <button type="button" class="btn btn-icon" onclick="toggleFilterDropdown(event)" title="Filter Status"
-                        th:style="${recurringStatus != null and recurringStatus != 'ALL'} ? 'border-color: var(--primary-color); background-color: #f0f9ff;' : ''">
-                    <i class="bi bi-funnel-fill"></i>
-                </button>
-
-                <div id="filterDropdown" class="dropdown-content filter-dropdown-content">
-                    <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='ALL')}"
-                       th:style="${recurringStatus == 'ALL' or recurringStatus == null} ? 'color: var(--primary-color); font-weight:bold;' : ''">All</a>
-
-                    <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='DRAFT')}"
-                       th:style="${recurringStatus == 'DRAFT'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Draft</a>
-
-                    <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='IN_REVIEW')}"
-                       th:style="${recurringStatus == 'IN_REVIEW'} ? 'color: var(--primary-color); font-weight:bold;' : ''">In Review</a>
-
-                    <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='ACTIVE')}"
-                       th:style="${recurringStatus == 'ACTIVE'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Active</a>
-
-                    <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='COMPLETED')}"
-                       th:style="${recurringStatus == 'COMPLETED'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Completed</a>
+                <div class="dropdown" style="margin-bottom: 10px;">
+                    <button class="btn btn-primary dropbtn">
+                        New <i class="bi bi-caret-down-fill" style="font-size: 10px; margin-left: 5px; margin-top: 3px;"></i>
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="/invoices/new">Invoice</a>
+                        <a href="/invoices/new/recurring">Recurring Invoice</a>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="action-buttons">
-            <button class="btn btn-primary" th:if="${currentStatus == 'PAID'}">New Credit Note</button>
-            <button class="btn btn-primary" th:if="${currentStatus == 'PAID'}">Send receipt</button>
 
-            <button type="button" class="btn btn-primary" onclick="submitSelected()" th:if="${currentStatus == 'DRAFT'}">
-                Submit
-            </button>
+            <div th:if="${currentStatus == 'Overview'}" class="dashboard-header">
+                <div class="summary-metrics">
+                    <div class="metric-item">
+                        <label>Total</label>
+                        <span th:text="'A$' + ${#numbers.formatDecimal(totalAmount, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
+                    </div>
+                    <div class="metric-item">
+                        <a th:href="@{/invoices(status='UNPAID', days=${selectedDays})}" style="text-decoration: none; display: block; cursor: pointer; color: inherit;">
+                            <label style="cursor: pointer;">Balance Due</label>
+                            <span th:text="'A$' + ${#numbers.formatDecimal(totalBalance, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
+                        </a>
+                    </div>
+                    <div class="metric-item">
+                        <a th:href="@{/invoices(status='OVERDUE', days=${selectedDays})}" style="text-decoration: none; display: block; cursor: pointer;">
+                            <label class="text-red" style="cursor: pointer;">Overdue</label>
+                            <span class="text-red" th:text="'A$' + ${#numbers.formatDecimal(totalOverdue, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
+                        </a>
+                    </div>
+                </div>
 
-            <button type="button" class="btn btn-icon" onclick="approveSelected()" title="Approve" th:if="${currentStatus == 'IN_REVIEW'}">
-                <i class="bi bi-check-lg"></i>
-            </button>
+                <div class="period-selector-wrapper">
+                    <select id="periodSelect" class="period-select" onchange="changePeriod()">
+                        <option value="30" th:selected="${selectedDays == 30}">Last 30 Days</option>
+                        <option value="60" th:selected="${selectedDays == 60}">Last 60 Days</option>
+                        <option value="365" th:selected="${selectedDays == 365}">Last 365 Days</option>
+                    </select>
+                </div>
+            </div>
 
-            <button type="button" class="btn btn-icon" onclick="approveSelected()" title="Approve" th:if="${currentStatus == 'Recurring'}">
-                <i class="bi bi-play-fill"></i>
-            </button>
+            <div class="toolbar">
+                <div class="search-bar" style="display: flex; gap: 5px;">
+                    <input type="text" id="searchInput" placeholder="Search by name, invoice #, company...">
+                    <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays})}"
+                       class="btn btn-icon"
+                       title="Reset Filters & Sort"
+                       style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
 
-            <button type="button" class="btn btn-icon" onclick="stopRecurring()" title="Stop Recurring" th:if="${currentStatus == 'Recurring'}">
-                <i class="bi bi-stop-fill"></i>
-            </button>
+                    <div class="dropdown dropdown-click" th:if="${currentStatus == 'Recurring'}" style="position: relative;">
+                        <button type="button" class="btn btn-icon" onclick="toggleFilterDropdown(event)" title="Filter Status"
+                                th:style="${recurringStatus != null and recurringStatus != 'ALL'} ? 'border-color: var(--primary-color); background-color: #f0f9ff;' : ''">
+                            <i class="bi bi-funnel-fill"></i>
+                        </button>
 
-            <button type="button" class="btn btn-icon" onclick="deleteSelected()" title="Delete" th:if="${currentStatus == 'DRAFT' or currentStatus == 'IN_REVIEW' or currentStatus == 'APPROVED' or currentStatus == 'Recurring'}">
-                <i class="bi bi-trash3"></i>
-            </button>
+                        <div id="filterDropdown" class="dropdown-content filter-dropdown-content">
+                            <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='ALL')}"
+                               th:style="${recurringStatus == 'ALL' or recurringStatus == null} ? 'color: var(--primary-color); font-weight:bold;' : ''">All</a>
 
-            <button type="button" class="btn btn-icon" onclick="copySelected()" title="Copy Invoice" th:if="${currentStatus != 'Overview'}">
-                <i class="bi bi-files"></i>
-            </button>
+                            <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='DRAFT')}"
+                               th:style="${recurringStatus == 'DRAFT'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Draft</a>
 
-            <button type="button" class="btn btn-icon" title="Show Payment Link" th:if="${currentStatus != 'Overview' and currentStatus != 'DRAFT' and currentStatus != 'PAID'}">
-                <i class="bi bi-link-45deg"></i>
-            </button>
+                            <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='IN_REVIEW')}"
+                               th:style="${recurringStatus == 'IN_REVIEW'} ? 'color: var(--primary-color); font-weight:bold;' : ''">In Review</a>
 
-            <button type="button" class="btn btn-icon" title="Send E-Mail" th:if="${currentStatus != 'Overview' and currentStatus != 'DRAFT' and currentStatus != 'PAID'}">
-                <i class="bi bi-send-fill"></i>
-            </button>
+                            <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='ACTIVE')}"
+                               th:style="${recurringStatus == 'ACTIVE'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Active</a>
 
-            <button type="button" class="btn btn-icon" title="Download PDF" th:if="${currentStatus != 'Overview'}">
-                <i class="bi bi-file-earmark-pdf"></i>
-            </button>
+                            <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='COMPLETED')}"
+                               th:style="${recurringStatus == 'COMPLETED'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Completed</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" th:if="${currentStatus == 'PAID'}">New Credit Note</button>
+                    <button class="btn btn-primary" th:if="${currentStatus == 'PAID'}">Send receipt</button>
 
-            <button type="button" class="btn btn-icon" title="Print" th:if="${currentStatus != 'Overview'}">
-                <i class="bi bi-printer"></i>
-            </button>
+                    <button type="button" class="btn btn-primary" onclick="submitSelected()" th:if="${currentStatus == 'DRAFT'}">
+                        Submit
+                    </button>
 
-            <button type="button" class="btn btn-icon" title="Download" th:if="${currentStatus != 'Overview'}">
-                <i class="bi bi-download"></i>
-            </button>
+                    <button type="button" class="btn btn-icon" onclick="approveSelected()" title="Approve" th:if="${currentStatus == 'IN_REVIEW'}">
+                        <i class="bi bi-check-lg"></i>
+                    </button>
+
+                    <button type="button" class="btn btn-icon" onclick="approveSelected()" title="Approve" th:if="${currentStatus == 'Recurring'}">
+                        <i class="bi bi-play-fill"></i>
+                    </button>
+
+                    <button type="button" class="btn btn-icon" onclick="stopRecurring()" title="Stop Recurring" th:if="${currentStatus == 'Recurring'}">
+                        <i class="bi bi-stop-fill"></i>
+                    </button>
+
+                    <button type="button" class="btn btn-icon" onclick="deleteSelected()" title="Delete" th:if="${currentStatus == 'DRAFT' or currentStatus == 'IN_REVIEW' or currentStatus == 'APPROVED' or currentStatus == 'Recurring'}">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+
+                    <button type="button" class="btn btn-icon" onclick="copySelected()" title="Copy Invoice" th:if="${currentStatus != 'Overview'}">
+                        <i class="bi bi-files"></i>
+                    </button>
+
+                    <button type="button" class="btn btn-icon" title="Show Payment Link" th:if="${currentStatus != 'Overview' and currentStatus != 'DRAFT' and currentStatus != 'PAID'}">
+                        <i class="bi bi-link-45deg"></i>
+                    </button>
+
+                    <button type="button" class="btn btn-icon" title="Send E-Mail" th:if="${currentStatus != 'Overview' and currentStatus != 'DRAFT' and currentStatus != 'PAID'}">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+
+                    <button type="button" class="btn btn-icon" title="Download PDF" th:if="${currentStatus != 'Overview'}">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                    </button>
+
+                    <button type="button" class="btn btn-icon" title="Print" th:if="${currentStatus != 'Overview'}">
+                        <i class="bi bi-printer"></i>
+                    </button>
+
+                    <button type="button" class="btn btn-icon" title="Download" th:if="${currentStatus != 'Overview'}">
+                        <i class="bi bi-download"></i>
+                    </button>
+                </div>
+            </div>
+
+            <table class="invoice-table">
+                <thead>
+                <tr>
+                    <th style="width: 20px;"><input type="checkbox" onclick="toggleAll(this)"></th>
+                    <th:block th:if="${currentStatus != 'Recurring'}">
+                        <th style="width: 80px;">
+                            <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='issuedDate', sortDir=${sortField == 'issuedDate' and sortDir == 'desc' ? 'asc' : 'desc'})}"
+                                style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
+                                Date
+                                <span th:if="${sortField == 'issuedDate'}" style="margin-left: 5px;">
+                                    <i th:if="${sortDir == 'desc'}" class="bi bi-caret-down-fill"></i>
+                                    <i th:if="${sortDir == 'asc'}" class="bi bi-caret-up-fill"></i>
+                                </span>
+                                <span th:unless="${sortField == 'issuedDate'}" style="margin-left: 5px; color: #ccc;">
+                                    <i class="bi bi-arrow-down-up" style="font-size: 10px;"></i>
+                                </span>
+                            </a>
+                        </th>
+                        <th style="width: 80px;">Invoice #</th>
+                        <th>Contact</th>
+                        <th>E-Mail</th>
+                        <th>Bill To</th>
+                        <th style="width: 90px;">Status</th>
+                        <th class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" style="width: 110px;">
+                            <span th:unless="${currentStatus == 'DRAFT' or currentStatus == 'IN_REVIEW' or currentStatus == 'APPROVED'}">Balance due</span>
+                        </th>
+                        <th class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" style="width: 110px;">Total</th>
+                        <th th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" style="width: 80px; padding-left: 20px;">
+                            <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='dueDate', sortDir=${sortField == 'dueDate' and sortDir == 'desc' ? 'asc' : 'desc'})}"
+                               style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
+                                Due Date
+                                <span th:if="${sortField == 'dueDate'}" style="margin-left: 5px;">
+                                    <i th:if="${sortDir == 'desc'}" class="bi bi-caret-down-fill"></i>
+                                    <i th:if="${sortDir == 'asc'}" class="bi bi-caret-up-fill"></i>
+                                </span>
+                                <span th:unless="${sortField == 'dueDate'}" style="margin-left: 5px; color: #ccc;">
+                                    <i class="bi bi-arrow-down-up" style="font-size: 10px;"></i>
+                                </span>
+                            </a>
+                        </th>
+                    </th:block>
+
+                    <th:block th:if="${currentStatus == 'Recurring'}">
+                        <th style="width: 80px;">Frequency</th>
+                        <th style="width: 80px;">Template #</th>
+                        <th>Contact</th>
+                        <th>Items</th>
+                        <th style="width: 80px;">Last Issue</th>
+                        <th style="width: 80px;">Next Issue</th>
+                        <th class="text-right" style="width: 110px;">Total</th>
+                        <th class="text-center" style="width: 100px;">Auto Send</th>
+                        <th style="width: 90px;">Status</th>
+                    </th:block>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${(currentStatus != 'Recurring' and invoices.isEmpty()) or (currentStatus == 'Recurring' and recurringInvoices.isEmpty())}">
+                    <td colspan="10" style="text-align: center; padding: 30px;">
+                        <span th:if="${currentStatus == 'Recurring'}">No templates found.</span>
+                        <span th:unless="${currentStatus == 'Recurring'}">No invoices found.</span>
+                    </td>
+                </tr>
+
+                <tr th:if="${currentStatus != 'Recurring'}" th:each="inv : ${invoices}" class="invoice-item" th:data-company="${inv.customerCompanyName}">
+                    <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${inv.id}" th:data-status="${inv.status}"></td>
+                    <td th:text="${#temporals.format(inv.issuedDate, 'dd/MM/yyyy')}">29/07/2025</td>
+                    <td>
+                        <a th:href="${#strings.toString(inv.status) == 'DRAFT'} ? @{/invoices/{id}/edit(id=${inv.uuid})} : @{/invoices/{id}(id=${inv.uuid})}"
+                           class="invoice-link search-invoice-num"
+                           th:text="${inv.invoiceNumber}">INV-00001</a>
+                    </td>
+                    <td class="search-contact-name" th:text="${inv.customerCompanyName != null ? inv.customerCompanyName + ' (' + inv.customerName + ')' : inv.customerName}">>June Young</td>
+                    <td th:text="${inv.customerEmail}">abc@gmail.com</td>
+                    <td th:text="${inv.customerBillTo}">Seoul</td>
+                    <td>
+                        <span class="status-badge" th:classappend="'status-' + ${#strings.toLowerCase(inv.status)}"
+                              th:text="${#strings.replace(#strings.toLowerCase(inv.status), '_', ' ')}">Draft</span>
+                    </td>
+                    <td class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
+                        <th:block th:unless="${#strings.toString(inv.status) == 'DRAFT' or #strings.toString(inv.status) == 'IN_REVIEW' or #strings.toString(inv.status) == 'APPROVED'}">
+                            <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span>
+                            <span th:text="${#numbers.formatDecimal(inv.balanceDue, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
+                        </th:block>
+                    </td>
+                    <td class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
+                        <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span>
+                        <span th:text="${#numbers.formatDecimal(inv.total, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
+                    </td>
+                    <td th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" th:text="${#temporals.format(inv.dueDate, 'dd/MM/yyyy')}" style="padding-left: 20px;">07/08/2025</td>
+                </tr>
+
+                <tr th:if="${currentStatus == 'Recurring'}" th:each="tpl : ${recurringInvoices}" class="invoice-item" th:data-company="${tpl.contact != null ? tpl.contact.companyName : ''}">
+                    <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${tpl.id}" th:data-status="${tpl.status}"></td>
+                    <td>
+                        <span th:text="${tpl.frequencyInterval}">1</span>
+                        <span th:text="${#strings.capitalize(#strings.toLowerCase(tpl.frequency))}">Weekly</span>
+                    </td>
+                    <td>
+                        <a th:href="${#strings.toString(tpl.status) == 'DRAFT'} ? @{/invoices/recurring/{id}/edit(id=${tpl.uuid})} : @{/invoices/recurring/{id}(id=${tpl.uuid})}"
+                           class="invoice-link search-invoice-num"
+                           th:text="${tpl.templateNumber}">INVT-00001</a>
+                    </td>
+                    <td class="search-contact-name" th:text="${tpl.contact != null ? (tpl.contact.companyName != null ? tpl.contact.companyName + ' (' + tpl.contact.name + ')' : tpl.contact.name) : '-'}">>Company (Name)</td>
+                    <td>
+                        <th:block th:if="${not #lists.isEmpty(tpl.items)}">
+                            <span th:text="${tpl.items[0].product.name}">Product</span>
+                            <span th:if="${tpl.items.size() > 1}" th:text="' + ' + (${tpl.items.size() - 1}) + ' Items'" style="color: #888; font-size: 0.9em;"></span>
+                        </th:block>
+                    </td>
+                    <td th:text="${tpl.lastIssuedDate != null ? #temporals.format(tpl.lastIssuedDate, 'dd/MM/yyyy') : '-'}">-</td>
+                    <td th:text="${tpl.nextInvoiceDate != null ? #temporals.format(tpl.nextInvoiceDate, 'dd/MM/yyyy') : '-'}">-</td>
+                    <td class="text-right">
+                        <span class="text-gray">A$</span>
+                        <span th:text="${#numbers.formatDecimal(tpl.total, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
+                    </td>
+                    <td class="text-center">
+                        <i th:if="${tpl.autoSend}" class="bi bi-check-lg" style="color: #00A3FF; font-size: 1.2em;"></i>
+                        <i th:unless="${tpl.autoSend}" class="bi bi-x-lg" style="color: #ccc; font-size: 1.0em;"></i>
+                    </td>
+                    <td>
+                        <span class="status-badge" th:classappend="'status-recurring-' + ${#strings.toLowerCase(tpl.status)}"
+                              th:text="${#strings.replace(#strings.toLowerCase(tpl.status), '_', ' ')}">Active</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </div>
-
-    <table class="invoice-table">
-        <thead>
-        <tr>
-            <th style="width: 20px;"><input type="checkbox" onclick="toggleAll(this)"></th>
-            <th:block th:if="${currentStatus != 'Recurring'}">
-                <th style="width: 80px;">
-                    <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='issuedDate', sortDir=${sortField == 'issuedDate' and sortDir == 'desc' ? 'asc' : 'desc'})}"
-                        style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
-                        Date
-                        <span th:if="${sortField == 'issuedDate'}" style="margin-left: 5px;">
-                            <i th:if="${sortDir == 'desc'}" class="bi bi-caret-down-fill"></i>
-                            <i th:if="${sortDir == 'asc'}" class="bi bi-caret-up-fill"></i>
-                        </span>
-                        <span th:unless="${sortField == 'issuedDate'}" style="margin-left: 5px; color: #ccc;">
-                            <i class="bi bi-arrow-down-up" style="font-size: 10px;"></i>
-                        </span>
-                    </a>
-                </th>
-                <th style="width: 80px;">Invoice #</th>
-                <th>Contact</th>
-                <th>E-Mail</th>
-                <th>Bill To</th>
-                <th style="width: 90px;">Status</th>
-                <th class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" style="width: 110px;">
-                    <span th:unless="${currentStatus == 'DRAFT' or currentStatus == 'IN_REVIEW' or currentStatus == 'APPROVED'}">Balance due</span>
-                </th>
-                <th class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" style="width: 110px;">Total</th>
-                <th th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" style="width: 80px; padding-left: 20px;">
-                    <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='dueDate', sortDir=${sortField == 'dueDate' and sortDir == 'desc' ? 'asc' : 'desc'})}"
-                       style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
-                        Due Date
-                        <span th:if="${sortField == 'dueDate'}" style="margin-left: 5px;">
-                            <i th:if="${sortDir == 'desc'}" class="bi bi-caret-down-fill"></i>
-                            <i th:if="${sortDir == 'asc'}" class="bi bi-caret-up-fill"></i>
-                        </span>
-                        <span th:unless="${sortField == 'dueDate'}" style="margin-left: 5px; color: #ccc;">
-                            <i class="bi bi-arrow-down-up" style="font-size: 10px;"></i>
-                        </span>
-                    </a>
-                </th>
-            </th:block>
-
-            <th:block th:if="${currentStatus == 'Recurring'}">
-                <th style="width: 80px;">Frequency</th>
-                <th style="width: 80px;">Template #</th>
-                <th>Contact</th>
-                <th>Items</th>
-                <th style="width: 80px;">Last Issue</th>
-                <th style="width: 80px;">Next Issue</th>
-                <th class="text-right" style="width: 110px;">Total</th>
-                <th class="text-center" style="width: 100px;">Auto Send</th>
-                <th style="width: 90px;">Status</th>
-            </th:block>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:if="${(currentStatus != 'Recurring' and invoices.isEmpty()) or (currentStatus == 'Recurring' and recurringInvoices.isEmpty())}">
-            <td colspan="10" style="text-align: center; padding: 30px;">
-                <span th:if="${currentStatus == 'Recurring'}">No templates found.</span>
-                <span th:unless="${currentStatus == 'Recurring'}">No invoices found.</span>
-            </td>
-        </tr>
-
-        <tr th:if="${currentStatus != 'Recurring'}" th:each="inv : ${invoices}" class="invoice-item" th:data-company="${inv.customerCompanyName}">
-            <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${inv.id}" th:data-status="${inv.status}"></td>
-            <td th:text="${#temporals.format(inv.issuedDate, 'dd/MM/yyyy')}">29/07/2025</td>
-            <td>
-                <a th:href="${#strings.toString(inv.status) == 'DRAFT'} ? @{/invoices/{id}/edit(id=${inv.uuid})} : @{/invoices/{id}(id=${inv.uuid})}"
-                   class="invoice-link search-invoice-num"
-                   th:text="${inv.invoiceNumber}">INV-00001</a>
-            </td>
-            <td class="search-contact-name" th:text="${inv.customerCompanyName != null ? inv.customerCompanyName + ' (' + inv.customerName + ')' : inv.customerName}">>June Young</td>
-            <td th:text="${inv.customerEmail}">abc@gmail.com</td>
-            <td th:text="${inv.customerBillTo}">Seoul</td>
-            <td>
-                <span class="status-badge" th:classappend="'status-' + ${#strings.toLowerCase(inv.status)}"
-                      th:text="${#strings.replace(#strings.toLowerCase(inv.status), '_', ' ')}">Draft</span>
-            </td>
-            <td class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
-                <th:block th:unless="${#strings.toString(inv.status) == 'DRAFT' or #strings.toString(inv.status) == 'IN_REVIEW' or #strings.toString(inv.status) == 'APPROVED'}">
-                    <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span>
-                    <span th:text="${#numbers.formatDecimal(inv.balanceDue, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
-                </th:block>
-            </td>
-            <td class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
-                <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span>
-                <span th:text="${#numbers.formatDecimal(inv.total, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
-            </td>
-            <td th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" th:text="${#temporals.format(inv.dueDate, 'dd/MM/yyyy')}" style="padding-left: 20px;">07/08/2025</td>
-        </tr>
-
-        <tr th:if="${currentStatus == 'Recurring'}" th:each="tpl : ${recurringInvoices}" class="invoice-item" th:data-company="${tpl.contact != null ? tpl.contact.companyName : ''}">
-            <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${tpl.id}" th:data-status="${tpl.status}"></td>
-            <td>
-                <span th:text="${tpl.frequencyInterval}">1</span>
-                <span th:text="${#strings.capitalize(#strings.toLowerCase(tpl.frequency))}">Weekly</span>
-            </td>
-            <td>
-                <a th:href="${#strings.toString(tpl.status) == 'DRAFT'} ? @{/invoices/recurring/{id}/edit(id=${tpl.uuid})} : @{/invoices/recurring/{id}(id=${tpl.uuid})}"
-                   class="invoice-link search-invoice-num"
-                   th:text="${tpl.templateNumber}">INVT-00001</a>
-            </td>
-            <td class="search-contact-name" th:text="${tpl.contact != null ? (tpl.contact.companyName != null ? tpl.contact.companyName + ' (' + tpl.contact.name + ')' : tpl.contact.name) : '-'}">>Company (Name)</td>
-            <td>
-                <th:block th:if="${not #lists.isEmpty(tpl.items)}">
-                    <span th:text="${tpl.items[0].product.name}">Product</span>
-                    <span th:if="${tpl.items.size() > 1}" th:text="' + ' + (${tpl.items.size() - 1}) + ' Items'" style="color: #888; font-size: 0.9em;"></span>
-                </th:block>
-            </td>
-            <td th:text="${tpl.lastIssuedDate != null ? #temporals.format(tpl.lastIssuedDate, 'dd/MM/yyyy') : '-'}">-</td>
-            <td th:text="${tpl.nextInvoiceDate != null ? #temporals.format(tpl.nextInvoiceDate, 'dd/MM/yyyy') : '-'}">-</td>
-            <td class="text-right">
-                <span class="text-gray">A$</span>
-                <span th:text="${#numbers.formatDecimal(tpl.total, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
-            </td>
-            <td class="text-center">
-                <i th:if="${tpl.autoSend}" class="bi bi-check-lg" style="color: #00A3FF; font-size: 1.2em;"></i>
-                <i th:unless="${tpl.autoSend}" class="bi bi-x-lg" style="color: #ccc; font-size: 1.0em;"></i>
-            </td>
-            <td>
-                <span class="status-badge" th:classappend="'status-recurring-' + ${#strings.toLowerCase(tpl.status)}"
-                      th:text="${#strings.replace(#strings.toLowerCase(tpl.status), '_', ' ')}">Active</span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
 </div>
 
 <script src="/js/home-script.js"></script>

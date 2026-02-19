@@ -3,51 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <title>Customer Organizations (Super Admin)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <link rel="stylesheet" th:href="@{/css/homestyle.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
     <style>
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border-bottom: 1px solid #ddd; padding: 15px; text-align: left; }
-        .badge-lite { background: #e0f7fa; color: #00838f; padding: 5px 10px; border-radius: 15px; }
-        .badge-active { background: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 15px; }
-        .clickable-row { cursor: pointer; }
-        .clickable-row:hover { background-color: #f9f9f9; }
+        .company-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .company-table th, .company-table td { border-bottom: 1px solid var(--border-color); padding: 15px; text-align: left; }
+        .badge-lite { background: #e0f7fa; color: #00838f; padding: 5px 12px; border-radius: 15px; font-weight: 600; font-size: 13px;}
+        .badge-active { background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 15px; font-weight: 600; font-size: 13px;}
+        .clickable-row { cursor: pointer; transition: background-color 0.2s;}
+        .clickable-row:hover { background-color: #f4f8fb; }
     </style>
 </head>
 <body>
-<div class="header">
-    <span class="logo">Super Admin Dashboard</span>
+
+<div th:replace="~{fragments/nav :: sidebar}"></div>
+
+<div class="main-wrapper">
+
+    <div th:replace="~{fragments/nav :: topbar}"></div>
+
+    <div class="content-area">
+
+        <div class="container">
+
+            <div class="header" style="margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                <h2 style="margin: 0;">Customer Organization</h2>
+            </div>
+
+            <table class="company-table">
+                <thead>
+                <tr>
+                    <th>Business name</th>
+                    <th>Plan</th>
+                    <th>Users</th>
+                    <th>Last active</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="company : ${companies}" class="clickable-row"
+                    th:onclick="|location.href='@{/super-admin/companies/{id}/users(id=${company.companyId})}'|">
+
+                    <td>
+                        <strong th:text="${company.businessName}">Business name</strong><br>
+                        <small style="color:gray;" th:text="${company.adminEmail}">email@email.com</small>
+                    </td>
+                    <td><span class="badge-lite" th:text="${company.plan}">Lite</span></td>
+                    <td th:text="${company.userCount + ' users'}">30 users</td>
+                    <td style="color: gray;" th:text="${company.lastActive}">1 hour ago</td>
+                    <td><span class="badge-active" th:text="${company.status}">Active</span></td>
+                    <td th:text="${company.joinedDate}">Jan 15 2025</td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
 </div>
 
-<div class="content" style="padding: 20px;">
-    <h2>Customer Organization</h2>
-
-    <table>
-        <thead>
-        <tr>
-            <th>Business name</th>
-            <th>Plan</th>
-            <th>Users</th>
-            <th>Last active</th>
-            <th>Status</th>
-            <th>Joined</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="company : ${companies}" class="clickable-row"
-            th:onclick="|location.href='@{/super-admin/companies/{id}/users(id=${company.companyId})}'|">
-
-            <td>
-                <strong th:text="${company.businessName}">Business name</strong><br>
-                <small style="color:gray;" th:text="${company.adminEmail}">email@email.com</small>
-            </td>
-            <td><span class="badge-lite" th:text="${company.plan}">Lite</span></td>
-            <td th:text="${company.userCount + ' users'}">30 users</td>
-            <td style="color: gray;" th:text="${company.lastActive}">1 hour ago</td>
-            <td><span class="badge-active" th:text="${company.status}">Active</span></td>
-            <td th:text="${company.joinedDate}">Jan 15 2025</td>
-        </tr>
-        </tbody>
-    </table>
-</div>
 </body>
 </html>

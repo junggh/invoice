@@ -9,13 +9,6 @@
 
 <div class="auth-container small"> <h2>Welcome Back</h2>
 
-    <div th:if="${param.error}" style="color: red; margin-bottom: 15px; text-align: center;">
-        Invalid email or password.
-    </div>
-    <div th:if="${param.logout}" style="color: green; margin-bottom: 15px; text-align: center;">
-        You have been logged out.
-    </div>
-
     <form action="/login" method="post">
 
         <div class="form-group">
@@ -39,6 +32,13 @@
             <a href="/signup" style="text-decoration: none; color: #666;">Create an account</a>
         </div>
     </form>
+
+    <div th:if="${param.error}" style="color: red; margin-top: 20px; text-align: center;">
+        Invalid email or password.
+    </div>
+    <div th:if="${param.logout}" style="color: green; margin-top: 20x; text-align: center;">
+        You have been logged out.
+    </div>
 </div>
 
 </body>

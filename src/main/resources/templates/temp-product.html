@@ -2,41 +2,64 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Create Product (Temp)</title>
+    <title>Create Product</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <link rel="stylesheet" th:href="@{/css/homestyle.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, textarea { width: 300px; padding: 8px; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+        /* 폼 전용 깔끔한 스타일 */
+        .form-container { max-width: 600px; margin: 0 auto; min-height: auto; }
+        .temp-form-group { margin-bottom: 20px; }
+        .temp-form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; font-size: 14px; }
+        .temp-form-group input, .temp-form-group textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border-color);
+            border-radius: 6px; font-size: 14px; box-sizing: border-box; transition: border-color 0.2s;
+        }
+        .temp-form-group textarea { resize: vertical; min-height: 80px; }
+        .temp-form-group input:focus, .temp-form-group textarea:focus { outline: none; border-color: var(--primary-color); }
+        .form-actions { margin-top: 30px; display: flex; gap: 10px; }
     </style>
 </head>
 <body>
 
-<h2>Create Product (Temporary)</h2>
+<div th:replace="~{fragments/nav :: sidebar}"></div>
 
-<form th:action="@{/product}" th:object="${product}" method="post">
+<div class="main-wrapper">
 
-    <div class="form-group">
-        <label>Product Name</label>
-        <input type="text" th:field="*{name}" required placeholder="Product Name">
+    <div th:replace="~{fragments/nav :: topbar}"></div>
+
+    <div class="content-area">
+
+        <div class="container form-container">
+            <h2 style="margin-top: 0; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 15px;">Create New Product</h2>
+
+            <form th:action="@{/product}" th:object="${product}" method="post">
+
+                <div class="temp-form-group">
+                    <label>Product Name <span style="color:red;">*</span></label>
+                    <input type="text" th:field="*{name}" required placeholder="Product Name">
+                </div>
+
+                <div class="temp-form-group">
+                    <label>Description</label>
+                    <textarea th:field="*{description}" placeholder="Description details..."></textarea>
+                </div>
+
+                <div class="temp-form-group">
+                    <label>Price <span style="color:red;">*</span></label>
+                    <input type="number" th:field="*{price}" step="0.01" required placeholder="0.00">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Product</button>
+                    <button type="button" class="btn" style="background: white; border: 1px solid #ddd; color: #555;" onclick="history.back()">Cancel</button>
+                </div>
+            </form>
+
+        </div>
     </div>
-
-    <div class="form-group">
-        <label>Description</label>
-        <input type="text" th:field="*{description}" placeholder="Description">
-    </div>
-
-    <div class="form-group">
-        <label>Price</label>
-        <input type="number" th:field="*{price}" step="0.01" required placeholder="0.00">
-    </div>
-
-    <button type="submit">Save Product</button>
-</form>
-
-<br>
-<a href="/invoices">Go to Dashboard</a>
+</div>
 
 </body>
 </html>

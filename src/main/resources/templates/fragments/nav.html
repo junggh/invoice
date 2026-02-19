@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="sidebar" class="sidebar">
+  <div class="sidebar-logo">
+    <span>ZeniBooks</span>
+    <i class="fas fa-bars"></i>
+  </div>
+  <ul class="sidebar-menu">
+    <li><a href="/invoices">Invoices</a></li>
+    <li><a href="/contact">Contact</a></li>
+    <li><a href="/product">Product</a></li>
+    <li><a href="/admin/users">Users</a></li>
+    <li><a href="/subscribe">Subscribe</a></li>
+  </ul>
+</div>
+
+<div th:fragment="topbar" class="topbar">
+  <div class="topbar-company" th:text="${globalCompanyName ?: 'ZeniBooks'}">Demo Company</div>
+
+  <div class="topbar-icons">
+    <i class="fas fa-plus"></i>
+    <i class="fas fa-search"></i>
+    <i class="far fa-bell"></i>
+    <i class="fas fa-th"></i>
+    <div class="dropdown">
+      <div class="user-avatar" th:text="${globalUserInitials ?: 'U'}">JY</div>
+
+      <div class="dropdown-content" style="min-width: 130px; margin-top: 15px;">
+        <a href="/logout" style="color: #FF4D4F; display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-sign-out-alt" style="font-size: 14px; color: #FF4D4F;"></i>
+          Logout
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

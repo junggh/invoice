@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>ERP Service Subscription</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <link rel="stylesheet" th:href="@{/css/homestyle.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
 
     <script src="https://www.paypal.com/sdk/js?client-id=AenizELkr11mR8bak__02MatabQdxIBpSIlFQyo41c1AiRHzP4kTlgr3-g6ZD8TWJznLnmSQntC_SQ0n&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
 
     <style>
-        .page-container {
-            max-width: 1200px;
-            margin: 50px auto;
-            text-align: center;
-        }
+        /* page-container 제거하고, 카드 레이아웃만 남김 */
         .plans-wrapper {
             display: flex;
             justify-content: center;
             gap: 20px;
             flex-wrap: wrap;
+            margin-top: 30px;
         }
         .plan-card {
             width: 300px;
@@ -29,6 +29,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            text-align: center; /* 카드 안쪽 중앙 정렬 */
         }
         .plan-title { font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #333; }
         .price-tag { font-size: 28px; font-weight: bold; color: #007bff; margin: 20px 0; }
@@ -44,64 +45,77 @@
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <a href="/invoices" class="logo">Back</a>
+<div th:replace="~{fragments/nav :: sidebar}"></div>
+
+<div class="main-wrapper">
+
+    <div th:replace="~{fragments/nav :: topbar}"></div>
+
+    <div class="content-area">
+
+        <div class="container">
+
+            <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                <h2 style="margin: 0;">Choose Your Plan</h2>
+                <a href="/invoices" class="btn" style="background: white; border: 1px solid #ddd; color: #555; text-decoration: none; padding: 8px 16px; border-radius: 4px;">Back</a>
+            </div>
+
+            <div th:if="${currentPlan != null and currentPlan.name() == 'PRO'}">
+                <div class="subscribed-message">
+                    <h3>🎉 You are a PRO member!</h3>
+                    <p>You have access to all features.</p>
+                </div>
+                <br>
+                <div style="text-align: center;">
+                    <a href="/invoices" class="btn btn-primary">Go to Dashboard</a>
+                </div>
+            </div>
+
+            <div class="plans-wrapper" th:unless="${currentPlan != null and currentPlan.name() == 'PRO'}">
+
+                <div class="plan-card" th:if="${currentPlan == null}">
+                    <div class="plan-title">Lite</div>
+                    <div class="price-tag">$5.00 / m</div>
+                    <ul class="features">
+                        <li>✅ Basic Access</li>
+                        <li>✅ Single User</li>
+                    </ul>
+                    <div id="paypal-button-container-LITE"></div>
+                </div>
+
+                <div class="plan-card" th:if="${currentPlan == null or currentPlan.name() == 'LITE'}">
+                    <div class="plan-title">Basic</div>
+                    <div class="price-tag">$10.00 / m</div>
+                    <ul class="features">
+                        <li>✅ Unlimited Invoices</li>
+                        <li>✅ Company-wide Access</li>
+                    </ul>
+                    <div id="paypal-button-container-BASIC"></div>
+                </div>
+
+                <div class="plan-card">
+                    <div class="plan-title">Pro</div>
+                    <div class="price-tag">$20.00 / m</div>
+                    <ul class="features">
+                        <li>✅ All Basic Features</li>
+                        <li>✅ Advanced Reports</li>
+                        <li>✅ Priority Support</li>
+                    </ul>
+                    <div id="paypal-button-container-PRO"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="page-container">
-    <h2>Choose Your Plan</h2>
-
-    <div th:if="${currentPlan != null and currentPlan.name() == 'PRO'}">
-        <div class="subscribed-message">
-            <h3>🎉 You are a PRO member!</h3>
-            <p>You have access to all features.</p>
-        </div>
-        <br>
-        <a href="/invoices" class="btn">Go to Dashboard</a>
-    </div>
-
-    <div class="plans-wrapper" th:unless="${currentPlan != null and currentPlan.name() == 'PRO'}">
-
-        <div class="plan-card" th:if="${currentPlan == null}">
-            <div class="plan-title">Lite</div>
-            <div class="price-tag">$5.00 / m</div>
-            <ul class="features">
-                <li>✅ Basic Access</li>
-                <li>✅ Single User</li>
-            </ul>
-            <div id="paypal-button-container-LITE"></div>
-        </div>
-
-        <div class="plan-card" th:if="${currentPlan == null or currentPlan.name() == 'LITE'}">
-            <div class="plan-title">Basic</div>
-            <div class="price-tag">$10.00 / m</div>
-            <ul class="features">
-                <li>✅ Unlimited Invoices</li>
-                <li>✅ Company-wide Access</li>
-            </ul>
-            <div id="paypal-button-container-BASIC"></div>
-        </div>
-
-        <div class="plan-card">
-            <div class="plan-title">Pro</div>
-            <div class="price-tag">$20.00 / m</div>
-            <ul class="features">
-                <li>✅ All Basic Features</li>
-                <li>✅ Advanced Reports</li>
-                <li>✅ Priority Support</li>
-            </ul>
-            <div id="paypal-button-container-PRO"></div>
-        </div>
-
-    </div>
-</div>
-
-<script>
+<script th:inline="javascript">
     var currentPlan = /*[[${currentPlan}]]*/ null;
 
     // 플랜별 ID 상수
@@ -113,7 +127,6 @@
 
     // 버튼 렌더링 함수
     function renderPayPalButton(containerId, planId) {
-        // 화면에 해당 컨테이너(div)가 존재할 때만 버튼 렌더링
         if (document.getElementById(containerId)) {
             paypal.Buttons({
                 style: { shape: 'rect', color: 'blue', layout: 'vertical', label: 'subscribe' },
@@ -147,7 +160,7 @@
         }
     }
 
-    // 각 플랜 버튼 렌더링 시도 (HTML에 div가 없으면 무시됨)
+    // 각 플랜 버튼 렌더링 시도
     renderPayPalButton('paypal-button-container-LITE', PLANS.LITE);
     renderPayPalButton('paypal-button-container-BASIC', PLANS.BASIC);
     renderPayPalButton('paypal-button-container-PRO', PLANS.PRO);
