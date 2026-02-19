@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Entity
 @Getter @Setter
 public class Member {
@@ -43,4 +46,15 @@ public class Member {
 
     // 권한 (USER, ADMIN 등 - 추후 확장용)
     private String role;
+
+    // 가입 날짜
+    private LocalDate joinedDate;
+
+    // 엔티티가 처음 DB에 저장되기 직전에 실행됨
+    @PrePersist
+    public void prePersist() {
+        this.joinedDate = LocalDate.now();
+    }
+
+    private LocalDateTime lastLoginDate;
 }

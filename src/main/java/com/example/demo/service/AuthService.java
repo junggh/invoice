@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -110,5 +113,23 @@ public class AuthService {
     // [추가] ABN 중복 확인용
     public boolean isAbnAvailable(String abn) {
         return !companyRepository.existsByAbn(abn);
+    }
+
+    // [추가된 부분] 로그인 성공 시 시간 업데이트 로직
+    @Transactional // 읽기/쓰기가 가능하도록 트랜잭션을 새로 엽니다.
+    public void updateLoginAndActivityDates(String email) {
+        memberRepository.findByEmail(email).ifPresent(member -> {
+            LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
+
+            // 1. 멤버 마지막 로그인 시간 갱신
+            member.setLastLoginDate(nowUtc);
+
+            // 2. 회사 마지막 활동 시간 갱신
+            // @Transactional 안에서 실행되므로 LazyInitializationException이 발생하지 않습니다!
+            if (member.getCompany() != null) {
+                Company company = member.getCompany();
+                company.setLastActiveDate(nowUtc);
+            }
+        });
     }
 }

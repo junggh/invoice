@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Entity
 @Getter @Setter
 public class Company {
@@ -54,4 +57,15 @@ public class Company {
 
     // PayPal 구독 ID (결제 전에는 null)
     private String subscriptionId;
+
+    // 가입 날짜
+    private LocalDate joinedDate;
+
+    // 엔티티가 처음 DB에 저장되기 직전에 실행됨
+    @PrePersist
+    public void prePersist() {
+        this.joinedDate = LocalDate.now();
+    }
+
+    private LocalDateTime lastActiveDate;
 }

@@ -1,5 +1,7 @@
 package com.example.demo.config;
 
+import com.example.demo.service.AuthService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -10,12 +12,17 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final AuthService authService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/super-admin/**").hasAuthority("SUPER_ADMIN") // 개발자 전용
+                        .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "SUPER_ADMIN") // 회사 관리자 및 개발자 접근 가능
                         // 1. 누구나 접근 가능한 페이지 (로그인, 회원가입, 정적 리소스, API)
                         .requestMatchers(
                                 "/login", "/signup",           // 페이지
@@ -29,7 +36,12 @@ public class SecurityConfig {
                         .loginPage("/login")             // 우리가 만든 로그인 페이지 경로
                         .loginProcessingUrl("/login")    // HTML Form의 action 경로 (스프링이 알아서 처리함)
                         .usernameParameter("email")     // 로그인 폼의 name="email"을 아이디로 인식
-                        .defaultSuccessUrl("/invoices", true) // 로그인 성공 시 이동할 곳
+                        .successHandler((request, response, authentication) -> {
+                            String email = authentication.getName();
+                            // [수정된 부분] 트랜잭션이 보장되는 서비스 메서드 호출!
+                            authService.updateLoginAndActivityDates(email);
+                            response.sendRedirect("/invoices");
+                        })
                         .failureHandler((request, response, exception) -> {
                             String email = request.getParameter("email");
                             // 세션에 입력했던 아이디를 잠시 저장 ('lastUsername' 이라는 이름으로)
@@ -48,9 +60,9 @@ public class SecurityConfig {
 
         return http.build();
     }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // 강력한 암호화 방식
-    }
+//
+//    @Bean
+//    public PasswordEncoder passwordEncoder() {
+//        return new BCryptPasswordEncoder(); // 강력한 암호화 방식
+//    }
 }
