@@ -145,7 +145,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const actionUrl = (currentTab === 'Recurring') ? '/api/invoices/recurring/delete' : '/api/invoices/delete';
+        let actionUrl = (currentTab === 'Recurring') ? '/api/invoices/recurring/delete' : '/api/invoices/delete';
+        const queryString = window.location.search;
+        if (queryString) {
+            actionUrl += queryString;
+        }
         submitForm(actionUrl, checkedBoxes);
     };
 

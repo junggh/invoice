@@ -189,9 +189,23 @@ public class InvoiceController {
 
     // [삭제] 처리
     @PostMapping("/api/invoices/delete")
-    public String deleteInvoices(@RequestParam List<Long> ids) {
-        if (ids != null && !ids.isEmpty()) invoiceService.deleteInvoices(ids);
-        return "redirect:/invoices";
+    public String deleteInvoices(@RequestParam List<Long> ids,
+                                 @RequestParam(required = false) String status,
+                                 @RequestParam(required = false) Integer days) {
+        if (ids != null && !ids.isEmpty()) {
+            invoiceService.deleteInvoices(ids);
+        }
+        // 파라미터를 조합하여 리다이렉트 URL 생성
+        StringBuilder redirectUrl = new StringBuilder("redirect:/invoices");
+        boolean hasQuery = false;
+        if (status != null && !status.isEmpty()) {
+            redirectUrl.append("?status=").append(status);
+            hasQuery = true;
+        }
+        if (days != null) {
+            redirectUrl.append(hasQuery ? "&" : "?").append("days=").append(days);
+        }
+        return redirectUrl.toString();
     }
 
     // ===================================================================================
