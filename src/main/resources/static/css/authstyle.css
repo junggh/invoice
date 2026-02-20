@@ -169,3 +169,19 @@ input:focus, select:focus {
 #timerDisplay.expired {
     color: #FF4D4F;
 }
+
+/* 슬라이드 다운/업 애니메이션을 위한 스타일 */
+#australiaFields {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    /* 초기 상태는 보이지 않게 설정 */
+    display: block; /* 기존 display: none 대신 block으로 설정하되, 높이를 0으로 만듭니다. */
+}
+
+/* 필드가 보여질 때 적용할 클래스 */
+#australiaFields.show {
+    max-height: 1000px; /* 충분히 큰 값으로 설정하여 내용이 모두 보이도록 합니다. */
+    opacity: 1;
+}

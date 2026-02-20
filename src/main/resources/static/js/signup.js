@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const businessCountrySelect = document.getElementById('businessCountry');
     const companyTimezoneSelect = document.getElementById('companyTimezone');
     const companyCurrencySelect = document.getElementById('companyCurrency');
+    const australiaFields = document.getElementById('australiaFields');
 
     const countryPresets = {
         "Australia": { timezone: "UTC_PLUS_10", currency: "AUD", iso: "au" },
@@ -94,6 +95,13 @@ document.addEventListener('DOMContentLoaded', function() {
     businessCountrySelect.addEventListener('change', function() {
         const selectedCountry = this.value;
         const preset = countryPresets[selectedCountry];
+
+        // 선택된 국가가 호주일 때만 필드 노출 (클래스 토글)
+        if (selectedCountry === "Australia") {
+            australiaFields.classList.add('show');
+        } else {
+            australiaFields.classList.remove('show');
+        }
 
         if (preset) {
             // Timezone
@@ -440,7 +448,9 @@ window.verifyAndNext = async function() {
 
 window.submitSignup = function() {
     const step3 = document.getElementById('step3');
-    const inputs = step3.querySelectorAll('input[required], select[required]');
+    // 화면에 보여지는(offsetParent !== null) required 필드만 유효성 검사
+    const inputs = Array.from(step3.querySelectorAll('input[required], select[required]'))
+                        .filter(input => input.offsetParent !== null);
     let valid = true;
 
     inputs.forEach(input => {
@@ -455,7 +465,8 @@ window.submitSignup = function() {
         return;
     }
 
-    if (!isAbnVerified) {
+    const businessCountry = document.getElementById('businessCountry').value;
+    if (businessCountry === "Australia" && !isAbnVerified) {
         alert("Please search and verify your ABN first.");
         document.getElementById('abnInput').focus();
         return;

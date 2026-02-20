@@ -73,6 +73,7 @@
             </div>
 
             <div class="step-actions">
+                <button type="button" class="btn btn-secondary" onclick="location.href='/login'">Back</button>
                 <button type="button" class="btn btn-primary" style="width: auto;" onclick="validateStep1AndNext()">Next</button>
             </div>
         </div>
@@ -135,74 +136,75 @@
                     </select>
                 </div>
             </div>
+            <div id="australiaFields">
 
-            <div class="form-group">
-                <label>Business Name</label>
-                <input type="text" id="businessName" th:field="*{businessName}" required>
-            </div>
+                <div class="form-group">
+                    <label>Business Name</label>
+                    <input type="text" id="businessName" th:field="*{businessName}" required>
+                </div>
 
-            <div class="form-group" style="position: relative;">
-                <label>ABN</label>
-                <input type="text" id="abnInput" th:field="*{abn}" placeholder="Search ABN..."
-                       style="padding-right: 40px;" oninput="resetAbnResult()">
-                <i class="bi bi-search" onclick="searchAbn()"
-                   style="position: absolute; right: 12px; top: 38px; color: #999; cursor: pointer;"></i>
-                <div id="abnResultMsg" style="font-size: 13px; margin-top: 5px; display: none;"></div>
-            </div>
+                <div class="form-group" style="position: relative;">
+                    <label>ABN</label>
+                    <input type="text" id="abnInput" th:field="*{abn}" placeholder="Search ABN..."
+                           style="padding-right: 40px;" oninput="resetAbnResult()">
+                    <i class="bi bi-search" onclick="searchAbn()"
+                       style="position: absolute; right: 12px; top: 38px; color: #999; cursor: pointer;"></i>
+                    <div id="abnResultMsg" style="font-size: 13px; margin-top: 5px; display: none;"></div>
+                </div>
 
-            <input type="hidden" id="hiddenEntityName" th:field="*{entityName}">
-            <input type="hidden" id="hiddenEntityTypeName" th:field="*{entityTypeName}">
-            <input type="hidden" id="hiddenAbnStatus" th:field="*{abnStatus}">
-            <input type="hidden" id="hiddenAddressPostcode" th:field="*{addressPostcode}">
-            <input type="hidden" id="hiddenAddressState" th:field="*{addressState}">
-            <input type="hidden" id="hiddenGst" th:field="*{gst}">
+                <input type="hidden" id="hiddenEntityName" th:field="*{entityName}">
+                <input type="hidden" id="hiddenEntityTypeName" th:field="*{entityTypeName}">
+                <input type="hidden" id="hiddenAbnStatus" th:field="*{abnStatus}">
+                <input type="hidden" id="hiddenAddressPostcode" th:field="*{addressPostcode}">
+                <input type="hidden" id="hiddenAddressState" th:field="*{addressState}">
+                <input type="hidden" id="hiddenGst" th:field="*{gst}">
 
-            <div class="form-group">
-                <label>Business Industry</label>
-                <select th:field="*{industry}">
-                    <option value="">Select Industry</option>
-                    <option value="IT">IT & Software</option>
-                    <option value="Retail">Retail</option>
-                    <option value="Consulting">Consulting</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Financial Year End</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="number" th:field="*{financialYearDay}" placeholder="Day (e.g. 30)" min="1" max="31">
-                    <select th:field="*{financialYearMonth}">
-                        <option th:each="month : ${months}"
-                                th:value="${month}"
-                                th:text="${#strings.capitalize(#strings.toLowerCase(month))}">
-                            January
-                        </option>
+                <div class="form-group">
+                    <label>Business Industry</label>
+                    <select th:field="*{industry}">
+                        <option value="">Select Industry</option>
+                        <option value="IT">IT & Software</option>
+                        <option value="Retail">Retail</option>
+                        <option value="Consulting">Consulting</option>
                     </select>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label>Website</label>
-                <input type="text" th:field="*{website}" placeholder="https://">
-            </div>
+                <div class="form-group">
+                    <label>Financial Year End</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" th:field="*{financialYearDay}" placeholder="Day (e.g. 30)" min="1" max="31">
+                        <select th:field="*{financialYearMonth}">
+                            <option th:each="month : ${months}"
+                                    th:value="${month}"
+                                    th:text="${#strings.capitalize(#strings.toLowerCase(month))}">
+                                January
+                            </option>
+                        </select>
+                    </div>
+                </div>
 
-            <div class="form-group">
-                <label>Company Email</label>
-                <input type="email" th:field="*{companyEmail}" placeholder="support@company.com">
-            </div>
+                <div class="form-group">
+                    <label>Website</label>
+                    <input type="text" th:field="*{website}" placeholder="https://">
+                </div>
 
-            <div class="form-group">
-                <label>Company Phone</label>
-                <input type="hidden" id="companyCountryCode" th:field="*{companyCountryCode}">
-                <input type="tel" id="companyPhone" th:field="*{companyPhone}"
-                       style="padding-left: 60px !important;">
-            </div>
+                <div class="form-group">
+                    <label>Company Email</label>
+                    <input type="email" th:field="*{companyEmail}" placeholder="support@company.com">
+                </div>
 
-            <div class="form-group">
-                <label>Fax</label>
-                <input type="tel" th:field="*{fax}">
-            </div>
+                <div class="form-group">
+                    <label>Company Phone</label>
+                    <input type="hidden" id="companyCountryCode" th:field="*{companyCountryCode}">
+                    <input type="tel" id="companyPhone" th:field="*{companyPhone}"
+                           style="padding-left: 60px !important;">
+                </div>
 
+                <div class="form-group">
+                    <label>Fax</label>
+                    <input type="tel" th:field="*{fax}">
+                </div>
+            </div>
             <div class="step-actions">
 <!--                <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>-->
                 <button type="button" class="btn btn-primary" style="width: auto;" onclick="submitSignup()">Complete Sign Up</button>
