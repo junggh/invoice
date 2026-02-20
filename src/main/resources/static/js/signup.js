@@ -118,6 +118,75 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // ============================================================
+    // 5. Business Industry 검색 로직
+    // ============================================================
+
+    let industryData = [];
+
+    // 1. 호주 산업 코드 데이터 로드 (경로는 실제 JSON 파일이나 API 위치로 맞춰주세요)
+    // 정적 파일 위치 예시: src/main/resources/static/data/australia-bic.json
+    fetch('/data/australia-bic.json')
+        .then(response => response.json())
+        .then(data => {
+            industryData = data;
+            // [로그 1] 데이터가 정상적으로 로드되었는지, 총 몇 개인지 확인
+            console.log("✅ [데이터 로드 완료] 총 항목 수:", industryData.length);
+            console.log("✅ [데이터 로드 샘플] 첫 3개 확인:", industryData.slice(0, 3));
+        })
+        .catch(error => console.error('Error loading industry codes:', error));
+
+    const industrySearch = document.getElementById('industrySearch');
+    const industryCode = document.getElementById('industryCode');
+    const suggestionsBox = document.getElementById('industrySuggestions');
+
+    if (industrySearch) {
+        // 2. 키보드 입력 시 필터링
+        industrySearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            suggestionsBox.innerHTML = '';
+
+            if (!query) {
+                suggestionsBox.style.display = 'none';
+                // 입력창을 비우면 hidden 값도 초기화
+                industryCode.value = '';
+                return;
+            }
+
+            // 입력된 키워드가 설명이나 코드에 포함된 것만 필터링 (렌더링 성능을 위해 최대 50개만 표시)
+            const filtered = industryData.filter(item =>
+                item.description.toLowerCase().includes(query) ||
+                item.code.includes(query)
+            ).slice(0, 50);
+
+            if (filtered.length > 0) {
+                filtered.forEach(item => {
+                    const li = document.createElement('li');
+                    // 텍스트는 "업종 설명 (코드)" 형태로 표시
+                    li.textContent = `${item.description} (${item.code})`;
+
+                    // 항목 클릭 시 입력칸에 값 세팅 후 창 닫기
+                    li.onclick = () => {
+                        industrySearch.value = item.description; // 화면에는 설명 표시
+                        industryCode.value = item.code;          // hidden에는 코드 저장
+                        suggestionsBox.style.display = 'none';
+                    };
+                    suggestionsBox.appendChild(li);
+                });
+                suggestionsBox.style.display = 'block';
+            } else {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        // 3. 외부 영역 클릭 시 자동완성 창 닫기
+        document.addEventListener('click', function(e) {
+            if (e.target !== industrySearch) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+    }
+
     // 엔터키 처리
     document.getElementById('signupForm').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
@@ -417,6 +486,16 @@ window.verifyAndNext = async function() {
         return;
     }
 
+    // ==========================================
+    // [테스트용] 마스터 코드 '000000' 입력 시 무사통과
+    // ==========================================
+    if (code === "000000") {
+        console.log("Test code used. Bypassing email verification.");
+        clearInterval(timerInterval); // 타이머 종료
+        window.showStep(3);           // Step 3 이동
+        return;                       // 함수 종료 (서버 요청 안 함)
+    }
+
     // 시간 초과 체크 (프론트엔드 측 1차 방어)
     if (timeLeft <= 0) {
         errorMsg.innerText = "Code expired. Please resend.";
@@ -448,15 +527,32 @@ window.verifyAndNext = async function() {
 
 window.submitSignup = function() {
     const step3 = document.getElementById('step3');
-    // 화면에 보여지는(offsetParent !== null) required 필드만 유효성 검사
-    const inputs = Array.from(step3.querySelectorAll('input[required], select[required]'))
-                        .filter(input => input.offsetParent !== null);
+    // 1. 모든 required 필드를 가져옵니다.
+    const allRequiredInputs = Array.from(step3.querySelectorAll('input[required], select[required]'));
+
+    // 2. 실제로 검사할 필드만 걸러냅니다.
+    const inputsToValidate = allRequiredInputs.filter(input => {
+        // 해당 input이 australiaFields 안에 있는지 확인합니다.
+        const ausParent = input.closest('#australiaFields');
+
+        if (ausParent) {
+            // 호주 필드 안에 있다면, 호주 필드가 열려있을 때(.show)만 검사 대상에 포함합니다.
+            return ausParent.classList.contains('show');
+        }
+
+        // 특정 국가 필드 안에 있지 않은 공통 필드(Country 등)는 무조건 검사 대상에 포함합니다.
+        return true;
+    });
+
     let valid = true;
 
-    inputs.forEach(input => {
+    // 3. 걸러진 필드들만 유효성 검사를 진행합니다.
+    inputsToValidate.forEach(input => {
         if (!input.value) {
             valid = false;
             input.style.borderColor = "red";
+        } else {
+            input.style.borderColor = "var(--border-color)"; // 통과 시 테두리 색상 복구
         }
     });
 

@@ -159,14 +159,13 @@
                 <input type="hidden" id="hiddenAddressState" th:field="*{addressState}">
                 <input type="hidden" id="hiddenGst" th:field="*{gst}">
 
-                <div class="form-group">
+                <div class="form-group" style="position: relative;">
                     <label>Business Industry</label>
-                    <select th:field="*{industry}">
-                        <option value="">Select Industry</option>
-                        <option value="IT">IT & Software</option>
-                        <option value="Retail">Retail</option>
-                        <option value="Consulting">Consulting</option>
-                    </select>
+                    <input type="text" id="industrySearch" placeholder="Search industry (e.g. Cafe, IT...)" autocomplete="off">
+
+                    <input type="hidden" id="industryCode" th:field="*{industry}">
+
+                    <ul id="industrySuggestions" class="autocomplete-suggestions" style="display: none;"></ul>
                 </div>
 
                 <div class="form-group">

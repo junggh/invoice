@@ -26,7 +26,7 @@ public class SecurityConfig {
                         // 1. 누구나 접근 가능한 페이지 (로그인, 회원가입, 정적 리소스, API)
                         .requestMatchers(
                                 "/login", "/signup",           // 페이지
-                                "/css/**", "/js/**", "/images/**", // 정적 리소스
+                                "/css/**", "/js/**", "/data/**", "/images/**", // 정적 리소스
                                 "/api/auth/**"                 // 회원가입용 API (중복체크, ABN 등)
                         ).permitAll()
                         // 2. 그 외 모든 페이지는 로그인 필요

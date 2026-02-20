@@ -185,3 +185,39 @@ input:focus, select:focus {
     max-height: 1000px; /* 충분히 큰 값으로 설정하여 내용이 모두 보이도록 합니다. */
     opacity: 1;
 }
+
+/* business industry 검색 */
+
+.autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    list-style: none;
+    padding: 0;
+    margin: 5px 0 0 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.autocomplete-suggestions li {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid #f5f5f5;
+    color: #555;
+}
+
+.autocomplete-suggestions li:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-suggestions li:hover {
+    background-color: #F5F7FA;
+    color: var(--primary-color);
+}
