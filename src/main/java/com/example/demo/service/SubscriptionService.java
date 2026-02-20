@@ -70,6 +70,15 @@ public class SubscriptionService {
         return member.getCompany().getPlan();
     }
 
+    // 회사의 현재 PayPal 구독 ID 가져오기
+    @Transactional(readOnly = true)
+    public String getCompanySubscriptionId(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
+        if (member.getCompany() == null) return null;
+        return member.getCompany().getSubscriptionId();
+    }
+
     // 현재 접속자가 관리자인지 확인
     @Transactional(readOnly = true)
     public boolean isAdmin(String email) {

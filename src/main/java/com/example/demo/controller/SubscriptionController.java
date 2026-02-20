@@ -28,12 +28,12 @@ public class SubscriptionController {
             return "redirect:/invoices?error=unauthorized";
         }
 
-        // 현재 회사의 플랜 정보 조회
+        // 현재 회사의 플랜 정보와 구독 ID를 같이 가져옵니다.
         PlanType currentPlan = subscriptionService.getCompanyPlan(email);
+        String currentSubscriptionId = subscriptionService.getCompanySubscriptionId(email);
 
         model.addAttribute("currentPlan", currentPlan);
-        // Thymeleaf에서 Enum 비교를 위해 T(...) 문법을 쓰거나, String으로 변환해서 넘겨도 됨
-        // 여기서는 Enum 자체를 넘김
+        model.addAttribute("currentSubscriptionId", currentSubscriptionId);
 
         return "subscribe";
     }
