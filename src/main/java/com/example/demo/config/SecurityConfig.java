@@ -40,7 +40,15 @@ public class SecurityConfig {
                             String email = authentication.getName();
                             // [수정된 부분] 트랜잭션이 보장되는 서비스 메서드 호출!
                             authService.updateLoginAndActivityDates(email);
-                            response.sendRedirect("/invoices");
+                            boolean isSuperAdmin = authentication.getAuthorities().stream()
+                                    .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("SUPER_ADMIN"));
+
+                            // 권한에 따라 리다이렉트할 페이지 분기
+                            if (isSuperAdmin) {
+                                response.sendRedirect("/super-admin/companies"); // 개발자는 전체 회사 목록으로
+                            } else {
+                                response.sendRedirect("/invoices"); // 일반 유저는 인보이스 대시보드로
+                            }
                         })
                         .failureHandler((request, response, exception) -> {
                             String email = request.getParameter("email");
