@@ -24,17 +24,37 @@
     <i class="fas fa-search"></i>
     <i class="far fa-bell"></i>
     <i class="fas fa-th"></i>
-    <div class="dropdown">
-      <div class="user-avatar" th:text="${globalUserInitials ?: 'U'}">JY</div>
+    <div class="profile-dropdown">
+      <div class="profile-avatar" th:text="${globalUserInitials ?: 'JY'}" onclick="window.toggleProfileMenu(event)">JY</div>
 
-      <div class="dropdown-content" style="min-width: 130px; margin-top: 15px;">
-        <a href="/logout" style="color: #FF4D4F; display: flex; align-items: center; gap: 8px;">
-          <i class="fas fa-sign-out-alt" style="font-size: 14px; color: #FF4D4F;"></i>
-          Logout
-        </a>
+      <div id="profileMenu" class="profile-menu">
+        <a href="#">Profile & Account</a>
+        <a href="#">Setting</a>
+        <a href="#">Files</a>
+        <a href="#">Help page</a>
+        <a href="/logout">Log out</a>
       </div>
     </div>
   </div>
+  <script>
+    window.toggleProfileMenu = function(event) {
+        event.stopPropagation();
+        const menu = document.getElementById("profileMenu");
+        if (menu) {
+            menu.classList.toggle("show");
+        }
+    };
+
+    // 바탕 화면 클릭 시 메뉴 닫기
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.profile-avatar')) {
+            const menu = document.getElementById("profileMenu");
+            if (menu && menu.classList.contains('show')) {
+                menu.classList.remove('show');
+            }
+        }
+    });
+  </script>
 </div>
 
 </body>
