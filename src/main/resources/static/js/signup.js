@@ -130,9 +130,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             industryData = data;
-            // [로그 1] 데이터가 정상적으로 로드되었는지, 총 몇 개인지 확인
-            console.log("✅ [데이터 로드 완료] 총 항목 수:", industryData.length);
-            console.log("✅ [데이터 로드 샘플] 첫 3개 확인:", industryData.slice(0, 3));
         })
         .catch(error => console.error('Error loading industry codes:', error));
 
@@ -484,16 +481,6 @@ window.verifyAndNext = async function() {
         errorMsg.innerText = "Please enter the code.";
         errorMsg.style.display = 'block';
         return;
-    }
-
-    // ==========================================
-    // [테스트용] 마스터 코드 '000000' 입력 시 무사통과
-    // ==========================================
-    if (code === "000000") {
-        console.log("Test code used. Bypassing email verification.");
-        clearInterval(timerInterval); // 타이머 종료
-        window.showStep(3);           // Step 3 이동
-        return;                       // 함수 종료 (서버 요청 안 함)
     }
 
     // 시간 초과 체크 (프론트엔드 측 1차 방어)
