@@ -168,7 +168,7 @@
             <table class="invoice-table">
                 <thead>
                 <tr>
-                    <th style="width: 20px;"><input type="checkbox" onclick="toggleAll(this)"></th>
+                    <th style="width: 20px;"><input type="checkbox" onclick="toggleAll(this)" th:style="${currentStatus == 'Overview'} ? 'visibility: hidden;' : ''"></th>
                     <th:block th:if="${currentStatus != 'Recurring'}">
                         <th style="width: 80px;">
                             <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='issuedDate', sortDir=${sortField == 'issuedDate' and sortDir == 'desc' ? 'asc' : 'desc'})}"
@@ -229,7 +229,11 @@
                 </tr>
 
                 <tr th:if="${currentStatus != 'Recurring'}" th:each="inv : ${invoices}" class="invoice-item" th:data-company="${inv.customerCompanyName}">
-                    <td><input type="checkbox" name="selectedIds" class="invoice-checkbox" th:value="${inv.id}" th:data-status="${inv.status}"></td>
+                    <td>
+                        <input type="checkbox" name="selectedIds" class="invoice-checkbox"
+                               th:value="${inv.id}" th:data-status="${inv.status}"
+                               th:style="${currentStatus == 'Overview'} ? 'visibility: hidden;' : ''">
+                    </td>
                     <td th:text="${#temporals.format(inv.issuedDate, 'dd/MM/yyyy')}">29/07/2025</td>
                     <td>
                         <a th:href="${#strings.toString(inv.status) == 'DRAFT'} ? @{/invoices/{id}/edit(id=${inv.uuid})} : @{/invoices/{id}(id=${inv.uuid})}"
