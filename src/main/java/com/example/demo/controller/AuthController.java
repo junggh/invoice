@@ -28,8 +28,12 @@ public class AuthController {
 
     // 회원가입 페이지 이동
     @GetMapping("/signup")
-    public String signupForm(Model model) {
-        model.addAttribute("signupForm", new SignupForm());
+    public String signupForm(@RequestParam(defaultValue = "admin") String type,Model model) {
+        SignupForm form = new SignupForm();
+        form.setAccountType(type); // 가입 유형 폼에 저장
+
+        model.addAttribute("signupForm", form);
+        model.addAttribute("accountType", type);
         model.addAttribute("timezones", Timezone.values());
         model.addAttribute("months", Month.values());
         return "signup"; // signup.html (Wizard 형식의 뷰)

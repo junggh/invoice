@@ -471,6 +471,46 @@ window.resendCode = function() {
     sendVerificationEmail();
 };
 
+// [신규] Member용 인증 및 가입 완료
+window.verifyAndCompleteMember = async function() {
+    const code = document.getElementById('verificationCode').value.trim();
+    const email = document.getElementById('personalEmail').value;
+    const errorMsg = document.getElementById('verifyErrorMsg');
+
+    if (!code) {
+        errorMsg.innerText = "Please enter the code.";
+        errorMsg.style.display = 'block';
+        return;
+    }
+
+    if (timeLeft <= 0) {
+        errorMsg.innerText = "Code expired. Please resend.";
+        errorMsg.style.display = 'block';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/auth/verify-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`
+        });
+
+        const isValid = await response.json();
+
+        if (isValid) {
+            clearInterval(timerInterval); // 타이머 종료
+            document.getElementById('signupForm').submit(); // 즉시 가입 처리
+        } else {
+            errorMsg.innerText = "Invalid verification code.";
+            errorMsg.style.display = 'block';
+        }
+    } catch (error) {
+        console.error("Verification error:", error);
+        alert("Verification failed. Please try again.");
+    }
+};
+
 // 6. [신규] 인증번호 확인 및 Step 3 이동
 window.verifyAndNext = async function() {
     const code = document.getElementById('verificationCode').value.trim();

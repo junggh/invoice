@@ -16,6 +16,7 @@
     <div th:if="${errorMessage}" style="color: red; margin-bottom: 15px;" th:text="${errorMessage}"></div>
 
     <form th:action="@{/signup}" th:object="${signupForm}" method="post" id="signupForm">
+        <input type="hidden" th:field="*{accountType}">
 
         <div class="step-section active" id="step1">
             <h3 style="margin-top: 0; color: #666; font-size: 18px; margin-bottom: 20px;">Personal Details</h3>
@@ -100,11 +101,12 @@
 
             <div class="step-actions">
                 <button type="button" class="btn btn-secondary" onclick="prevStep(1)">Back</button>
-                <button type="button" class="btn btn-primary" style="width: auto;" onclick="verifyAndNext()">Verify & Next</button>
+                <button th:if="${accountType == 'admin'}" type="button" class="btn btn-primary" style="width: auto;" onclick="verifyAndNext()">Verify & Next</button>
+                <button th:if="${accountType == 'member'}" type="button" class="btn btn-primary" style="width: auto;" onclick="verifyAndCompleteMember()">Verify & Complete</button>
             </div>
         </div>
 
-        <div class="step-section" id="step3">
+        <div class="step-section" id="step3" th:if="${accountType == 'admin'}">
             <h3 style="margin-top: 0;">Set your business</h3>
 
             <div class="form-group">

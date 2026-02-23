@@ -7,6 +7,9 @@ import lombok.Setter;
 @Getter @Setter
 public class SignupForm {
 
+    // 가입 유형 (admin 또는 member)
+    private String accountType;
+
     // === Step 1: 기본 정보 & 계정 정보 ===
     private String firstName;
     // middleName 삭제
