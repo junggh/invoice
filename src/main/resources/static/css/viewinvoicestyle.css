@@ -158,3 +158,18 @@ h3 { margin-bottom: 15px; font-size: 18px; }
     color: white;
 }
 .btn-primary:hover { filter: brightness(90%); }
+
+/* [추가] Partial Payment Input 스타일 */
+.payment-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    width: 120px;
+    box-sizing: border-box;
+}
+
+.payment-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}

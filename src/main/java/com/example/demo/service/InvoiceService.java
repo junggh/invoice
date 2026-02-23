@@ -189,6 +189,32 @@ public class InvoiceService {
         }
     }
 
+    // [상태변경 및 결제] 결제 기록
+    @Transactional
+    public void recordPayment(String uuid, BigDecimal paymentAmount, Company company) {
+        Invoice invoice = getInvoiceByUuid(uuid, company);
+
+        if (invoice.getStatus() == InvoiceStatus.PAID) {
+            throw new IllegalStateException("This invoice is already paid in full.");
+        }
+
+        // 현재 잔액 가져오기 (만약 null이면 Total 금액으로 간주)
+        BigDecimal currentBalance = invoice.getBalanceDue() != null ? invoice.getBalanceDue() : invoice.getTotal();
+
+        // 새로운 잔액 계산
+        BigDecimal newBalance = currentBalance.subtract(paymentAmount);
+
+        // 잔액이 0 이하면 PAID 처리
+        if (newBalance.compareTo(BigDecimal.ZERO) <= 0) {
+            invoice.setBalanceDue(BigDecimal.ZERO);
+            invoice.setStatus(InvoiceStatus.PAID);
+        } else {
+            invoice.setBalanceDue(newBalance);
+            // 상태가 OVERDUE였더라도 일부 결제 시 여전히 기한이 지났다면 OVERDUE 유지,
+            // 아니면 UNPAID로 두는 로직이 필요할 수 있으나, 기본적으로 기존 상태를 유지합니다.
+        }
+    }
+
     // ===================================================================================
     // 3. Status Management (상태 변경 및 승인)
     // ===================================================================================

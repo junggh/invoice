@@ -173,6 +173,19 @@ public class InvoiceController {
         return "redirect:/invoices";
     }
 
+    // [결제] 부분 결제 및 전액 결제 기록
+    @PostMapping("/api/invoices/{uuid}/pay")
+    public String recordPayment(@PathVariable String uuid,
+                                @RequestParam BigDecimal paymentAmount,
+                                @AuthenticationPrincipal CustomUserDetails user) {
+
+        Company company = user.getMember().getCompany();
+        invoiceService.recordPayment(uuid, paymentAmount, company);
+
+        // 결제 후 다시 해당 인보이스 상세 화면으로 리다이렉트
+        return "redirect:/invoices/" + uuid;
+    }
+
     // [상태변경] 제출 (DRAFT -> IN_REVIEW)
     @PostMapping("/api/invoices/submit")
     public String submitInvoices(@RequestParam List<Long> ids) {

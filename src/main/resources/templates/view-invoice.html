@@ -126,6 +126,10 @@
                         <span style="color: var(--primary-color);"
                               th:text="${invoice.total != null ? #numbers.formatDecimal(invoice.total, 1, 2) : '0.00'}">0.00</span>
                     </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 18px; font-weight: bold; color: #333;">
+                        <span>Balance Due</span>
+                        <span th:text="${invoice.balanceDue != null ? #numbers.formatDecimal(invoice.balanceDue, 1, 2) : '0.00'}">0.00</span>
+                    </div>
                 </div>
             </div>
 
@@ -133,12 +137,26 @@
                 <div th:if="${#strings.toString(invoice.status) == 'UNPAID' or #strings.toString(invoice.status) == 'OVERDUE'}"
                      style="margin-right: auto; display: flex; gap: 12px;">
                     <button type="button" class="btn btn-secondary">Create payment link</button>
-                    <button type="button" class="btn btn-secondary">Record partial payment</button>
+                    <button type="button" class="btn btn-secondary" onclick="togglePaymentForm()">Record partial payment</button>
+                    <form id="paymentForm" th:action="@{/api/invoices/{uuid}/pay(uuid=${invoice.uuid})}" method="post" style="display: none; align-items: center; gap: 8px; margin: 0;">
+                        <input type="number" step="0.01" min="0.01" th:max="${invoice.balanceDue}" name="paymentAmount" class="payment-input" placeholder="Amount" required>
+                        <button type="submit" class="btn btn-primary" style="padding: 8px 16px; margin: 0;">Confirm</button>
+                    </form>
                 </div>
                 <button type="button" onclick="location.href='/invoices'" class="btn btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
 </div>
+<script>
+    function togglePaymentForm() {
+        const form = document.getElementById('paymentForm');
+        if (form.style.display === 'none') {
+            form.style.display = 'flex';
+        } else {
+            form.style.display = 'none';
+        }
+    }
+</script>
 </body>
 </html>
