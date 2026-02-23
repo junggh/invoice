@@ -2,18 +2,27 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<div th:fragment="sidebar" class="sidebar">
+<div th:fragment="sidebar" id="sidebar" class="sidebar">
   <div class="sidebar-logo">
-    <span>ZeniBooks</span>
-    <i class="fas fa-bars"></i>
+    <span class="logo-text">ZeniBooks</span>
+    <i class="fas fa-bars" onclick="window.toggleSidebar()"></i>
   </div>
   <ul class="sidebar-menu">
-    <li><a href="/invoices">Invoices</a></li>
-    <li><a href="/contact">Contact</a></li>
-    <li><a href="/product">Product</a></li>
-    <li><a href="/admin/users">Users</a></li>
-    <li><a href="/subscribe">Subscribe</a></li>
+    <li><a href="/invoices"><i class="fas fa-file-invoice"></i> <span class="menu-text">Invoices</span></a></li>
+    <li><a href="/contact"><i class="fas fa-address-book"></i> <span class="menu-text">Contact</span></a></li>
+    <li><a href="/product"><i class="fas fa-box-open"></i> <span class="menu-text">Product</span></a></li>
+    <li><a href="/admin/users"><i class="fas fa-users"></i> <span class="menu-text">Users</span></a></li>
+    <li><a href="/subscribe"><i class="fas fa-credit-card"></i> <span class="menu-text">Subscribe</span></a></li>
   </ul>
+
+  <script>
+    window.toggleSidebar = function() {
+        const sidebar = document.getElementById("sidebar");
+        if (sidebar) {
+            sidebar.classList.toggle("collapsed");
+        }
+    };
+  </script>
 </div>
 
 <div th:fragment="topbar" class="topbar">
