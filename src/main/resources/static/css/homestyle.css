@@ -322,3 +322,49 @@ h1 {
 .text-center { text-align: center !important;}
 .text-red { color: #FF4D4F !important;}
 .text-gray { color: rgba(0, 0, 0, 0.5); }
+
+/* ==========================================================================
+   9. Pagination Styles
+   ========================================================================== */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center; /* 세로 중앙 정렬 핵심 */
+    margin-top: 30px;
+    gap: 8px; /* 버튼 사이 간격 */
+}
+
+.pagination-container a,
+.pagination-container span {
+    display: inline-flex; /* 텍스트를 버튼 중앙에 배치 */
+    align-items: center;
+    justify-content: center;
+    min-width: 36px; /* 버튼 최소 너비 (정사각형 형태 유지용) */
+    height: 36px;    /* 버튼 고정 높이 */
+    padding: 0 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    box-sizing: border-box; /* 패딩 포함 높이 계산 */
+}
+
+/* 비활성화된 텍스트 (예: 현재 페이지가 아닐 때의 스타일 등 필요시) */
+.pagination-container .current-page {
+    background-color: var(--primary-color);
+    color: white;
+    border: 1px solid var(--primary-color);
+}
+
+.pagination-container .page-link {
+    background-color: white;
+    color: #555;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+
+.pagination-container .page-link:hover {
+    background-color: #f0f9ff;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}

@@ -83,13 +83,21 @@
 
             <div class="toolbar">
                 <div class="search-bar" style="display: flex; gap: 5px;">
-                    <input type="text" id="searchInput" placeholder="Search by name, invoice #, company...">
-                    <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays})}"
-                       class="btn btn-icon"
-                       title="Reset Filters & Sort"
-                       style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                    </a>
+                    <form th:action="@{/invoices}" method="get" style="display: flex; gap: 5px; margin: 0; align-items: center;">
+                        <input type="hidden" name="status" th:value="${currentStatus}">
+                        <input type="hidden" name="days" th:value="${selectedDays}">
+                        <input type="hidden" name="sortField" th:value="${sortField}">
+                        <input type="hidden" name="sortDir" th:value="${sortDir}">
+                        <input th:if="${currentStatus == 'Recurring'}" type="hidden" name="recurringStatus" th:value="${recurringStatus}">
+
+                        <input type="text" name="keyword" th:value="${keyword}" placeholder="Search by name, invoice #, company..." style="width: 250px;">
+                        <button type="submit" class="btn btn-secondary" style="padding: 8px 12px; height: 37px; margin-top: 0;">Search</button>
+
+                        <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays})}"
+                           class="btn btn-icon" title="Reset Filters & Sort">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </a>
+                    </form>
 
                     <div class="dropdown dropdown-click" th:if="${currentStatus == 'Recurring'}" style="position: relative;">
                         <button type="button" class="btn btn-icon" onclick="toggleFilterDropdown(event)" title="Filter Status"
@@ -171,7 +179,7 @@
                     <th style="width: 20px;"><input type="checkbox" onclick="toggleAll(this)" th:style="${currentStatus == 'Overview'} ? 'visibility: hidden;' : ''"></th>
                     <th:block th:if="${currentStatus != 'Recurring'}">
                         <th style="width: 80px;">
-                            <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='issuedDate', sortDir=${sortField == 'issuedDate' and sortDir == 'desc' ? 'asc' : 'desc'})}"
+                            <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='issuedDate', sortDir=${sortField == 'issuedDate' and sortDir == 'desc' ? 'asc' : 'desc'}, keyword=${keyword})}"
                                 style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
                                 Date
                                 <span th:if="${sortField == 'issuedDate'}" style="margin-left: 5px;">
@@ -295,6 +303,34 @@
                 </tr>
                 </tbody>
             </table>
+            <div th:if="${totalPages > 1}" class="pagination-container">
+
+                <a th:if="${currentPage > 1}"
+                   th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${currentPage - 1})}"
+                   class="page-link">&laquo; Prev</a>
+
+                <th:block th:if="${startPage > 1}">
+                    <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=1)}" class="page-link">1</a>
+                    <span style="color: #888; margin: 0 4px;">...</span>
+                </th:block>
+
+                <th:block th:each="i : ${#numbers.sequence(startPage, endPage)}">
+                    <span th:if="${currentPage == i}" class="current-page" th:text="${i}">1</span>
+                    <a th:unless="${currentPage == i}"
+                       th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${i})}"
+                       class="page-link" th:text="${i}">2</a>
+                </th:block>
+
+                <th:block th:if="${endPage < totalPages}">
+                    <span style="color: #888; margin: 0 4px;">...</span>
+                    <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${totalPages})}" class="page-link" th:text="${totalPages}">100</a>
+                </th:block>
+
+                <a th:if="${currentPage < totalPages}"
+                   th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${currentPage + 1})}"
+                   class="page-link">Next &raquo;</a>
+
+            </div>
         </div>
     </div>
 </div>

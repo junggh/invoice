@@ -4,7 +4,11 @@ import com.example.demo.entity.Company;
 import com.example.demo.entity.Invoice;
 import com.example.demo.entity.RecurringInvoice;
 import com.example.demo.entity.RecurringStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,6 +25,30 @@ public interface RecurringInvoiceRepository extends JpaRepository<RecurringInvoi
 
     // 회사별 상태별 필터링 조회 (정확히 일치하는 상태만)
     List<RecurringInvoice> findByCompanyAndStatusOrderByIdAsc(Company company, RecurringStatus status);
+
+    // [추가] ALL 필터용 (삭제된 것 제외) + 검색 + 페이징
+    @Query("SELECT r FROM RecurringInvoice r LEFT JOIN r.contact c " +
+            "WHERE r.company = :company AND r.status != :status AND " +
+            "(:keyword IS NULL OR :keyword = '' OR LOWER(r.templateNumber) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(c.companyName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<RecurringInvoice> findTemplatesByKeywordAndStatusNot(
+            @Param("company") Company company,
+            @Param("status") RecurringStatus status,
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+    // [추가] 특정 상태별 조회 + 검색 + 페이징
+    @Query("SELECT r FROM RecurringInvoice r LEFT JOIN r.contact c " +
+            "WHERE r.company = :company AND r.status = :status AND " +
+            "(:keyword IS NULL OR :keyword = '' OR LOWER(r.templateNumber) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(c.companyName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<RecurringInvoice> findTemplatesByKeywordAndStatus(
+            @Param("company") Company company,
+            @Param("status") RecurringStatus status,
+            @Param("keyword") String keyword,
+            Pageable pageable);
 
     // 마지막 템플릿 번호 조회 (INVT-0000# 생성용)
     Optional<RecurringInvoice> findTopByCompanyAndTemplateNumberStartingWithOrderByTemplateNumberDesc(Company company, String s);

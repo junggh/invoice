@@ -3,6 +3,8 @@ package com.example.demo.repository;
 import com.example.demo.entity.Company;
 import com.example.demo.entity.Invoice;
 import com.example.demo.entity.InvoiceStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -24,6 +26,28 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
 
     // 회사별 특정 상태 제외 조회 (주로 DELETED 제외 용도)
     List<Invoice> findByCompanyAndStatusNot(Company company, InvoiceStatus status, Sort sort);
+
+    // [추가] Overview용 (삭제된 것 제외) + 검색 + 페이징
+    @Query("SELECT i FROM Invoice i WHERE i.company = :company AND i.status != :status AND " +
+            "(:keyword IS NULL OR :keyword = '' OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(i.customerName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(i.customerCompanyName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Invoice> findInvoicesByKeywordAndStatusNot(
+            @Param("company") Company company,
+            @Param("status") InvoiceStatus status,
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+    // [추가] 탭별 상태 조회 + 검색 + 페이징
+    @Query("SELECT i FROM Invoice i WHERE i.company = :company AND i.status = :status AND " +
+            "(:keyword IS NULL OR :keyword = '' OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(i.customerName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(i.customerCompanyName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Invoice> findInvoicesByKeywordAndStatus(
+            @Param("company") Company company,
+            @Param("status") InvoiceStatus status,
+            @Param("keyword") String keyword,
+            Pageable pageable);
 
     // 마지막 번호 조회 (INV-0000# 생성용)
     Optional<Invoice> findTopByCompanyAndInvoiceNumberStartingWithOrderByInvoiceNumberDesc(Company company, String s);

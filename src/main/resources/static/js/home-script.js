@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================================
     // 2. 검색 로직 (Search Filter)
     // ============================================================
-    const searchInput = document.getElementById('searchInput');
+/*    const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('keyup', function() {
             const filter = this.value.toLowerCase();
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         });
-    }
+    }*/
 
     // ============================================================
     // 3. 기간 변경 (Period Selector)

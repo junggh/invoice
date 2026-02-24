@@ -7,6 +7,7 @@ import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.InvoiceService;
 import com.example.demo.service.RecurringInvoiceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,33 +40,69 @@ public class InvoiceController {
                        @RequestParam(required = false) String sortField,
                        @RequestParam(required = false) String sortDir,
                        @RequestParam(required = false) String recurringStatus,
+                       @RequestParam(required = false) String keyword,     // 검색어 추가
+                       @RequestParam(defaultValue = "1") int page,         // 페이지 추가
                        Model model,
                        @AuthenticationPrincipal CustomUserDetails user) {
 
-        // 0. 로그인한 유저의 회사 정보 획득
+        // ... 0, 1, 2번 로직은 기존과 동일하게 유지 ...
         Company company = user.getMember().getCompany();
-
-        // 1. 상태 및 필터 설정
         String currentStatus = (status == null || status.isEmpty()) ? "Overview" : status;
+
+        // 기존 model.addAttribute 들 유지
         model.addAttribute("currentStatus", currentStatus);
         model.addAttribute("selectedDays", days);
         model.addAttribute("sortField", sortField);
         model.addAttribute("sortDir", sortDir);
         model.addAttribute("recurringStatus", recurringStatus);
+        model.addAttribute("keyword", keyword); // 화면 유지용
+        model.addAttribute("currentPage", page);
 
-        // 2. 상단 요약 정보 계산 (Total, Balance, Overdue)
         model.addAttribute("totalAmount", invoiceService.calculateGlobalTotal(days, company));
         model.addAttribute("totalBalance", invoiceService.calculateGlobalBalance(days, company));
         model.addAttribute("totalOverdue", invoiceService.calculateGlobalOverdue(days, company));
 
+        // 총 페이지 수를 저장할 변수
+        int totalPages = 0;
+
         // 3. 탭별 리스트 조회
         if ("Recurring".equals(currentStatus)) {
-            model.addAttribute("recurringInvoices", recurringService.getTemplates(recurringStatus, company));
+            Page<RecurringInvoice> templatePage = recurringService.getTemplates(recurringStatus, company, keyword, page);
+            model.addAttribute("recurringInvoices", templatePage.getContent());
             model.addAttribute("invoices", Collections.emptyList());
+
+            totalPages = templatePage.getTotalPages();
+            model.addAttribute("totalPages", totalPages);
         } else {
-            model.addAttribute("invoices", invoiceService.getInvoices(status, sortField, sortDir, company));
+            Page<Invoice> invoicePage = invoiceService.getInvoices(currentStatus, sortField, sortDir, company, keyword, page);
+            model.addAttribute("invoices", invoicePage.getContent()); // 실제 데이터 리스트
             model.addAttribute("recurringInvoices", Collections.emptyList());
+
+            totalPages = invoicePage.getTotalPages();
+            model.addAttribute("totalPages", totalPages); // 전체 페이지 수
         }
+
+        // =========================================================================
+        // [추가] 슬라이딩 페이징 블록 계산 (화면에 5개 버튼만 표시)
+        // =========================================================================
+        int maxPageButtons = 5;
+        int startPage = Math.max(1, page - maxPageButtons / 2);
+        int endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+
+        // 끝 페이지 근처에 도달했을 때 앞쪽 버튼 개수 유지 (예: 총 10쪽인데 10쪽 클릭 시 6~10 표시)
+        if (endPage - startPage + 1 < maxPageButtons) {
+            startPage = Math.max(1, endPage - maxPageButtons + 1);
+        }
+
+        // 데이터가 아예 없을 때(0페이지) 에러 방지용
+        if (totalPages == 0) {
+            startPage = 1;
+            endPage = 1;
+        }
+
+        model.addAttribute("startPage", startPage);
+        model.addAttribute("endPage", endPage);
+        // =========================================================================
 
         return "home";
     }

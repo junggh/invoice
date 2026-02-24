@@ -4,6 +4,10 @@ import com.example.demo.entity.*;
 import com.example.demo.repository.RecurringInvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -28,19 +32,22 @@ public class RecurringInvoiceService {
     // ===================================================================================
 
     // [조회] 선택된 Status 템플릿 목록 (삭제된 것 제외)
-    public List<RecurringInvoice> getTemplates(String statusFilter, Company company) {
-        // 1. 필터가 없거나 'ALL'이면 기존대로 삭제된 것 빼고 전체 조회
+    public Page<RecurringInvoice> getTemplates(String statusFilter, Company company, String keyword, int page) {
+        // ID 기준 내림차순(최신순), 페이지당 15개
+        Pageable pageable = PageRequest.of(page - 1, 15, Sort.by(Sort.Direction.DESC, "id"));
+
+        // 1. 필터가 없거나 'ALL'이면 삭제된 것 빼고 전체 검색
         if (statusFilter == null || statusFilter.isEmpty() || "ALL".equals(statusFilter)) {
-            return recurringRepository.findByCompanyAndStatusNotOrderByIdAsc(company, RecurringStatus.DELETED);
+            return recurringRepository.findTemplatesByKeywordAndStatusNot(company, RecurringStatus.DELETED, keyword, pageable);
         }
 
-        // 2. 특정 상태 필터링
+        // 2. 특정 상태 필터링 검색
         try {
             RecurringStatus status = RecurringStatus.valueOf(statusFilter);
-            return recurringRepository.findByCompanyAndStatusOrderByIdAsc(company, status);
+            return recurringRepository.findTemplatesByKeywordAndStatus(company, status, keyword, pageable);
         } catch (IllegalArgumentException e) {
             // 잘못된 값이 들어오면 전체 조회 (안전장치)
-            return recurringRepository.findByCompanyAndStatusNotOrderByIdAsc(company, RecurringStatus.DELETED);
+            return recurringRepository.findTemplatesByKeywordAndStatusNot(company, RecurringStatus.DELETED, keyword, pageable);
         }
     }
 

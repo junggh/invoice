@@ -4,6 +4,9 @@ import com.example.demo.entity.*;
 import com.example.demo.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
@@ -46,24 +49,27 @@ public class InvoiceService {
         return invoice;
     }
 
-    // [조회] 목록 조회 (필터 및 정렬)
-    public List<Invoice> getInvoices(String statusCondition, String sortField, String sortDir, Company company) {
-        // 1. 정렬 설정 (기본값: ID 오름차순)
-        Sort sort = Sort.by(Sort.Direction.ASC, "id");
+    // [조회] 목록 조회 (필터 및 정렬 + 검색 + 페이징)
+    public Page<Invoice> getInvoices(String statusCondition, String sortField, String sortDir, Company company, String keyword, int page) {
+        // 1. 정렬 설정 (기본값: ID 내림차순 - 최신순)
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
         if (sortField != null && !sortField.isEmpty()) {
             Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
             sort = Sort.by(direction, sortField);
         }
 
-        // 2. 조회 (Overview는 삭제된 것 제외 전체, 그 외는 상태별 조회)
+        // 2. 페이징 설정 (0-indexed 이므로 page - 1, 사이즈는 15개)
+        Pageable pageable = PageRequest.of(page - 1, 15, sort);
+
+        // 3. 조회
         if (statusCondition == null || statusCondition.isEmpty() || "Overview".equals(statusCondition)) {
-            return invoiceRepository.findByCompanyAndStatusNot(company, InvoiceStatus.DELETED, sort);
+            return invoiceRepository.findInvoicesByKeywordAndStatusNot(company, InvoiceStatus.DELETED, keyword, pageable);
         }
 
         try {
-            return invoiceRepository.findByCompanyAndStatus(company, InvoiceStatus.valueOf(statusCondition), sort);
+            return invoiceRepository.findInvoicesByKeywordAndStatus(company, InvoiceStatus.valueOf(statusCondition), keyword, pageable);
         } catch (IllegalArgumentException e) {
-            return invoiceRepository.findByCompanyAndStatusNot(company, InvoiceStatus.DELETED, sort);
+            return invoiceRepository.findInvoicesByKeywordAndStatusNot(company, InvoiceStatus.DELETED, keyword, pageable);
         }
     }
 
