@@ -5,7 +5,9 @@ import com.example.demo.dto.SignupForm;
 import com.example.demo.entity.Timezone;
 import com.example.demo.service.AbnLookupService;
 import com.example.demo.service.AuthService;
+import com.example.demo.service.CompanyInvitationService;
 import com.example.demo.service.EmailService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,34 +27,59 @@ public class AuthController {
     private final AuthService authService;
     private final AbnLookupService abnLookupService;
     private final EmailService emailService;
+    private final CompanyInvitationService invitationService;
 
     // 회원가입 페이지 이동
     @GetMapping("/signup")
-    public String signupForm(@RequestParam(defaultValue = "admin") String type,Model model) {
+    public String signupForm(@RequestParam(defaultValue = "admin") String type,
+                             @RequestParam(required = false) String token,
+                             Model model) {
         SignupForm form = new SignupForm();
-        form.setAccountType(type); // 가입 유형 폼에 저장
+        form.setAccountType(type);
+        form.setToken(token);
+
+        // 토큰이 있으면 이메일을 DB에서 가져와서 미리 폼에 채워줍니다.
+        if (token != null) {
+            String inviteeEmail = invitationService.getEmailByToken(token);
+            if (inviteeEmail != null) {
+                form.setPersonalEmail(inviteeEmail);
+            }
+        }
 
         model.addAttribute("signupForm", form);
         model.addAttribute("accountType", type);
         model.addAttribute("timezones", Timezone.values());
         model.addAttribute("months", Month.values());
-        return "signup"; // signup.html (Wizard 형식의 뷰)
+        return "signup";
     }
 
     // 회원가입 처리
     @PostMapping("/signup")
-    public String processSignup(@ModelAttribute SignupForm signupForm, Model model) {
+    public String processSignup(@ModelAttribute SignupForm signupForm, Model model, HttpServletRequest request) { // request 추가
         try {
+            // 1. 회원 가입 처리 (DB 저장)
             authService.processSignup(signupForm);
-            return "redirect:/login";
+
+            // 2. [추가] 토큰이 있다면 가입과 동시에 회사 연결 처리!
+            if (signupForm.getToken() != null && !signupForm.getToken().isEmpty()) {
+                invitationService.acceptInvitation(signupForm.getToken(), signupForm.getPersonalEmail());
+            }
+
+            // 3. [추가] 가입 완료 즉시 자동 로그인 처리 (Spring Security)
+            request.login(signupForm.getPersonalEmail(), signupForm.getPassword());
+            authService.updateLoginAndActivityDates(signupForm.getPersonalEmail());
+
+            // 4. [추가] 로그인 페이지를 거치지 않고 바로 대시보드로 이동!
+            return "redirect:/invoices";
 
         } catch (IllegalArgumentException e) {
-            // 에러 발생 시 다시 가입 페이지로 (에러 메시지 전달)
             model.addAttribute("errorMessage", e.getMessage());
-            //model.addAttribute("signupForm", signupForm); // 입력했던 정보 유지
             model.addAttribute("timezones", Timezone.values());
             model.addAttribute("months", Month.values());
             return "signup";
+        } catch (Exception e) {
+            // request.login 실패 시 안전하게 로그인 페이지로 보냄
+            return "redirect:/login";
         }
     }
 

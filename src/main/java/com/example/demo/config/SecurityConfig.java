@@ -1,6 +1,7 @@
 package com.example.demo.config;
 
 import com.example.demo.service.AuthService;
+import com.example.demo.service.CompanyInvitationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final AuthService authService;
+    private final CompanyInvitationService invitationService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -27,7 +29,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/login", "/signup",           // 페이지
                                 "/css/**", "/js/**", "/data/**", "/images/**", // 정적 리소스
-                                "/api/auth/**"                 // 회원가입용 API (중복체크, ABN 등)
+                                "/api/auth/**",                 // 회원가입용 API (중복체크, ABN 등)
+                                "/invitations/accept"           // 초대 링크 허용
                         ).permitAll()
                         // 2. 그 외 모든 페이지는 로그인 필요
                         .anyRequest().authenticated()
@@ -40,6 +43,17 @@ public class SecurityConfig {
                             String email = authentication.getName();
                             // [수정된 부분] 트랜잭션이 보장되는 서비스 메서드 호출!
                             authService.updateLoginAndActivityDates(email);
+
+                            // 폼에서 넘어온 토큰이 있다면 즉시 초대 수락(회사 연결) 처리
+                            String token = request.getParameter("token");
+                            if (token != null && !token.isEmpty()) {
+                                try {
+                                    invitationService.acceptInvitation(token, email);
+                                } catch (Exception e) {
+                                    System.out.println("초대 자동 연결 실패: " + e.getMessage());
+                                }
+                            }
+
                             boolean isSuperAdmin = authentication.getAuthorities().stream()
                                     .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("SUPER_ADMIN"));
 

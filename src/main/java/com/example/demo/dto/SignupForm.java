@@ -51,4 +51,7 @@ public class SignupForm {
     private String companyCountryCode;
     private String companyPhone;
     private String fax;
+
+    // [추가] 초대장 토큰을 담을 필드
+    private String token;
 }
