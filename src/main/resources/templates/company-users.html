@@ -44,7 +44,8 @@
             <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
                 <h2 style="margin: 0;">Members List</h2>
                 <div>
-                    <button type="button" class="btn btn-primary" onclick="openInviteModal()">+ Invite User</button>
+                    <button th:if="${#authorization.expression('hasAuthority(''ADMIN'')')}"
+                            type="button" class="btn btn-primary" onclick="openInviteModal()">+ Invite User</button>
                     <a href="javascript:history.back()" class="btn" style="background: white; border: 1px solid #ddd; color: #555; text-decoration: none; margin-left: 10px;">Back</a>
                 </div>
             </div>

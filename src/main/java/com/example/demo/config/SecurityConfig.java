@@ -24,7 +24,6 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/super-admin/**").hasAuthority("SUPER_ADMIN") // 개발자 전용
-                        .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "SUPER_ADMIN") // 회사 관리자 및 개발자 접근 가능
                         // 1. 누구나 접근 가능한 페이지 (로그인, 회원가입, 정적 리소스, API)
                         .requestMatchers(
                                 "/login", "/signup",           // 페이지
