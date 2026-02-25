@@ -2,7 +2,9 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.CompanyDashboardDto;
 import com.example.demo.dto.MemberManagementDto;
+import com.example.demo.entity.Company;
 import com.example.demo.entity.Member;
+import com.example.demo.repository.CompanyRepository;
 import com.example.demo.repository.MemberRepository;
 import com.example.demo.service.AdminDashboardService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class AdminController {
 
     private final AdminDashboardService adminDashboardService;
     private final MemberRepository memberRepository;
+    private final CompanyRepository companyRepository;
 
     // 1. [개발자 전용] 전체 회사 목록 보기
     @GetMapping("/super-admin/companies")
@@ -33,9 +36,12 @@ public class AdminController {
     // 2. [개발자 전용] 특정 회사 클릭 시 멤버 보기
     @GetMapping("/super-admin/companies/{companyId}/users")
     public String viewCompanyUsersBySuperAdmin(@PathVariable Long companyId, Model model) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new IllegalArgumentException("Company not found"));
         List<MemberManagementDto> users = adminDashboardService.getCompanyMembers(companyId);
+        model.addAttribute("companyName", company.getBusinessName());
         model.addAttribute("users", users);
-        return "company-users"; // 공통 HTML 템플릿 사용
+        return "super-admin-company-users";
     }
 
     // 3. [회사 관리자용] 자기 회사 멤버 보기

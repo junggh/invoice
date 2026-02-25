@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="sidebar" id="sidebar" class="sidebar">
+    <div class="sidebar-logo">
+        <span class="logo-text">ZeniBooks</span>
+        <i class="fas fa-bars" onclick="window.toggleSidebar()"></i>
+    </div>
+
+    <ul class="sidebar-menu">
+        <li>
+            <a href="/super-admin/companies">
+                <i class="fas fa-building"></i> <span class="menu-text">Companies</span>
+            </a>
+        </li>
+    </ul>
+
+    <script>
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById("sidebar");
+            if (sidebar) {
+                sidebar.classList.toggle("collapsed");
+            }
+        };
+    </script>
+</div>
+
+<div th:fragment="topbar" class="topbar">
+    <div class="topbar-company" th:text="${globalCompanyName ?: 'ZeniBooks'}">Demo Company</div>
+
+    <div class="topbar-icons">
+        <i class="fas fa-plus"></i>
+        <i class="fas fa-search"></i>
+        <i class="far fa-bell"></i>
+        <i class="fas fa-th"></i>
+        <div class="profile-dropdown">
+            <div class="profile-avatar" th:text="${globalUserInitials ?: 'SA'}" onclick="window.toggleProfileMenu(event)">SA</div>
+
+            <div id="profileMenu" class="profile-menu">
+                <a href="#">Profile & Account</a>
+                <a href="#">Setting</a>
+                <a href="#">Files</a>
+                <a href="#">Help page</a>
+                <a href="/logout">Log out</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        window.toggleProfileMenu = function(event) {
+            event.stopPropagation();
+            const menu = document.getElementById("profileMenu");
+            if (menu) {
+                menu.classList.toggle("show");
+            }
+        };
+
+        // 바탕 화면 클릭 시 메뉴 닫기
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.profile-avatar')) {
+                const menu = document.getElementById("profileMenu");
+                if (menu && menu.classList.contains('show')) {
+                    menu.classList.remove('show');
+                }
+            }
+        });
+    </script>
+</div>
+
+</body>
+</html>
