@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.entity.CompanyInvitation;
 import com.example.demo.service.CompanyInvitationService;
+import com.example.demo.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,6 +17,7 @@ import java.util.Map;
 public class CompanyInvitationController {
 
     private final CompanyInvitationService invitationService;
+    private final EmailService emailService;
 
     // 1. 관리자가 초대 모달에서 'Send Invite' 버튼을 누를 때 호출됨
     @PostMapping("/api/invitations")
@@ -24,17 +26,27 @@ public class CompanyInvitationController {
                                              @AuthenticationPrincipal UserDetails userDetails) {
         String inviteeEmail = request.get("email");
         try {
+            // 초대장 토큰 생성 및 DB 저장
             CompanyInvitation invitation = invitationService.createInvitation(userDetails.getUsername(), inviteeEmail);
 
-            // [임시 처리] 실제 이메일 발송은 JavaMailSender 등을 세팅해야 하므로, 우선 콘솔창에 링크를 출력합니다!
+            // 실제 가입 링크 생성 (나중에 실제 도메인으로 변경 필요)
             String inviteLink = "http://localhost:8080/invitations/accept?token=" + invitation.getToken();
 
-            System.out.println("\n========================================================");
-            System.out.println("💌 [가상 이메일 발송] " + inviteeEmail + " 님에게 초대장이 도착했습니다!");
-            System.out.println("👉 가입 링크: " + inviteLink);
-            System.out.println("========================================================\n");
+            // 이메일 제목 및 본문(HTML) 구성
+            String subject = "[ZeniBooks] You've been invited to join a team!";
+            String content = "<div style='font-family: Arial, sans-serif; text-align:center; border:1px solid #ddd; padding:30px; border-radius: 8px; max-width: 500px; margin: 0 auto;'>"
+                    + "<h2 style='color:#333; margin-top:0;'>Team Invitation</h2>"
+                    + "<p style='color:#555; font-size: 16px; line-height: 1.5; margin-bottom: 25px;'>"
+                    + "You have been invited to join the company on ZeniBooks.<br>Click the button below to accept the invitation and join the team.</p>"
+                    + "<a href='" + inviteLink + "' style='display:inline-block; padding:12px 24px; background-color:#00A3FF; color:#fff; text-decoration:none; border-radius:6px; font-weight:bold; font-size: 16px;'>Accept Invitation</a>"
+                    + "<p style='margin-top: 30px; font-size: 12px; color: #999; word-break: break-all;'>"
+                    + "If the button doesn't work, copy and paste this link into your browser:<br>" + inviteLink + "</p>"
+                    + "</div>";
 
-            return ResponseEntity.ok("초대장이 성공적으로 발송되었습니다.");
+            // EmailService를 호출하여 실제 비동기 메일 발송
+            emailService.sendEmail(inviteeEmail, subject, content);
+
+            return ResponseEntity.ok("초대 이메일이 성공적으로 발송되었습니다.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -44,7 +56,7 @@ public class CompanyInvitationController {
     @GetMapping("/invitations/accept")
     public String acceptInvitation(@RequestParam String token,
                                    @AuthenticationPrincipal UserDetails userDetails) {
-        // [수정] 비로그인 상태면 토큰을 들고 로그인 화면으로 보냅니다!
+        // 비로그인 상태면 토큰을 들고 로그인 화면으로 보냄
         if (userDetails == null) {
             return "redirect:/login?token=" + token;
         }
