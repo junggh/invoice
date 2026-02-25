@@ -26,6 +26,7 @@ import java.util.List;
 public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
+    private final EmailService emailService;
 
     // ===================================================================================
     // 1. Read Operations (조회 및 대시보드)
@@ -249,7 +250,7 @@ public class InvoiceService {
                 if (invoice.getInvoiceNumber() == null) {
                     invoice.setInvoiceNumber(generateNextInvoiceNumber(member.getCompany()));
                 }
-                // TODO: 이메일 발송 로직 추가
+                sendUnpaidInvoiceEmail(invoice);
             } else {
                 // 미래 날짜면 대기(Approved)
                 invoice.setStatus(InvoiceStatus.APPROVED);
@@ -280,9 +281,38 @@ public class InvoiceService {
 
         for (Invoice invoice : scheduledInvoices) {
             invoice.setStatus(InvoiceStatus.UNPAID);
-            // TODO: 이메일 발송 로직 추가
+            sendUnpaidInvoiceEmail(invoice);
             System.out.println("Auto-sending Invoice ID: " + invoice.getId());
         }
+    }
+
+    // [이메일] 미납 인보이스 알림 메일 발송
+    public void sendUnpaidInvoiceEmail(Invoice invoice) {
+        if (invoice.getCustomerEmail() == null || invoice.getCustomerEmail().isEmpty()) {
+            return;
+        }
+
+        String companyName = invoice.getCompany().getBusinessName();
+        String subject = "[Invoice] New invoice " + invoice.getInvoiceNumber() + " from " + companyName;
+
+        String content = String.format(
+                "<div style='font-family: Arial, sans-serif; line-height: 1.6;'>" +
+                        "<h2>New Invoice Received</h2>" +
+                        "<p>Hello <strong>%s</strong>,</p>" +
+                        "<p>You have received a new invoice from <strong>%s</strong>.</p>" +
+                        "<p><strong>Invoice Number:</strong> %s<br>" +
+                        "<strong>Total Amount:</strong> %s %s</p>" +
+                        "<p>Please log in to your portal to view the details and make a payment.</p>" +
+                        "<p>Thank you.</p>" +
+                        "</div>",
+                invoice.getCustomerName(),
+                companyName,
+                invoice.getInvoiceNumber(),
+                invoice.getCustomerCurrency() != null ? invoice.getCustomerCurrency() : "",
+                invoice.getTotal().toString()
+        );
+
+        emailService.sendEmail(invoice.getCustomerEmail(), subject, content);
     }
 
     // [스케줄러] 연체 상태 업데이트 (Unpaid -> Overdue)

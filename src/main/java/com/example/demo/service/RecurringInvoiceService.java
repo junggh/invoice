@@ -297,6 +297,11 @@ public class RecurringInvoiceService {
         newInvoice.setBalanceDue(template.getTotal());
 
         invoiceService.autoCreateInvoice(newInvoice);
+
+        // [추가] AutoSend가 체크되어 UNPAID 상태로 생성된 경우 이메일 발송
+        if (newInvoice.getStatus() == InvoiceStatus.UNPAID) {
+            invoiceService.sendUnpaidInvoiceEmail(newInvoice);
+        }
     }
 
     // [추가] 템플릿 번호 중복 체크
