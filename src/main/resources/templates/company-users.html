@@ -86,7 +86,7 @@
             <span class="close-btn" onclick="closeInviteModal()">&times;</span>
         </div>
         <div>
-            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">팀원의 이메일 주소를 입력하면 초대 링크가 발송됩니다.</p>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Enter your team member's email address to send an invitation link.</p>
             <div style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Email Address</label>
                 <input type="email" id="inviteEmail" placeholder="businessman@example.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
@@ -112,7 +112,7 @@
     function sendInvite() {
         const email = document.getElementById('inviteEmail').value;
         if (!email) {
-            alert('초대할 직원의 이메일을 입력해주세요.');
+            alert('Please enter the email of the employee you want to invite.');
             return;
         }
 

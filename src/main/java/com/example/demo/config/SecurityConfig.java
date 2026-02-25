@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 try {
                                     invitationService.acceptInvitation(token, email);
                                 } catch (Exception e) {
-                                    System.out.println("초대 자동 연결 실패: " + e.getMessage());
+                                    System.out.println("invite matching failed: " + e.getMessage());
                                 }
                             }
 

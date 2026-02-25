@@ -32,7 +32,7 @@ public class InitDataConfig {
                 superAdmin.setCompany(null);
 
                 memberRepository.save(superAdmin);
-                System.out.println("✅ 개발자(SUPER_ADMIN) 계정이 자동 생성되었습니다.");
+                System.out.println("✅ SUPER_ADMIN account auto created.");
             }
         };
     }

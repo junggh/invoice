@@ -46,7 +46,7 @@ public class CompanyInvitationController {
             // EmailService를 호출하여 실제 비동기 메일 발송
             emailService.sendEmail(inviteeEmail, subject, content);
 
-            return ResponseEntity.ok("초대 이메일이 성공적으로 발송되었습니다.");
+            return ResponseEntity.ok("Invitation email successfully sent.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

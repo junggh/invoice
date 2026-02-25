@@ -31,7 +31,7 @@ public class EmailService {
             javaMailSender.send(message);
         } catch (MessagingException e) {
             e.printStackTrace();
-            throw new RuntimeException("메일 발송 실패");
+            throw new RuntimeException("Failed to send email.");
         }
     }
 }

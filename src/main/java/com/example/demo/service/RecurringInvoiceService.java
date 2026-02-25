@@ -54,7 +54,7 @@ public class RecurringInvoiceService {
     // [조회] 템플릿 상세
     public RecurringInvoice getRecurringInvoice(Long id) {
         return recurringRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 템플릿이 없습니다. id=" + id));
+                .orElseThrow(() -> new IllegalArgumentException("Template not found. id=" + id));
     }
 
     // [조회] 주소로 탬플릿 조회
@@ -64,7 +64,7 @@ public class RecurringInvoiceService {
 
         // 내 회사의 인보이스가 아니면 에러 발생
         if (!invoice.getCompany().getId().equals(company.getId())) {
-            throw new AccessDeniedException("접근 권한이 없습니다.");
+            throw new AccessDeniedException("You do not have permission to access this template.");
         }
         return invoice;
     }

@@ -44,7 +44,7 @@ public class InvoiceService {
 
         // 내 회사의 인보이스가 아니면 에러 발생
         if (!invoice.getCompany().getId().equals(company.getId())) {
-            throw new AccessDeniedException("접근 권한이 없습니다.");
+            throw new AccessDeniedException("You do not have permission to access this invoice.");
         }
         return invoice;
     }

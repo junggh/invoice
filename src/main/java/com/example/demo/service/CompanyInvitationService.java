@@ -23,15 +23,15 @@ public class CompanyInvitationService {
     @Transactional
     public CompanyInvitation createInvitation(String adminEmail, String inviteeEmail) {
         Member admin = memberRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new IllegalArgumentException("관리자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("Administrator not found."));
 
         if (!"ADMIN".equals(admin.getRole())) {
-            throw new IllegalStateException("초대 권한이 없습니다. 관리자만 가능합니다.");
+            throw new IllegalStateException("You do not have permission to invite. Only administrators can do this.");
         }
 
         Company company = admin.getCompany();
         if (company == null) {
-            throw new IllegalStateException("소속된 회사가 없습니다.");
+            throw new IllegalStateException("No company affiliation found.");
         }
 
         CompanyInvitation invitation = new CompanyInvitation();
@@ -46,24 +46,24 @@ public class CompanyInvitationService {
     @Transactional
     public void acceptInvitation(String token, String loggedInEmail) {
         CompanyInvitation invitation = invitationRepository.findByToken(token)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않거나 잘못된 초대 링크입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or incorrect invitation link."));
 
         if (invitation.getStatus() != CompanyInvitation.InvitationStatus.PENDING) {
-            throw new IllegalStateException("이미 수락되었거나 만료된 초대장입니다.");
+            throw new IllegalStateException("This invitation has already been accepted or expired.");
         }
 
         if (invitation.getExpiresAt().isBefore(LocalDateTime.now())) {
             invitation.setStatus(CompanyInvitation.InvitationStatus.EXPIRED);
-            throw new IllegalStateException("초대 유효기간(7일)이 만료되었습니다. 관리자에게 재요청하세요.");
+            throw new IllegalStateException("The invitation has expired (valid for 7 days). Please request a new one from the administrator.");
         }
 
         // 로그인한 사람이 초대받은 사람이 맞는지 확인 (보안)
         if (!invitation.getInviteeEmail().equalsIgnoreCase(loggedInEmail)) {
-            throw new IllegalStateException("초대받은 이메일(" + invitation.getInviteeEmail() + ") 계정으로 로그인해주세요.");
+            throw new IllegalStateException("Please log in with the invited email account (" + invitation.getInviteeEmail() + ").");
         }
 
         Member member = memberRepository.findByEmail(loggedInEmail)
-                .orElseThrow(() -> new IllegalArgumentException("회원 정보가 없습니다. 먼저 회원가입을 진행해주세요."));
+                .orElseThrow(() -> new IllegalArgumentException("Member information not found. Please sign up first."));
 
         // 회사 연결 및 권한 일반 사용자(USER)로 부여
         member.setCompany(invitation.getCompany());
