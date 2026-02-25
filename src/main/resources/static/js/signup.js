@@ -589,11 +589,14 @@ window.submitSignup = function() {
     }
 
     const businessCountry = document.getElementById('businessCountry').value;
-    if (businessCountry === "Australia" && !isAbnVerified) {
-        alert("Please search and verify your ABN first.");
-        document.getElementById('abnInput').focus();
+    const abnInput = document.getElementById('abnInput');
+    const abnValue = abnInput ? abnInput.value.trim() : "";
+
+    // ABN이 입력된 경우에만 검증 여부를 확인합니다.
+    if (businessCountry === "Australia" && abnValue !== "" && !isAbnVerified) {
+        alert("Please search and verify your ABN first, or leave it empty.");
+        abnInput.focus();
         return;
     }
-
     document.getElementById('signupForm').submit();
 };
