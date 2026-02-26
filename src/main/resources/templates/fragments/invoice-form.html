@@ -20,16 +20,29 @@
         <div class="form-grid">
             <div class="section-left">
                 <div class="form-group">
-                    <label for="contactSelect">Contact Name <span style="color:red">*</span></label>
-                    <select id="contactSelect" name="contact.id" required style="width: 100%;">
-                        <option value="">Select Client</option>
-                        <option th:each="c : ${contacts}" th:value="${c.id}"
-                                th:text="${c.companyName != null ? c.companyName + ' (' + c.name + ')' : c.name}"
-                                th:selected="${invoice.contact != null and c.id == invoice.contact.id}"
-                                th:data-name="${c.name}" th:data-address="${c.billTo}"
-                                th:data-currency="${c.currency}" th:data-company="${c.companyName}"
-                                th:data-email="${c.email}"></option>
-                    </select>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                        <label style="margin-bottom: 0;">Customer <span style="color:red">*</span></label>
+                        <label style="font-size: 12px; font-weight: normal; cursor: pointer; color: #00A3FF;">
+                            <input type="checkbox" id="manualContactToggle" onchange="toggleManualContact()"> Enter manually (One-off)
+                        </label>
+                    </div>
+
+                    <div id="contactSelectWrapper">
+                        <select id="contactSelect" name="contact.id" required style="width: 100%;">
+                            <option value="">Select Client</option>
+                            <option th:each="c : ${contacts}" th:value="${c.id}"
+                                    th:text="${c.companyName != null ? c.companyName + ' (' + c.name + ')' : c.name}"
+                                    th:selected="${invoice.contact != null and c.id == invoice.contact.id}"
+                                    th:data-name="${c.name}" th:data-address="${c.billTo}"
+                                    th:data-currency="${c.currency}" th:data-company="${c.companyName}"
+                                    th:data-email="${c.email}"></option>
+                        </select>
+                    </div>
+
+                    <div id="manualContactWrapper" class="d-none" style="display: flex; gap: 10px; margin-top: 5px;">
+                        <input type="text" id="manualName" placeholder="Customer Name *" th:value="${invoice.customerName}" style="flex: 1;">
+                        <input type="email" id="manualEmail" placeholder="Email Address" th:value="${invoice.customerEmail}" style="flex: 1;">
+                    </div>
                 </div>
                 <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0;">
                     <div class="form-group">
