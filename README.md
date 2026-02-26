@@ -1,137 +1,351 @@
-# Invoice Management System (Demo)
+# ZeniBooks - Invoice Management SaaS
 
-이 프로젝트는 Spring Boot와 Thymeleaf를 기반으로 한 **인보이스(청구서) 관리 시스템** 데모입니다.  
-사용자는 회원가입을 통해 회사를 등록하고, 인보이스를 생성, 발송, 관리할 수 있으며, 정기 결제(Recurring Invoice) 템플릿 기능도 제공합니다.
-
----
-
-## 🚀 주요 기능
-
-### 1. 회원가입 및 회사 등록 (Onboarding)
-- **회원가입**: 이메일 인증 및 ABN(Australian Business Number) 조회를 통한 회사 정보 자동 입력 지원.
-- **회사 정보 관리**: 비즈니스 이름, 주소, 연락처, 로고(미구현), 세금 정보(GST) 등을 관리.
-
-### 2. 인보이스 관리 (Invoicing)
-- **인보이스 생성/수정**: 고객 선택, 상품 추가, 할인 및 세금(GST) 적용.
-- **상태 관리**: Draft(작성중) -> In Review(검토) -> Approved(승인) -> Unpaid(미납) -> Paid(지불완료) / Overdue(연체).
-- **PDF/이메일 발송**: (현재 이메일 발송 로직은 껍데기만 존재, 실제 연동 필요).
-- **대시보드**: 기간별 매출(Total), 미수금(Balance Due), 연체금(Overdue) 요약 통계 제공.
-
-### 3. 정기 인보이스 (Recurring Invoices)
-- **템플릿 생성**: 매주/매월/매년 반복되는 인보이스 템플릿 설정.
-- **자동 생성**: 스케줄러가 매일 실행되어 발송 예정일이 된 템플릿을 실제 인보이스로 자동 변환.
-
-### 4. 관리자 기능 (Admin)
-- **Super Admin**: 전체 등록된 회사 목록 및 상태 조회.
-- **Company Admin**: 소속 회사의 직원(Member) 관리.
+Spring Boot + Thymeleaf 기반의 호주 사업자용 멀티테넌트 인보이스 관리 시스템.
+회사(Company)를 테넌트 루트로 하여, 인보이스 생성/승인/발송/결제 전 과정을 관리한다.
 
 ---
 
-## 🛠 기술 스택
+## 실행 방법
 
-- **Backend**: Java 17, Spring Boot 3.x, Spring Security, Spring Data JPA
-- **Frontend**: Thymeleaf, HTML5, CSS3, JavaScript (jQuery 일부 사용 가능성 있음)
-- **Database**: PostgreSQL (Docker Compose 사용)
-- **Build Tool**: Gradle
-- **Container**: Docker, Docker Compose
+### 사전 요구사항
+- Java 17+
+- Docker & Docker Compose
+- Gmail 앱 비밀번호 (이메일 발송용)
+- ABN Lookup API GUID (호주 사업자 번호 조회용, [ABR](https://abr.business.gov.au/)에서 발급)
 
----
-
-## ⚙️ 설치 및 실행 가이드
-
-이 프로젝트를 로컬 환경에서 실행하기 위해 다음 단계를 따라주세요.
-
-### 1. 사전 요구사항 (Prerequisites)
-- **Java 17** 이상 설치
-- **Docker** 및 **Docker Compose** 설치
-- **Git** 설치
-
-### 2. 프로젝트 클론
-```bash
-git clone <repository-url>
-cd demo
-```
-
-### 3. 환경 변수 및 설정 파일 수정
-`src/main/resources/application.yaml` 파일을 열어 본인의 환경에 맞게 수정해야 합니다.
-
-#### (1) 데이터베이스 설정 (Docker 사용 시 기본값 유지 가능)
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/invoicedb
-    username: newzen  # docker-compose.yml과 일치해야 함
-    password: 1234    # docker-compose.yml과 일치해야 함
-```
-
-#### (2) 이메일 발송 설정 (Google SMTP 예시)
-실제 이메일 발송 기능을 테스트하려면 본인의 구글 앱 비밀번호가 필요합니다.
-```yaml
-spring:
-  mail:
-    username: ${mail.user}  # [변경] 본인 구글 이메일 (예: myemail@gmail.com)
-    password: ${mail.pass}  # [변경] 구글 앱 비밀번호 16자리
-```
-> **Tip**: 보안을 위해 실제 비밀번호를 파일에 직접 적지 말고, 환경 변수나 IDE의 Run Configuration에서 설정하는 것을 권장합니다.
-
-#### (3) ABN Lookup API 설정
-호주 사업자 번호 조회를 위해 [ABR GUID](https://abr.business.gov.au/)가 필요합니다.
-`src/main/java/com/example/demo/service/AbnLookupService.java` 또는 `application.yaml`에 설정을 확인하세요.
-```yaml
-# application.yaml 예시 (현재 코드에는 @Value로 주입받도록 되어 있음)
-abn:
-  guid: "YOUR-GUID-HERE"
-```
-
-### 4. 데이터베이스 실행 (Docker)
-프로젝트 루트 경로에서 다음 명령어를 실행하여 PostgreSQL 컨테이너를 띄웁니다.
+### 1. 데이터베이스 시작
 ```bash
 docker-compose up -d
 ```
-- DB가 정상적으로 떴는지 확인: `docker ps`
+PostgreSQL 15 | port 5432 | DB: `invoicedb` | user: `newzen` | pw: `1234`
 
-### 5. 애플리케이션 실행
+### 2. Secret 설정 파일 생성
+`src/main/resources/application-secret.yml` (gitignored):
+```yaml
+mail:
+  user: your-gmail@gmail.com
+  pass: your-app-password
+abn:
+  guid: your-abn-api-guid
+```
+
+### 3. 빌드 및 실행
 ```bash
-# Windows
-./gradlew bootRun
-
-# Mac/Linux
 ./gradlew bootRun
 ```
+http://localhost:8080 에서 접속.
 
-### 6. 접속 확인
-브라우저를 열고 `http://localhost:8080`으로 접속합니다.
+### 기본 로그인
+| Email | Password | Role |
+|---|---|---|
+| `dev@myerp.com` | `1234` | SUPER_ADMIN |
 
-- **초기 개발자 계정 (Super Admin)**
-  - ID: `dev@myerp.com`
-  - PW: `1234`
-  - (서버 시작 시 `InitDataConfig.java`에 의해 자동 생성됨)
+`InitDataConfig`에 의해 서버 시작 시 자동 생성됨.
 
 ---
 
-## 📂 프로젝트 구조
+## 기술 스택
 
-```
-src/main/java/com/example/demo
-├── config          # Security, 초기 데이터 등 설정
-├── controller      # 웹 요청 처리 (View & API)
-├── dto             # 데이터 전송 객체
-├── entity          # JPA 엔티티 (DB 테이블 매핑)
-├── repository      # DB 접근 계층
-├── security        # 인증/인가 관련 클래스
-└── service         # 비즈니스 로직
-```
-
-## 📝 주요 비즈니스 로직 설명
-
-- **인보이스 번호 생성**: `INV-00001` 형식으로 회사별로 시퀀스를 관리하며, 동시성 문제를 최소화하기 위해 DB에서 마지막 번호를 조회하여 +1 하는 방식을 사용합니다.
-- **스케줄러 (`@Scheduled`)**:
-  - `RecurringInvoiceService`: 매일 자정(`0 0 0 * * *`)에 실행되어, 활성 템플릿 중 예정일이 도래한 건을 찾아 인보이스를 생성합니다.
-  - `InvoiceService`: 승인된 인보이스를 발송 처리하거나, 납기일이 지난 인보이스를 연체(Overdue) 상태로 변경합니다.
+| 영역 | 기술 |
+|---|---|
+| Backend | Java 17, Spring Boot 3.5.9, Spring Security, Spring Data JPA |
+| Frontend | Thymeleaf, jQuery, Select2, Flatpickr, intl-tel-input |
+| Database | PostgreSQL 15 (Docker) |
+| Build | Gradle |
+| Email | Gmail SMTP (비동기 `@Async`) |
+| Scheduling | Spring `@Scheduled` (매일 자정 cron) |
 
 ---
 
-## ⚠️ 주의사항
+## 아키텍처 개요
 
-- **보안**: 현재 `application.yaml`에 민감한 정보(DB 비번, 메일 비번 등)가 노출될 수 있으므로, 실제 운영 배포 시에는 환경 변수(`System.getenv()`)나 Secret Manager를 사용해야 합니다.
-- **이메일**: 구글 SMTP 사용 시 "보안 수준이 낮은 앱 액세스" 설정이 불가능하므로, 반드시 **2단계 인증** 설정 후 **앱 비밀번호**를 발급받아 사용해야 합니다.
+### 멀티테넌시
+**Company**가 테넌트 루트. 모든 데이터(Invoice, Contact, Product, Member)는 Company에 종속되며, 쿼리 시 반드시 Company로 필터링한다.
+
+### 인증/인가
+Spring Security form login. `Member.email`을 로그인 ID로 사용.
+
+| 경로 | 접근 권한 |
+|---|---|
+| `/login`, `/signup`, `/api/auth/**`, `/invitations/accept` | 공개 |
+| `/super-admin/**` | SUPER_ADMIN만 |
+| 그 외 모든 경로 | 인증 필요 |
+
+로그인 성공 시 역할별 리다이렉트:
+- `SUPER_ADMIN` → `/super-admin/companies`
+- `ADMIN`, `USER` → `/invoices`
+
+### CSRF
+현재 비활성화 상태.
+
+---
+
+## 패키지 구조
+
+```
+src/main/java/com/example/demo/
+├── config/           # 설정 클래스
+│   ├── SecurityConfig          # Spring Security 설정 (URL 권한, 로그인/로그아웃, 성공 핸들러)
+│   ├── InitDataConfig          # 서버 시작 시 SUPER_ADMIN 자동 생성
+│   └── PasswordEncoderConfig   # BCryptPasswordEncoder 빈
+│
+├── controller/       # HTTP 요청 처리 (View + API)
+│   ├── AuthController              # 회원가입, 로그인, ABN 조회, 이메일 인증
+│   ├── InvoiceController           # 인보이스/반복템플릿 CRUD, 대시보드, 상태변경, 결제
+│   ├── AdminController             # Super Admin 회사 목록, Company Admin 멤버 관리
+│   ├── SubscriptionController      # PayPal 구독 플랜 페이지 및 활성화
+│   ├── CompanyInvitationController # 팀 초대 생성/수락
+│   ├── TempDataController          # Product/Contact 간편 등록
+│   └── GlobalControllerAdvice      # 모든 요청에 회사명/유저 이니셜 주입
+│
+├── service/          # 비즈니스 로직
+│   ├── AuthService                 # 회원가입 처리, 이메일/ABN 중복 확인, 로그인 일시 갱신
+│   ├── InvoiceService              # 인보이스 CRUD, 상태변경, 결제, 스케줄러(연체/예약발송)
+│   ├── RecurringInvoiceService     # 반복 템플릿 CRUD, 자동 인보이스 생성 스케줄러
+│   ├── EmailService                # 비동기 이메일 발송 (@Async)
+│   ├── AbnLookupService            # 호주 ABN API 조회
+│   ├── AdminDashboardService       # Super Admin/Company Admin 대시보드 데이터
+│   ├── CompanyInvitationService    # 팀 초대 토큰 생성/수락 (7일 만료)
+│   └── SubscriptionService         # PayPal 구독 활성화, 플랜 조회
+│
+├── entity/           # JPA 엔티티 (DB 테이블)
+│   ├── Company                 # 테넌트 루트 (사업자 정보, 플랜, 구독)
+│   ├── Member                  # 사용자 계정 (email 로그인, 역할)
+│   ├── Invoice                 # 인보이스 본체 (상태, 금액, 고객 스냅샷)
+│   ├── InvoiceItem             # 인보이스 항목 (상품, 수량, 할인, GST)
+│   ├── Contact                 # 거래처/고객 정보
+│   ├── Product                 # 상품/서비스 카탈로그
+│   ├── RecurringInvoice        # 반복 인보이스 템플릿
+│   ├── RecurringInvoiceItem    # 반복 템플릿 항목
+│   ├── CompanyInvitation       # 팀 초대 (토큰, 7일 만료)
+│   └── Enums                   # InvoiceStatus, RecurringStatus, TaxType, GstCode,
+│                               # RecurringFrequency, PlanType, Timezone
+│
+├── repository/       # Spring Data JPA 리포지토리
+│   ├── InvoiceRepository           # 검색+페이징, 대시보드 집계, 스케줄러 조회
+│   ├── RecurringInvoiceRepository  # 검색+페이징, 스케줄러 조회
+│   ├── CompanyRepository           # ABN 중복 확인
+│   ├── MemberRepository            # 이메일 조회, 회사별 멤버 조회
+│   ├── ContactRepository           # 회사별 거래처 조회
+│   ├── ProductRepository           # 회사별 상품 조회
+│   └── CompanyInvitationRepository # 토큰으로 초대 조회
+│
+├── dto/              # 데이터 전송 객체
+│   ├── SignupForm              # 회원가입 폼 (개인정보 + 회사정보 + ABN)
+│   ├── AbnApiResponse          # ABN API 응답 매핑
+│   ├── CompanyDashboardDto     # Super Admin 회사 목록용
+│   ├── MemberManagementDto     # 멤버 관리 목록용
+│   └── SubscriptionRequest     # PayPal 구독 요청
+│
+└── security/         # Spring Security 커스텀
+    ├── CustomUserDetails       # Member 래핑 (UserDetails 구현)
+    └── CustomUserDetailsService # email로 Member 조회 → UserDetails 반환
+```
+
+---
+
+## 엔티티 관계도
+
+```
+Company (테넌트 루트)
+ ├── Member (1:N)           - 사용자 계정, 역할(ADMIN/USER/SUPER_ADMIN)
+ ├── Invoice (1:N)          - 인보이스
+ │    └── InvoiceItem (1:N) - 인보이스 항목
+ ├── RecurringInvoice (1:N) - 반복 템플릿
+ │    └── RecurringInvoiceItem (1:N)
+ ├── Contact (1:N)          - 거래처/고객
+ ├── Product (1:N)          - 상품/서비스
+ └── CompanyInvitation (1:N)- 팀 초대
+
+Contact ←── Invoice.contact (N:1, nullable)
+Product ←── InvoiceItem.product (N:1)
+```
+
+---
+
+## 인보이스 상태 흐름
+
+```
+DRAFT ──[Submit]──> IN_REVIEW ──[Approve]──┬──> UNPAID (발행일 ≤ 오늘, 이메일 발송)
+                                           │      ├──[결제 완료]──> PAID
+                                           │      └──[납기일 초과, 자정 스케줄러]──> OVERDUE
+                                           │
+                                           └──> APPROVED (발행일 > 오늘, 예약)
+                                                  └──[발행일 도래, 자정 스케줄러]──> UNPAID
+
+모든 상태 ──[Delete]──> DELETED (소프트 삭제)
+```
+
+### 반복 인보이스 상태 흐름
+```
+DRAFT ──[Approve]──> ACTIVE ──[자정 스케줄러]──> 인보이스 자동 생성
+                       │                           (autoSend=true → UNPAID, false → DRAFT)
+                       ├──[종료일 초과]──> COMPLETED
+                       └──[수동 중지]──> COMPLETED
+```
+
+---
+
+## 주요 비즈니스 로직
+
+### 인보이스 번호 채번
+`INV-#####` 형식, 회사별 시퀀셜. `findTopByCompanyAndInvoiceNumberStartingWithOrderByInvoiceNumberDesc`로 마지막 번호 조회 후 +1.
+반복 템플릿은 `INVT-#####` 형식.
+
+### 고객 정보 스냅샷
+Invoice에 `customerName`, `customerEmail`, `customerCompanyName` 등을 별도로 저장.
+Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된다.
+
+`manualContact` (boolean) 필드로 수동 입력 여부를 구분:
+- `false`: Contact 드롭다운에서 선택 (contact 참조 연결됨)
+- `true`: 일회성 고객 직접 입력 (contact 참조 없음)
+
+### 스케줄러 (매일 자정 실행)
+| 스케줄러 | 위치 | 동작 |
+|---|---|---|
+| 예약 인보이스 발송 | `InvoiceService.processScheduledInvoices()` | APPROVED → UNPAID (발행일 도래 시) |
+| 연체 상태 갱신 | `InvoiceService.updateOverdueInvoices()` | UNPAID → OVERDUE (납기일 초과 시) |
+| 반복 인보이스 생성 | `RecurringInvoiceService.generateRecurringInvoices()` | ACTIVE 템플릿 → Invoice 자동 생성 |
+
+### 결제 처리
+`InvoiceService.recordPayment(uuid, amount, company)`:
+- `newBalance = currentBalance - paymentAmount`
+- `newBalance ≤ 0` → `balanceDue = 0`, `status = PAID`
+- `newBalance > 0` → `balanceDue = newBalance`, 기존 상태 유지
+
+### 팀 초대 플로우
+1. Admin이 이메일로 초대 → UUID 토큰 생성 (7일 만료)
+2. 초대 메일에 `/invitations/accept?token=...` 링크 포함
+3. 수락 시 Member.company 연결, role = USER 설정
+4. 로그인 성공 핸들러에서 토큰 자동 수락 처리
+
+---
+
+## 프론트엔드 구조
+
+### 템플릿 (`src/main/resources/templates/`)
+
+| 파일 | 설명 |
+|---|---|
+| `home.html` | 대시보드 - 탭 필터, 검색, 페이징, 기간별 통계, 일괄 작업 |
+| `new-invoice.html` | 인보이스 생성 (invoice-form 프래그먼트 사용) |
+| `edit-invoice.html` | 인보이스 수정 (DRAFT만 가능) |
+| `view-invoice.html` | 인보이스 상세 조회 (읽기 전용) |
+| `new-template.html` | 반복 템플릿 생성 (template-form 프래그먼트 사용) |
+| `edit-template.html` | 반복 템플릿 수정 |
+| `view-template.html` | 반복 템플릿 상세 조회 |
+| `login.html` | 로그인 폼 |
+| `signup.html` | 다단계 회원가입 (개인정보 → 이메일 인증 → 회사 정보) |
+| `subscribe.html` | PayPal 구독 플랜 선택 |
+| `company-users.html` | Company Admin - 멤버 관리 |
+| `super-admin-companies.html` | Super Admin - 전체 회사 목록 |
+| `super-admin-company-users.html` | Super Admin - 특정 회사 멤버 조회 |
+| `temp-product.html` | Product 간편 등록 |
+| `temp-contact.html` | Contact 간편 등록 |
+
+### 프래그먼트 (`templates/fragments/`)
+
+| 파일 | 설명 |
+|---|---|
+| `nav.html` | 사이드바 + 상단바 (메뉴, 회사명, 유저 이니셜) |
+| `super-admin-nav.html` | Super Admin 전용 네비게이션 |
+| `invoice-form.html` | 인보이스 입력 폼 (고객 선택/수동입력, 항목 테이블, 금액 계산) |
+| `template-form.html` | 반복 템플릿 입력 폼 (빈도, 기간, 자동발송 토글) |
+
+### 정적 파일 (`src/main/resources/static/`)
+
+| 파일 | 설명 |
+|---|---|
+| `css/layout.css` | 전체 레이아웃 (사이드바, 상단바, 콘텐츠 영역) |
+| `css/homestyle.css` | 대시보드 (탭, 테이블, 페이징, 통계 카드) |
+| `css/newinvoicestyle.css` | 인보이스 폼 (그리드, 항목 테이블, Select2 오버라이드, 모달) |
+| `css/viewinvoicestyle.css` | 인보이스 상세 보기 |
+| `css/authstyle.css` | 로그인/회원가입 페이지 |
+| `js/newinvoicescript.js` | 인보이스 폼 로직 (항목 추가/삭제, 금액 계산, 수동 연락처 토글, Select2/Flatpickr 초기화) |
+| `js/home-script.js` | 대시보드 로직 (일괄 선택, 상태 변경, 복사, 기간 필터) |
+| `js/signup.js` | 회원가입 다단계 폼 (ABN 조회, 이메일 인증, 유효성 검사) |
+
+---
+
+## 설정 파일
+
+| 파일 | 설명 |
+|---|---|
+| `application.yaml` | 메인 설정 - DB 연결, JPA(DDL auto=update, SQL 로깅), Gmail SMTP |
+| `application-secret.yml` | **gitignored** - Gmail 비밀번호, ABN API GUID |
+| `docker-compose.yml` | PostgreSQL 15 컨테이너 설정 |
+| `build.gradle` | 의존성: spring-boot-starter-{data-jpa, thymeleaf, web, security, mail}, postgresql, lombok |
+
+---
+
+## API 엔드포인트 요약
+
+### 인보이스 (`InvoiceController`)
+
+| Method | URL | 설명 |
+|---|---|---|
+| GET | `/invoices` | 대시보드 (목록 + 통계) |
+| GET | `/invoices/new` | 생성 폼 (`?copyId=` 복사) |
+| GET | `/invoices/{uuid}` | 상세 조회 |
+| GET | `/invoices/{uuid}/edit` | 수정 폼 (DRAFT만) |
+| POST | `/api/invoices` | 생성 |
+| POST | `/api/invoices/update` | 수정 |
+| POST | `/api/invoices/{uuid}/pay` | 결제 기록 |
+| POST | `/api/invoices/submit` | 일괄 제출 (DRAFT → IN_REVIEW) |
+| POST | `/api/invoices/approve` | 일괄 승인 |
+| POST | `/api/invoices/delete` | 일괄 삭제 (소프트) |
+
+### 반복 템플릿 (`InvoiceController`)
+
+| Method | URL | 설명 |
+|---|---|---|
+| GET | `/invoices/new/recurring` | 템플릿 생성 폼 |
+| GET | `/invoices/recurring/{uuid}` | 템플릿 상세 |
+| GET | `/invoices/recurring/{uuid}/edit` | 템플릿 수정 폼 |
+| POST | `/api/invoices/recurring` | 템플릿 생성 |
+| POST | `/api/invoices/recurring/update` | 템플릿 수정 |
+| POST | `/api/invoices/recurring/approve` | 활성화 (IN_REVIEW → ACTIVE) |
+| POST | `/api/invoices/recurring/complete` | 완료 처리 |
+| POST | `/api/invoices/recurring/delete` | 삭제 (소프트) |
+
+### 인증 (`AuthController`)
+
+| Method | URL | 설명 |
+|---|---|---|
+| GET | `/signup` | 회원가입 폼 |
+| POST | `/signup` | 회원가입 처리 |
+| GET | `/login` | 로그인 폼 |
+| GET | `/api/auth/check-email` | 이메일 중복 확인 |
+| GET | `/api/auth/abn-lookup` | ABN 조회 |
+| POST | `/api/auth/send-verification` | 이메일 인증코드 발송 |
+| POST | `/api/auth/verify-code` | 인증코드 확인 |
+
+### 관리자 (`AdminController`)
+
+| Method | URL | 설명 |
+|---|---|---|
+| GET | `/super-admin/companies` | 전체 회사 목록 (SUPER_ADMIN) |
+| GET | `/super-admin/companies/{id}/users` | 회사별 멤버 (SUPER_ADMIN) |
+| GET | `/admin/users` | 내 회사 멤버 (ADMIN) |
+
+### 기타
+
+| Method | URL | 설명 |
+|---|---|---|
+| POST | `/api/invitations` | 팀 초대 생성 |
+| GET | `/invitations/accept` | 초대 수락 |
+| GET | `/subscribe` | 구독 플랜 페이지 |
+| POST | `/api/subscription/success` | PayPal 구독 활성화 |
+| GET/POST | `/product` | Product 등록 |
+| GET/POST | `/contact` | Contact 등록 |
+
+---
+
+## 미구현/진행중 기능
+
+- **PDF Export**: 미구현
+- **알림 센터**: 상단바 아이콘 비활성
+- **Credit Notes**: 버튼만 존재, 로직 없음
+- **Payment Link**: 모달 UI 존재, 실제 연동 없음
+- **역할별 세분화 권한**: 기본적인 역할 체크만 존재
+- **Audit Logging**: 상세 감사 추적 미구현
