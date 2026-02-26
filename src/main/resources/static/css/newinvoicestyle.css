@@ -178,7 +178,7 @@ textarea { resize: vertical; height: 80px; }
    ========================================================================== */
 /* (A) 상단 Form용 기본 Select2 (큰 사이즈) */
 .select2-container .select2-selection--single {
-    height: 42px !important;
+    height: 39px !important;
     display: flex !important; align-items: center !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 6px !important;
@@ -187,7 +187,7 @@ textarea { resize: vertical; height: 80px; }
     padding-right: 40px !important; /* x 버튼 공간 확보 */
 }
 .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 40px !important; top: 1px !important; right: 1px !important;
+    height: 37px !important; top: 1px !important; right: 1px !important;
 }
 .select2-container--default .select2-selection--single .select2-selection__clear {
     position: absolute !important; /* 흐름에서 제거 */

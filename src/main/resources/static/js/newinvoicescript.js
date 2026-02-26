@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
             altFormat: "d/m/Y",
             allowInput: true,
             onReady: function(selectedDates, dateStr, instance) {
-                // [추가] CSS에서 화살표 위치를 조절할 수 있도록 식별 클래스 추가
+                // CSS에서 화살표 위치를 조절할 수 있도록 식별 클래스 추가
                 instance.calendarContainer.classList.add('has-quick-select');
                 // 1. 버튼들을 담을 컨테이너 생성
                 const container = document.createElement("div");
@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const qtyInput = row.querySelector('input[name$=".quantity"]');
         const discountInput = row.querySelector('input[name$=".discount"]');
 
-        // [추가] GST 요소 가져오기
+        // GST 요소 가져오기
         const gstSelect = row.querySelector('.gst-select');
         const taxTypeSelect = document.getElementById('taxTypeSelect');
 
@@ -272,7 +272,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         else if (taxType === 'TAX_INCLUSIVE') {
             // 세금 포함: 110원(10%) -> 세금은 110 * (0.1 / 1.1) = 10원
-            // Amount 필드는 보통 세전 금액이 아니라 '표시 금액'을 그대로 둡니다.
             calculatedTax = lineTotal * (taxRate / (1 + taxRate));
             finalAmount = lineTotal;
         }
@@ -330,11 +329,93 @@ document.addEventListener('DOMContentLoaded', function() {
         if(hiddenTax) hiddenTax.value = totalTax.toFixed(2);
     };
 
-    // [추가] "Amounts are" 변경 시 모든 행 재계산 필요
+    // "Amounts are" 변경 시 모든 행 재계산 필요
     document.getElementById('taxTypeSelect').addEventListener('change', function() {
         const rows = document.querySelectorAll('#invoiceItems .item-row');
         rows.forEach(row => window.calculateRow(row));
     });
+
+    // ============================================================
+    // [신규] 수동 연락처 입력 토글 함수
+    // ============================================================
+    window.toggleManualContact = function() {
+        const isManual = document.getElementById('manualContactToggle').checked;
+
+        // UI 요소들
+        const selectWrapper = document.getElementById('contactSelectWrapper');
+        const manualWrapper = document.getElementById('manualContactWrapper');
+        const contactSelect = document.getElementById('contactSelect');
+        const currencyInput = document.getElementById('customerCurrency');
+        const billToInput = document.getElementById('customerBillTo');
+
+        // 데이터 전송(name) 제어 요소들
+        const hiddenName = document.getElementById('hiddenName');
+        const hiddenEmail = document.getElementById('hiddenEmail');
+        const manualName = document.getElementById('manualName');
+        const manualEmail = document.getElementById('manualEmail');
+
+        // 라벨 텍스트 변경
+        const contactLabel = document.getElementById('contactLabel');
+        if (contactLabel) {
+            contactLabel.innerHTML = isManual
+                ? 'Customer <span style="color:red">*</span>'
+                : 'Contact <span style="color:red">*</span>';
+        }
+
+        if (isManual) {
+            // 1. 직접 입력 모드 켜기
+            selectWrapper.classList.add('d-none');
+            manualWrapper.classList.remove('d-none');
+
+            // 2. Select 필수값 해제 및 값 초기화
+            contactSelect.removeAttribute('required');
+            // contact.id 전송을 막기 위해 name 속성 임시 제거 (null로 넘어감)
+            contactSelect.removeAttribute('name');
+
+            // 3. 수동 입력 필드에 Spring Binding(name) 권한 넘겨주기
+            manualName.setAttribute('required', 'required');
+            manualEmail.setAttribute('required', 'required');
+            hiddenName.removeAttribute('name');
+            hiddenEmail.removeAttribute('name');
+            manualName.setAttribute('name', 'customerName');
+            manualEmail.setAttribute('name', 'customerEmail');
+
+            // 4. customerCompanyName 초기화 (contact에서 가져온 회사명 제거)
+            document.getElementById('hiddenCompanyName').value = '';
+
+            // 5. Currency, Bill To 입력창 잠금 해제
+            currencyInput.removeAttribute('readonly');
+            billToInput.removeAttribute('readonly');
+
+            // 시각적 피드백
+            currencyInput.style.backgroundColor = '#fff';
+            billToInput.style.backgroundColor = '#fff';
+
+        } else {
+            // 1. 기존 Contact 선택 모드 복구
+            selectWrapper.classList.remove('d-none');
+            manualWrapper.classList.add('d-none');
+
+            // 2. Select 권한 복구
+            contactSelect.setAttribute('required', 'required');
+            contactSelect.setAttribute('name', 'contact.id');
+
+            // 3. 수동 필드 권한 박탈 및 숨김 필드로 복구
+            manualName.removeAttribute('required');
+            manualName.removeAttribute('name');
+            manualEmail.removeAttribute('required');
+            manualEmail.removeAttribute('name');
+            hiddenName.setAttribute('name', 'customerName');
+            hiddenEmail.setAttribute('name', 'customerEmail');
+
+            // 4. 입력창 다시 잠금
+            currencyInput.setAttribute('readonly', 'readonly');
+            billToInput.setAttribute('readonly', 'readonly');
+
+            currencyInput.style.backgroundColor = '#f9f9f9';
+            billToInput.style.backgroundColor = '#f9f9f9';
+        }
+    };
 
     // ============================================================
     // 4. 정보 업데이트 함수 (Product / Contact)
@@ -433,6 +514,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 2. 각 행의 계산이 끝난 후 전체 합계 계산
     window.calculateTotal();
+
+    // 3. 수동 연락처 토글 초기화 (수정/복사 시 DB에서 불러온 값 반영)
+    const manualContactToggle = document.getElementById('manualContactToggle');
+    if (manualContactToggle && manualContactToggle.checked) {
+        window.toggleManualContact();
+    }
 
     // ============================================================
     // 6. Payment Link Modal Logic [신규 추가]

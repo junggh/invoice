@@ -64,6 +64,8 @@ public class Invoice {
     private Company company;
 
     // --- [스냅샷] 발행 시점의 고객 정보 저장 (고객 정보가 변경되어도 인보이스는 유지) ---
+    private boolean manualContact; // 수동 입력 여부 (One-off)
+
     private String customerName;
     private String customerCompanyName;
     private String customerEmail;
