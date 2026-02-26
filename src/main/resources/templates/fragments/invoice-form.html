@@ -7,6 +7,7 @@
     <form th:action="${actionUrl}" method="POST" th:object="${invoice}">
         <input type="hidden" name="id" th:if="${invoice.id != null}" th:value="${invoice.id}">
         <input type="hidden" id="hiddenStatus" name="status" th:value="${invoice.status}">
+        <input type="hidden" name="_manualContact" value="on">
         <input type="hidden" id="hiddenCompanyName" name="customerCompanyName" th:value="${invoice.customerCompanyName}">
         <input type="hidden" id="hiddenEmail" name="customerEmail" th:value="${invoice.customerEmail}">
         <input type="hidden" id="hiddenName" name="customerName" th:value="${invoice.customerName}">
@@ -20,10 +21,10 @@
         <div class="form-grid">
             <div class="section-left">
                 <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
-                        <label style="margin-bottom: 0;">Customer <span style="color:red">*</span></label>
-                        <label style="font-size: 12px; font-weight: normal; cursor: pointer; color: #00A3FF;">
-                            <input type="checkbox" id="manualContactToggle" onchange="toggleManualContact()"> Enter manually (One-off)
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label style="margin-bottom: 0;" id="contactLabel">Contact <span style="color:red">*</span></label>
+                        <label style="font-size: 12px; font-weight: normal; cursor: pointer; color: #00A3FF; margin-bottom: 0;">
+                            <input type="checkbox" id="manualContactToggle" name="manualContact" value="true" th:checked="${invoice.manualContact}" onchange="toggleManualContact()"> Enter manually (One-off)
                         </label>
                     </div>
 
@@ -39,7 +40,7 @@
                         </select>
                     </div>
 
-                    <div id="manualContactWrapper" class="d-none" style="display: flex; gap: 10px; margin-top: 5px;">
+                    <div id="manualContactWrapper" class="d-none" style="display: flex; gap: 10px;">
                         <input type="text" id="manualName" placeholder="Customer Name *" th:value="${invoice.customerName}" style="flex: 1;">
                         <input type="email" id="manualEmail" placeholder="Email Address" th:value="${invoice.customerEmail}" style="flex: 1;">
                     </div>

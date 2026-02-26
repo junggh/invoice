@@ -138,7 +138,12 @@ public class InvoiceService {
         newInvoice.setIssuedDate(LocalDate.now());
 
         // 2. 고객 및 메타데이터 복사 (스냅샷)
-        newInvoice.setContact(source.getContact());
+        newInvoice.setManualContact(source.isManualContact());
+        if (source.isManualContact()) {
+            newInvoice.setContact(null);
+        } else {
+            newInvoice.setContact(source.getContact());
+        }
         newInvoice.setCustomerName(source.getCustomerName());
         newInvoice.setCustomerEmail(source.getCustomerEmail());
         newInvoice.setCustomerCompanyName(source.getCustomerCompanyName());

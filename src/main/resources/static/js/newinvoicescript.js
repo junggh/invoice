@@ -354,6 +354,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const manualName = document.getElementById('manualName');
         const manualEmail = document.getElementById('manualEmail');
 
+        // 라벨 텍스트 변경
+        const contactLabel = document.getElementById('contactLabel');
+        if (contactLabel) {
+            contactLabel.innerHTML = isManual
+                ? 'Customer <span style="color:red">*</span>'
+                : 'Contact <span style="color:red">*</span>';
+        }
+
         if (isManual) {
             // 1. 직접 입력 모드 켜기
             selectWrapper.classList.add('d-none');
@@ -366,12 +374,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // 3. 수동 입력 필드에 Spring Binding(name) 권한 넘겨주기
             manualName.setAttribute('required', 'required');
+            manualEmail.setAttribute('required', 'required');
             hiddenName.removeAttribute('name');
             hiddenEmail.removeAttribute('name');
             manualName.setAttribute('name', 'customerName');
             manualEmail.setAttribute('name', 'customerEmail');
 
-            // 4. Currency, Bill To 입력창 잠금 해제
+            // 4. customerCompanyName 초기화 (contact에서 가져온 회사명 제거)
+            document.getElementById('hiddenCompanyName').value = '';
+
+            // 5. Currency, Bill To 입력창 잠금 해제
             currencyInput.removeAttribute('readonly');
             billToInput.removeAttribute('readonly');
 
@@ -391,6 +403,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 3. 수동 필드 권한 박탈 및 숨김 필드로 복구
             manualName.removeAttribute('required');
             manualName.removeAttribute('name');
+            manualEmail.removeAttribute('required');
             manualEmail.removeAttribute('name');
             hiddenName.setAttribute('name', 'customerName');
             hiddenEmail.setAttribute('name', 'customerEmail');
@@ -501,6 +514,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 2. 각 행의 계산이 끝난 후 전체 합계 계산
     window.calculateTotal();
+
+    // 3. 수동 연락처 토글 초기화 (수정/복사 시 DB에서 불러온 값 반영)
+    const manualContactToggle = document.getElementById('manualContactToggle');
+    if (manualContactToggle && manualContactToggle.checked) {
+        window.toggleManualContact();
+    }
 
     // ============================================================
     // 6. Payment Link Modal Logic [신규 추가]
