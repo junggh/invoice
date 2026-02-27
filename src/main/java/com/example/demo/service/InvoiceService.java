@@ -29,6 +29,7 @@ public class InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final EmailService emailService;
     private final CompanyRepository companyRepository;
+    private final PdfService pdfService;
 
     // ===================================================================================
     // 1. Read Operations (조회 및 대시보드)
@@ -398,7 +399,9 @@ public class InvoiceService {
                 invoice.getTotal().toString()
         );
 
-        emailService.sendEmail(invoice.getCustomerEmail(), subject, content);
+        byte[] pdfBytes = pdfService.generateInvoicePdf(invoice);
+        String pdfFilename = invoice.getInvoiceNumber() + ".pdf";
+        emailService.sendEmailWithAttachment(invoice.getCustomerEmail(), subject, content, pdfBytes, pdfFilename);
     }
 
     // [스케줄러] 연체 상태 업데이트 (Unpaid -> Overdue)

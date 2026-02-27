@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.util.ByteArrayDataSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -32,6 +33,25 @@ public class EmailService {
         } catch (MessagingException e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to send email.");
+        }
+    }
+
+    @Async
+    public void sendEmailWithAttachment(String to, String subject, String text, byte[] pdfBytes, String pdfFilename) {
+        try {
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text, true);
+            helper.setFrom(senderEmail);
+            helper.addAttachment(pdfFilename, new ByteArrayDataSource(pdfBytes, "application/pdf"));
+
+            javaMailSender.send(message);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send email with attachment.");
         }
     }
 }

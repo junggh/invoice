@@ -179,7 +179,30 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // ============================================================
-    // 8. 액션: 정기결제 중단 (Stop Recurring)
+    // 8. 액션: PDF 다운로드 (Download PDF)
+    // ============================================================
+    window.downloadPdf = function() {
+        const checkedBoxes = document.querySelectorAll('.invoice-checkbox:checked');
+        if (checkedBoxes.length === 0) {
+            alert("Please select an invoice to download.");
+            return;
+        }
+        if (checkedBoxes.length > 1) {
+            alert("Please select only one invoice to download PDF.");
+            return;
+        }
+
+        const uuid = checkedBoxes[0].getAttribute('data-uuid');
+        if (!uuid) {
+            alert("Cannot determine invoice UUID.");
+            return;
+        }
+
+        window.location.href = '/api/invoices/' + uuid + '/pdf';
+    };
+
+    // ============================================================
+    // 9. 액션: 정기결제 중단 (Stop Recurring)
     // ============================================================
     window.stopRecurring = function() {
         const checkedBoxes = document.querySelectorAll('.invoice-checkbox:checked');

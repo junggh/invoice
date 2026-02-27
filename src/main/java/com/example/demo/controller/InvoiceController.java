@@ -5,9 +5,13 @@ import com.example.demo.repository.ContactRepository;
 import com.example.demo.repository.ProductRepository;
 import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.InvoiceService;
+import com.example.demo.service.PdfService;
 import com.example.demo.service.RecurringInvoiceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,6 +33,7 @@ public class InvoiceController {
     private final RecurringInvoiceService recurringService;
     private final ProductRepository productRepository;
     private final ContactRepository contactRepository;
+    private final PdfService pdfService;
 
     // ===================================================================================
     // 1. Dashboard & List (메인 화면)
@@ -121,6 +126,20 @@ public class InvoiceController {
         model.addAttribute("tax", invoice.getTax());
 
         return "view-invoice";
+    }
+
+    // [다운로드] 인보이스 PDF 다운로드
+    @GetMapping("/api/invoices/{uuid}/pdf")
+    public ResponseEntity<byte[]> downloadInvoicePdf(@PathVariable String uuid,
+                                                      @AuthenticationPrincipal CustomUserDetails user) {
+        Invoice invoice = invoiceService.getInvoiceByUuid(uuid, user.getMember().getCompany());
+        byte[] pdfBytes = pdfService.generateInvoicePdf(invoice);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + invoice.getInvoiceNumber() + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
     }
 
     // [등록] 화면 이동 (신규 및 복사)
