@@ -176,8 +176,8 @@
                 <div class="form-group">
                     <label>Financial Year End</label>
                     <div style="display: flex; gap: 10px;">
-                        <input type="number" th:field="*{financialYearDay}" placeholder="Day (e.g. 30)" min="1" max="31">
-                        <select th:field="*{financialYearMonth}">
+                        <input type="number" th:field="*{financialYearDay}" placeholder="Day (e.g. 30)" min="1" max="31" required>
+                        <select th:field="*{financialYearMonth}" required>
                             <option th:each="month : ${months}"
                                     th:value="${month}"
                                     th:text="${#strings.capitalize(#strings.toLowerCase(month))}">

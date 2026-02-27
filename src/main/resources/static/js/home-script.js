@@ -44,10 +44,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // 3. 기간 변경 (Period Selector)
     // ============================================================
     window.changePeriod = function() {
-        const days = document.getElementById('periodSelect').value;
+        const period = document.getElementById('periodSelect').value;
         const urlParams = new URLSearchParams(window.location.search);
         const currentStatus = urlParams.get('status') || 'Overview';
-        location.href = `/invoices?status=${currentStatus}&days=${days}`;
+        location.href = `/invoices?status=${currentStatus}&period=${period}`;
     };
 
     // ============================================================

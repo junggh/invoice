@@ -23,21 +23,21 @@
 
             <div class="tabs-container">
                 <ul class="tabs">
-                    <li><a th:href="@{/invoices(status='Overview', days=${selectedDays})}"
+                    <li><a th:href="@{/invoices(status='Overview', period=${selectedPeriod})}"
                            th:classappend="${currentStatus == 'Overview'} ? 'active'">Overview</a></li>
-                    <li><a th:href="@{/invoices(status='DRAFT', days=${selectedDays})}"
+                    <li><a th:href="@{/invoices(status='DRAFT', period=${selectedPeriod})}"
                            th:classappend="${currentStatus == 'DRAFT'} ? 'active'">Draft</a></li>
-                    <li><a th:href="@{/invoices(status='IN_REVIEW', days=${selectedDays})}"
+                    <li><a th:href="@{/invoices(status='IN_REVIEW', period=${selectedPeriod})}"
                            th:classappend="${currentStatus == 'IN_REVIEW'} ? 'active'">In Review</a></li>
-                    <li><a th:href="@{/invoices(status='APPROVED', days=${selectedDays})}"
+                    <li><a th:href="@{/invoices(status='APPROVED', period=${selectedPeriod})}"
                            th:classappend="${currentStatus == 'APPROVED'} ? 'active'">Approved</a></li>
-                    <li><a th:href="@{/invoices(status='UNPAID', days=${selectedDays})}"
+                    <li><a th:href="@{/invoices(status='UNPAID', period=${selectedPeriod})}"
                            th:classappend="${currentStatus == 'UNPAID'} ? 'active'">Unpaid</a></li>
-                    <li><a th:href="@{/invoices(status='PAID', days=${selectedDays})}"
+                    <li><a th:href="@{/invoices(status='PAID', period=${selectedPeriod})}"
                            th:classappend="${currentStatus == 'PAID'} ? 'active'">Paid</a></li>
-                    <li><a th:href="@{/invoices(status='OVERDUE', days=${selectedDays})}"
+                    <li><a th:href="@{/invoices(status='OVERDUE', period=${selectedPeriod})}"
                            th:classappend="${currentStatus == 'OVERDUE'} ? 'active'">Overdue</a></li>
-                    <li><a th:href="@{/invoices(status='Recurring', days=${selectedDays})}"
+                    <li><a th:href="@{/invoices(status='Recurring', period=${selectedPeriod})}"
                            th:classappend="${currentStatus == 'Recurring'} ? 'active'">Recurring</a></li>
                 </ul>
 
@@ -59,13 +59,13 @@
                         <span th:text="'A$' + ${#numbers.formatDecimal(totalAmount, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
                     </div>
                     <div class="metric-item">
-                        <a th:href="@{/invoices(status='UNPAID', days=${selectedDays})}" style="text-decoration: none; display: block; cursor: pointer; color: inherit;">
+                        <a th:href="@{/invoices(status='UNPAID', period=${selectedPeriod})}" style="text-decoration: none; display: block; cursor: pointer; color: inherit;">
                             <label style="cursor: pointer;">Balance Due</label>
                             <span th:text="'A$' + ${#numbers.formatDecimal(totalBalance, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
                         </a>
                     </div>
                     <div class="metric-item">
-                        <a th:href="@{/invoices(status='OVERDUE', days=${selectedDays})}" style="text-decoration: none; display: block; cursor: pointer;">
+                        <a th:href="@{/invoices(status='OVERDUE', period=${selectedPeriod})}" style="text-decoration: none; display: block; cursor: pointer;">
                             <label class="text-red" style="cursor: pointer;">Overdue</label>
                             <span class="text-red" th:text="'A$' + ${#numbers.formatDecimal(totalOverdue, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
                         </a>
@@ -74,9 +74,15 @@
 
                 <div class="period-selector-wrapper">
                     <select id="periodSelect" class="period-select" onchange="changePeriod()">
-                        <option value="30" th:selected="${selectedDays == 30}">Last 30 Days</option>
-                        <option value="60" th:selected="${selectedDays == 60}">Last 60 Days</option>
-                        <option value="365" th:selected="${selectedDays == 365}">Last 365 Days</option>
+                        <option value="LAST_30_DAYS" th:selected="${selectedPeriod == 'LAST_30_DAYS'}">Last 30 days</option>
+                        <option value="LAST_60_DAYS" th:selected="${selectedPeriod == 'LAST_60_DAYS'}">Last 60 days</option>
+                        <option value="LAST_90_DAYS" th:selected="${selectedPeriod == 'LAST_90_DAYS'}">Last 90 days</option>
+                        <option value="THIS_MONTH" th:selected="${selectedPeriod == 'THIS_MONTH'}">This month</option>
+                        <option value="LAST_MONTH" th:selected="${selectedPeriod == 'LAST_MONTH'}">Last month</option>
+                        <option value="THIS_QUARTER" th:selected="${selectedPeriod == 'THIS_QUARTER'}">This quarter</option>
+                        <option value="LAST_QUARTER" th:selected="${selectedPeriod == 'LAST_QUARTER'}">Last quarter</option>
+                        <option value="THIS_FINANCIAL_YEAR" th:selected="${selectedPeriod == 'THIS_FINANCIAL_YEAR'}">This financial year</option>
+                        <option value="LAST_FINANCIAL_YEAR" th:selected="${selectedPeriod == 'LAST_FINANCIAL_YEAR'}">Last financial year</option>
                     </select>
                 </div>
             </div>
@@ -85,7 +91,7 @@
                 <div class="search-bar" style="display: flex; gap: 5px;">
                     <form th:action="@{/invoices}" method="get" style="display: flex; gap: 5px; margin: 0; align-items: center;">
                         <input type="hidden" name="status" th:value="${currentStatus}">
-                        <input type="hidden" name="days" th:value="${selectedDays}">
+                        <input type="hidden" name="period" th:value="${selectedPeriod}">
                         <input type="hidden" name="sortField" th:value="${sortField}">
                         <input type="hidden" name="sortDir" th:value="${sortDir}">
                         <input th:if="${currentStatus == 'Recurring'}" type="hidden" name="recurringStatus" th:value="${recurringStatus}">
@@ -93,7 +99,7 @@
                         <input type="text" name="keyword" th:value="${keyword}" placeholder="Search by name, invoice #, company..." style="width: 250px;">
                         <button type="submit" class="btn btn-secondary" style="padding: 8px 12px; height: 37px; margin-top: 0;">Search</button>
 
-                        <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays})}"
+                        <a th:href="@{/invoices(status=${currentStatus}, period=${selectedPeriod})}"
                            class="btn btn-icon" title="Reset Filters & Sort">
                             <i class="bi bi-arrow-counterclockwise"></i>
                         </a>
@@ -106,19 +112,19 @@
                         </button>
 
                         <div id="filterDropdown" class="dropdown-content filter-dropdown-content">
-                            <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='ALL')}"
+                            <a th:href="@{/invoices(status='Recurring', period=${selectedPeriod}, recurringStatus='ALL')}"
                                th:style="${recurringStatus == 'ALL' or recurringStatus == null} ? 'color: var(--primary-color); font-weight:bold;' : ''">All</a>
 
-                            <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='DRAFT')}"
+                            <a th:href="@{/invoices(status='Recurring', period=${selectedPeriod}, recurringStatus='DRAFT')}"
                                th:style="${recurringStatus == 'DRAFT'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Draft</a>
 
-                            <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='IN_REVIEW')}"
+                            <a th:href="@{/invoices(status='Recurring', period=${selectedPeriod}, recurringStatus='IN_REVIEW')}"
                                th:style="${recurringStatus == 'IN_REVIEW'} ? 'color: var(--primary-color); font-weight:bold;' : ''">In Review</a>
 
-                            <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='ACTIVE')}"
+                            <a th:href="@{/invoices(status='Recurring', period=${selectedPeriod}, recurringStatus='ACTIVE')}"
                                th:style="${recurringStatus == 'ACTIVE'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Active</a>
 
-                            <a th:href="@{/invoices(status='Recurring', days=${selectedDays}, recurringStatus='COMPLETED')}"
+                            <a th:href="@{/invoices(status='Recurring', period=${selectedPeriod}, recurringStatus='COMPLETED')}"
                                th:style="${recurringStatus == 'COMPLETED'} ? 'color: var(--primary-color); font-weight:bold;' : ''">Completed</a>
                         </div>
                     </div>
@@ -179,7 +185,7 @@
                     <th style="width: 20px;"><input type="checkbox" onclick="toggleAll(this)" th:style="${currentStatus == 'Overview'} ? 'visibility: hidden;' : ''"></th>
                     <th:block th:if="${currentStatus != 'Recurring'}">
                         <th style="width: 80px;">
-                            <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='issuedDate', sortDir=${sortField == 'issuedDate' and sortDir == 'desc' ? 'asc' : 'desc'}, keyword=${keyword})}"
+                            <a th:href="@{/invoices(status=${currentStatus}, period=${selectedPeriod}, sortField='issuedDate', sortDir=${sortField == 'issuedDate' and sortDir == 'desc' ? 'asc' : 'desc'}, keyword=${keyword})}"
                                 style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
                                 Date
                                 <span th:if="${sortField == 'issuedDate'}" style="margin-left: 5px;">
@@ -201,7 +207,7 @@
                         </th>
                         <th class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" style="width: 110px;">Total</th>
                         <th th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" style="width: 80px; padding-left: 20px;">
-                            <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField='dueDate', sortDir=${sortField == 'dueDate' and sortDir == 'desc' ? 'asc' : 'desc'})}"
+                            <a th:href="@{/invoices(status=${currentStatus}, period=${selectedPeriod}, sortField='dueDate', sortDir=${sortField == 'dueDate' and sortDir == 'desc' ? 'asc' : 'desc'})}"
                                style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
                                 Due Date
                                 <span th:if="${sortField == 'dueDate'}" style="margin-left: 5px;">
@@ -306,28 +312,28 @@
             <div th:if="${totalPages > 1}" class="pagination-container">
 
                 <a th:if="${currentPage > 1}"
-                   th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${currentPage - 1})}"
+                   th:href="@{/invoices(status=${currentStatus}, period=${selectedPeriod}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${currentPage - 1})}"
                    class="page-link">&laquo; Prev</a>
 
                 <th:block th:if="${startPage > 1}">
-                    <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=1)}" class="page-link">1</a>
+                    <a th:href="@{/invoices(status=${currentStatus}, period=${selectedPeriod}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=1)}" class="page-link">1</a>
                     <span style="color: #888; margin: 0 4px;">...</span>
                 </th:block>
 
                 <th:block th:each="i : ${#numbers.sequence(startPage, endPage)}">
                     <span th:if="${currentPage == i}" class="current-page" th:text="${i}">1</span>
                     <a th:unless="${currentPage == i}"
-                       th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${i})}"
+                       th:href="@{/invoices(status=${currentStatus}, period=${selectedPeriod}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${i})}"
                        class="page-link" th:text="${i}">2</a>
                 </th:block>
 
                 <th:block th:if="${endPage < totalPages}">
                     <span style="color: #888; margin: 0 4px;">...</span>
-                    <a th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${totalPages})}" class="page-link" th:text="${totalPages}">100</a>
+                    <a th:href="@{/invoices(status=${currentStatus}, period=${selectedPeriod}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${totalPages})}" class="page-link" th:text="${totalPages}">100</a>
                 </th:block>
 
                 <a th:if="${currentPage < totalPages}"
-                   th:href="@{/invoices(status=${currentStatus}, days=${selectedDays}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${currentPage + 1})}"
+                   th:href="@{/invoices(status=${currentStatus}, period=${selectedPeriod}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, recurringStatus=${recurringStatus}, page=${currentPage + 1})}"
                    class="page-link">Next &raquo;</a>
 
             </div>

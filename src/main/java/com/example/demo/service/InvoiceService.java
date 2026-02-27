@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.entity.*;
+import com.example.demo.repository.CompanyRepository;
 import com.example.demo.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -27,6 +28,7 @@ public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     private final EmailService emailService;
+    private final CompanyRepository companyRepository;
 
     // ===================================================================================
     // 1. Read Operations (조회 및 대시보드)
@@ -74,29 +76,108 @@ public class InvoiceService {
         }
     }
 
+    // 문자열 기간(period)을 실제 시작일(LocalDate)로 변환하는 헬퍼 메서드
+    private record DateRange(LocalDate startDate, LocalDate endDate) {}
+
+    private DateRange getDateRangeFromPeriod(String period, Company company) {
+        LocalDate today = LocalDate.now();
+
+        return switch (period) {
+            case "LAST_60_DAYS" -> new DateRange(today.minusDays(60), today);
+            case "LAST_90_DAYS" -> new DateRange(today.minusDays(90), today);
+
+            case "THIS_MONTH" -> {
+                LocalDate start = today.withDayOfMonth(1);
+                LocalDate end = today.withDayOfMonth(today.lengthOfMonth());
+                yield new DateRange(start, end);
+            }
+            case "LAST_MONTH" -> {
+                LocalDate start = today.minusMonths(1).withDayOfMonth(1);
+                LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
+                yield new DateRange(start, end);
+            }
+
+            // 분기 계산: 시작 달을 찾고, 그 달로부터 2달을 더해 해당 월의 마지막 날을 종료일로 설정
+            case "THIS_QUARTER" -> {
+                int startMonth = ((today.getMonthValue() - 1) / 3) * 3 + 1;
+                LocalDate start = today.withMonth(startMonth).withDayOfMonth(1);
+                LocalDate end = start.plusMonths(2).withDayOfMonth(start.plusMonths(2).lengthOfMonth());
+                yield new DateRange(start, end);
+            }
+            case "LAST_QUARTER" -> {
+                int startMonth = ((today.getMonthValue() - 1) / 3) * 3 + 1;
+                LocalDate start = today.withMonth(startMonth).withDayOfMonth(1).minusMonths(3);
+                LocalDate end = start.plusMonths(2).withDayOfMonth(start.plusMonths(2).lengthOfMonth());
+                yield new DateRange(start, end);
+            }
+
+            // 회계연도 (Company 설정 정보 활용)
+            case "THIS_FINANCIAL_YEAR", "LAST_FINANCIAL_YEAR" -> {
+                int fyEndMonth = 6; // 기본값: 호주 표준 회계연도 종료월 (June)
+                int fyEndDay = 30;  // 기본값: 호주 표준 회계연도 종료일 (30)
+
+                // 세션 프록시 대신 진짜 회사 정보를 DB에서 가져옴 (에러 방지)
+                Company realCompany = companyRepository.findById(company.getId()).orElse(company);
+
+                if (realCompany.getFinancialYearMonth() != null && realCompany.getFinancialYearDay() != null) {
+                    try {
+                        fyEndMonth = java.time.Month.valueOf(realCompany.getFinancialYearMonth().toUpperCase()).getValue();
+                        fyEndDay = Integer.parseInt(realCompany.getFinancialYearDay());
+                    } catch (Exception ignored) { }
+                }
+
+                // 1. 해당 월의 마지막 날짜를 초과하지 않도록 안전하게 보정 (예: 2월 30일 방지)
+                int maxDays = java.time.YearMonth.of(today.getYear(), fyEndMonth).lengthOfMonth();
+                int safeDay = Math.min(fyEndDay, maxDays);
+
+                // 2. 올해 기준 회계연도 종료일 생성
+                LocalDate currentFyEnd = LocalDate.of(today.getYear(), fyEndMonth, safeDay);
+
+                // 3. 오늘 날짜가 이미 올해의 종료일을 지났다면? -> 현재 속한 회계연도의 종료일은 '내년'이 됨
+                if (today.isAfter(currentFyEnd)) {
+                    int nextYearMaxDays = java.time.YearMonth.of(today.getYear() + 1, fyEndMonth).lengthOfMonth();
+                    int nextYearSafeDay = Math.min(fyEndDay, nextYearMaxDays);
+                    currentFyEnd = LocalDate.of(today.getYear() + 1, fyEndMonth, nextYearSafeDay);
+                }
+
+                // 4. 회계연도 시작일 계산 (종료일로부터 1년 전의 바로 다음 날)
+                LocalDate currentFyStart = currentFyEnd.minusYears(1).plusDays(1);
+
+                if ("LAST_FINANCIAL_YEAR".equals(period)) {
+                    // 작년 회계연도: 시작일 1년 빼기, 종료일 1년 빼기
+                    yield new DateRange(currentFyStart.minusYears(1), currentFyEnd.minusYears(1));
+                } else {
+                    // 올해 회계연도
+                    yield new DateRange(currentFyStart, currentFyEnd);
+                }
+            }
+
+            // 기본값: LAST_30_DAYS
+            default -> new DateRange(today.minusDays(30), today);
+        };
+    }
+
     // [대시보드] 기간별 총 매출 (Total Amount)
-    public BigDecimal calculateGlobalTotal(int days, Company company) {
-        return invoiceRepository.sumTotalByCompanyAndDate(
-                company,
-                LocalDate.now().minusDays(days),
-                List.of(InvoiceStatus.UNPAID, InvoiceStatus.PAID, InvoiceStatus.OVERDUE)
+    public BigDecimal calculateGlobalTotal(String period, Company company) {
+        DateRange range = getDateRangeFromPeriod(period, company);
+        return invoiceRepository.sumTotalByCompanyAndDateBetween(
+                company, range.startDate(), range.endDate(), List.of(InvoiceStatus.UNPAID, InvoiceStatus.PAID, InvoiceStatus.OVERDUE)
         );
     }
 
     // [대시보드] 기간별 미수금 (Balance Due)
-    public BigDecimal calculateGlobalBalance(int days, Company company) {
-        return invoiceRepository.sumBalanceByCompanyAndDate(
-                company,
-                LocalDate.now().minusDays(days),
-                List.of(InvoiceStatus.UNPAID, InvoiceStatus.PAID, InvoiceStatus.OVERDUE)
+    public BigDecimal calculateGlobalBalance(String period, Company company) {
+        DateRange range = getDateRangeFromPeriod(period, company);
+        return invoiceRepository.sumBalanceByCompanyAndDateBetween(
+                company, range.startDate(), range.endDate(), List.of(InvoiceStatus.UNPAID, InvoiceStatus.PAID, InvoiceStatus.OVERDUE)
         );
     }
 
     // [대시보드] 기간별 연체금 (Overdue)
-    public BigDecimal calculateGlobalOverdue(int days, Company company) {
-        return invoiceRepository.sumOverdueByCompanyAndDate(
-                company,
-                LocalDate.now().minusDays(days)
+    public BigDecimal calculateGlobalOverdue(String period, Company company) {
+        DateRange range = getDateRangeFromPeriod(period, company);
+        return invoiceRepository.sumOverdueByCompanyAndDateBetween(
+                company, range.startDate(), range.endDate()
         );
     }
 

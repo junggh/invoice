@@ -36,7 +36,7 @@ public class InvoiceController {
 
     @GetMapping("/invoices")
     public String home(@RequestParam(required = false) String status,
-                       @RequestParam(defaultValue = "30") int days,
+                       @RequestParam(defaultValue = "LAST_30_DAYS") String period,
                        @RequestParam(required = false) String sortField,
                        @RequestParam(required = false) String sortDir,
                        @RequestParam(required = false) String recurringStatus,
@@ -51,16 +51,16 @@ public class InvoiceController {
 
         // 기존 model.addAttribute 들 유지
         model.addAttribute("currentStatus", currentStatus);
-        model.addAttribute("selectedDays", days);
+        model.addAttribute("selectedPeriod", period);
         model.addAttribute("sortField", sortField);
         model.addAttribute("sortDir", sortDir);
         model.addAttribute("recurringStatus", recurringStatus);
         model.addAttribute("keyword", keyword); // 화면 유지용
         model.addAttribute("currentPage", page);
 
-        model.addAttribute("totalAmount", invoiceService.calculateGlobalTotal(days, company));
-        model.addAttribute("totalBalance", invoiceService.calculateGlobalBalance(days, company));
-        model.addAttribute("totalOverdue", invoiceService.calculateGlobalOverdue(days, company));
+        model.addAttribute("totalAmount", invoiceService.calculateGlobalTotal(period, company));
+        model.addAttribute("totalBalance", invoiceService.calculateGlobalBalance(period, company));
+        model.addAttribute("totalOverdue", invoiceService.calculateGlobalOverdue(period, company));
 
         // 총 페이지 수를 저장할 변수
         int totalPages = 0;
@@ -241,7 +241,7 @@ public class InvoiceController {
     @PostMapping("/api/invoices/delete")
     public String deleteInvoices(@RequestParam List<Long> ids,
                                  @RequestParam(required = false) String status,
-                                 @RequestParam(required = false) Integer days) {
+                                 @RequestParam(required = false) String period) {
         if (ids != null && !ids.isEmpty()) {
             invoiceService.deleteInvoices(ids);
         }
@@ -252,8 +252,8 @@ public class InvoiceController {
             redirectUrl.append("?status=").append(status);
             hasQuery = true;
         }
-        if (days != null) {
-            redirectUrl.append(hasQuery ? "&" : "?").append("days=").append(days);
+        if (period != null && !period.isEmpty()) {
+            redirectUrl.append(hasQuery ? "&" : "?").append("period=").append(period);
         }
         return redirectUrl.toString();
     }
