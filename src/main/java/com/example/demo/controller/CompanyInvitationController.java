@@ -31,6 +31,7 @@ public class CompanyInvitationController {
 
             // 실제 가입 링크 생성 (나중에 실제 도메인으로 변경 필요)
             String inviteLink = "http://localhost:8080/invitations/accept?token=" + invitation.getToken();
+            //String inviteLink = "http://20.194.25.99/invitations/accept?token=" + invitation.getToken();
 
             // 이메일 제목 및 본문(HTML) 구성
             String subject = "[ZeniBooks] You've been invited to join a team!";
