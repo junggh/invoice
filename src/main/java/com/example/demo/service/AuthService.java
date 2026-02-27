@@ -54,7 +54,12 @@ public class AuthService {
 
             Company company = new Company();
             company.setBusinessName(form.getBusinessName());
-            company.setAbn(form.getAbn());
+            String inputAbn = form.getAbn();
+            if (inputAbn != null && inputAbn.trim().isEmpty()) {
+                company.setAbn(null);
+            } else {
+                company.setAbn(inputAbn);
+            }
             company.setEntityName(form.getEntityName());
             company.setEntityTypeName(form.getEntityTypeName());
             company.setAbnStatus(form.getAbnStatus());

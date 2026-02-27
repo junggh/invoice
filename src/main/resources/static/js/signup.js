@@ -590,7 +590,7 @@ window.submitSignup = function() {
 
     const businessCountry = document.getElementById('businessCountry').value;
     const abnInput = document.getElementById('abnInput');
-    const abnValue = abnInput ? abnInput.value.trim() : "";
+    const abnValue = abnInput ? abnInput.value : "";
 
     // ABN이 입력된 경우에만 검증 여부를 확인합니다.
     if (businessCountry === "Australia" && abnValue !== "" && !isAbnVerified) {
