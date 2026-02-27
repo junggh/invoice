@@ -248,7 +248,7 @@
                 </td>
 
                 <td class="col-amount text-right">
-                    <span class="amount-display" th:text="${item.amount}">0.00</span>
+                    <span class="amount-display" th:text="${item.amount != null ? #numbers.formatDecimal(item.amount, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span>
                     <input type="hidden" th:name="|items[${stat.index}].amount|" th:value="${item.amount}" class="row-amount">
                     <input type="hidden" th:name="|items[${stat.index}].taxAmount|" class="row-tax">
                 </td>
@@ -275,7 +275,7 @@
                 <div class="total-final">
                     <span>Total</span>
                     <input type="hidden" name="total" id="hiddenTotal" th:value="${invoice.total}">
-                    <span id="totalAmount" style="color: var(--primary-color);" th:text="${invoice.total}">0.00</span>
+                    <span id="totalAmount" style="color: var(--primary-color);" th:text="${invoice.total != null ? #numbers.formatDecimal(invoice.total, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span>
                 </div>
             </div>
         </div>

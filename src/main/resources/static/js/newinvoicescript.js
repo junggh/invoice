@@ -235,6 +235,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // 3. 계산 함수 (행 계산 / 전체 합계)
     // ============================================================
 
+    function formatNumber(num) {
+        return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
     window.calculateRow = function(row) {
         const priceInput = row.querySelector('input[name$=".price"]');
         const qtyInput = row.querySelector('input[name$=".quantity"]');
@@ -283,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 값 업데이트
         if (amountInput) amountInput.value = finalAmount.toFixed(2);
-        if (amountDisplay) amountDisplay.textContent = finalAmount.toFixed(2);
+        if (amountDisplay) amountDisplay.textContent = formatNumber(finalAmount);
         if (taxInput) taxInput.value = calculatedTax.toFixed(2); // 숨겨진 필드에 세금 저장
 
         window.calculateTotal();
@@ -315,9 +319,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const total = subtotal + totalTax;
 
         // 화면 업데이트
-        document.getElementById('subtotal').textContent = subtotal.toFixed(2);
-        document.getElementById('tax').textContent = totalTax.toFixed(2);
-        document.getElementById('totalAmount').textContent = total.toFixed(2);
+        document.getElementById('subtotal').textContent = formatNumber(subtotal);
+        document.getElementById('tax').textContent = formatNumber(totalTax);
+        document.getElementById('totalAmount').textContent = formatNumber(total);
 
         const hiddenTotal = document.getElementById('hiddenTotal');
         if(hiddenTotal) hiddenTotal.value = total.toFixed(2);

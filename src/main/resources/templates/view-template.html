@@ -129,16 +129,16 @@
 
                     <td th:text="${item.product.description}" style="color: #666;">Description</td>
 
-                    <td class="text-right" th:text="${item.product.price}">0</td>
+                    <td class="text-right" th:text="${item.product.price != null ? #numbers.formatDecimal(item.product.price, 1, 'COMMA', 2, 'POINT') : '0.00'}">0</td>
 
                     <td class="text-right" th:text="${item.quantity}">0</td>
 
-                    <td class="text-right" th:text="${item.discount}">0</td>
+                    <td class="text-right" th:text="${item.discount != null ? #numbers.formatDecimal(item.discount, 1, 'COMMA', 2, 'POINT') : '0.00'}">0</td>
 
                     <td th:text="${item.gstCode != null ? item.gstCode.displayValue : '-'}">GST on Income</td>
 
                     <td class="text-right" style="font-weight: 600;">
-                        <span th:text="${item.amount}">0.00</span>
+                        <span th:text="${item.amount != null ? #numbers.formatDecimal(item.amount, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span>
                     </td>
                 </tr>
                 </tbody>
@@ -149,17 +149,17 @@
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                         <span>Subtotal</span>
                         <span id="subtotal" style="font-weight: bold;"
-                              th:text="${subtotal != null ? #numbers.formatDecimal(subtotal, 1, 2) : '0.00'}">0.00</span>
+                              th:text="${subtotal != null ? #numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
                         <span>Tax (10%)</span>
                         <span id="tax"
-                              th:text="${tax != null ? #numbers.formatDecimal(tax, 1, 2) : '0.00'}">0.00</span>
+                              th:text="${tax != null ? #numbers.formatDecimal(tax, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; border-top: 2px solid #333; padding-top: 10px; font-size: 18px; font-weight: bold;">
                         <span>Total Amount</span>
                         <span style="color: var(--primary-color);"
-                              th:text="${invoice.total != null ? #numbers.formatDecimal(invoice.total, 1, 2) : '0.00'}">0.00</span>
+                              th:text="${invoice.total != null ? #numbers.formatDecimal(invoice.total, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span>
                     </div>
                 </div>
             </div>
