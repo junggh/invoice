@@ -17,6 +17,7 @@ public class RecurringInvoiceItem {
     private Integer quantity;
     private BigDecimal discount;
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(50) DEFAULT 'AMOUNT'")
     private DiscountType discountType = DiscountType.AMOUNT; // 할인 방식 (기본값: 금액 할인)
     @Enumerated(EnumType.STRING)
     private GstCode gstCode = GstCode.GST_ON_INCOME; // 기본값: 10%

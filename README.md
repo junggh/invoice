@@ -17,14 +17,24 @@ Spring Boot + Thymeleaf 기반의 호주 사업자용 멀티테넌트 인보이�
 ```bash
 docker-compose up -d
 ```
-PostgreSQL 15 | port 5432 | DB: `invoicedb` | user: `newzen` | pw: `1234`
+PostgreSQL 15 | port 5432 | DB: `invoicedb`
 
 ### 2. Secret 설정 파일 생성
 `src/main/resources/application-secret.yml` (gitignored):
 ```yaml
+db:
+  username: newzen
+  password: 1234
+
+init:
+  admin:
+    email: dev@myerp.com
+    password: 1234
+
 mail:
   user: your-gmail@gmail.com
   pass: your-app-password
+
 abn:
   guid: your-abn-api-guid
 ```
@@ -36,11 +46,14 @@ abn:
 http://localhost:8080 에서 접속.
 
 ### 기본 로그인
-| Email | Password | Role |
-|---|---|---|
-| `dev@myerp.com` | `1234` | SUPER_ADMIN |
-
 `InitDataConfig`에 의해 서버 시작 시 자동 생성됨.
+이메일과 비밀번호는 `application-secret.yml`의 `init.admin.email`, `init.admin.password`에서 읽어온다.
+
+### 4. 프로덕션 배포
+```bash
+java -jar demo.jar --spring.profiles.active=prod
+```
+`prod` 프로필 활성화 시 SQL 로깅이 비활성화된다.
 
 ---
 
@@ -53,6 +66,7 @@ http://localhost:8080 에서 접속.
 | Database | PostgreSQL 15 (Docker) |
 | Build | Gradle |
 | Email | Gmail SMTP (비동기 `@Async`) |
+| PDF | openhtmltopdf (HTML → PDF 변환) |
 | Scheduling | Spring `@Scheduled` (매일 자정 cron) |
 
 ---
@@ -76,7 +90,8 @@ Spring Security form login. `Member.email`을 로그인 ID로 사용.
 - `ADMIN`, `USER` → `/invoices`
 
 ### CSRF
-현재 비활성화 상태.
+활성화 상태. `/api/auth/**` 경로는 비인증 공개 API이므로 CSRF 검증 제외.
+Thymeleaf `th:action` 폼은 자동으로 CSRF 토큰이 주입되며, JS fetch 호출은 메타 태그에서 토큰을 읽어 헤더에 포함한다.
 
 ---
 
@@ -102,7 +117,8 @@ src/main/java/com/example/demo/
 │   ├── AuthService                 # 회원가입 처리, 이메일/ABN 중복 확인, 로그인 일시 갱신
 │   ├── InvoiceService              # 인보이스 CRUD, 상태변경, 결제, 스케줄러(연체/예약발송)
 │   ├── RecurringInvoiceService     # 반복 템플릿 CRUD, 자동 인보이스 생성 스케줄러
-│   ├── EmailService                # 비동기 이메일 발송 (@Async)
+│   ├── PdfService                  # Thymeleaf HTML → PDF 변환 (openhtmltopdf)
+│   ├── EmailService                # 비동기 이메일 발송 (@Async, PDF 첨부)
 │   ├── AbnLookupService            # 호주 ABN API 조회
 │   ├── AdminDashboardService       # Super Admin/Company Admin 대시보드 데이터
 │   ├── CompanyInvitationService    # 팀 초대 토큰 생성/수락 (7일 만료)
@@ -119,7 +135,7 @@ src/main/java/com/example/demo/
 │   ├── RecurringInvoiceItem    # 반복 템플릿 항목
 │   ├── CompanyInvitation       # 팀 초대 (토큰, 7일 만료)
 │   └── Enums                   # InvoiceStatus, RecurringStatus, TaxType, GstCode,
-│                               # RecurringFrequency, PlanType, Timezone
+│                               # RecurringFrequency, PlanType, Timezone, DiscountType
 │
 ├── repository/       # Spring Data JPA 리포지토리
 │   ├── InvoiceRepository           # 검색+페이징, 대시보드 집계, 스케줄러 조회
@@ -150,7 +166,7 @@ src/main/java/com/example/demo/
 Company (테넌트 루트)
  ├── Member (1:N)           - 사용자 계정, 역할(ADMIN/USER/SUPER_ADMIN)
  ├── Invoice (1:N)          - 인보이스
- │    └── InvoiceItem (1:N) - 인보이스 항목
+ │    └── InvoiceItem (1:N) - 인보이스 항목 (수량, 할인, GST, DiscountType)
  ├── RecurringInvoice (1:N) - 반복 템플릿
  │    └── RecurringInvoiceItem (1:N)
  ├── Contact (1:N)          - 거래처/고객
@@ -181,7 +197,7 @@ DRAFT ──[Submit]──> IN_REVIEW ──[Approve]──┬──> UNPAID (�
 DRAFT ──[Approve]──> ACTIVE ──[자정 스케줄러]──> 인보이스 자동 생성
                        │                           (autoSend=true → UNPAID, false → DRAFT)
                        ├──[종료일 초과]──> COMPLETED
-                       └──[수동 중지]──> COMPLETED
+                       └──[Stop Recurring]──> COMPLETED
 ```
 
 ---
@@ -191,6 +207,13 @@ DRAFT ──[Approve]──> ACTIVE ──[자정 스케줄러]──> 인보이
 ### 인보이스 번호 채번
 `INV-#####` 형식, 회사별 시퀀셜. `findTopByCompanyAndInvoiceNumberStartingWithOrderByInvoiceNumberDesc`로 마지막 번호 조회 후 +1.
 반복 템플릿은 `INVT-#####` 형식.
+
+### 할인 방식 (DiscountType)
+항목별로 할인 방식을 선택할 수 있다.
+- `AMOUNT`: 고정 금액 할인 (예: $10 할인)
+- `PERCENT`: 퍼센트 할인 (예: 10% 할인)
+
+기본값은 `AMOUNT`. DB 레벨에서 `DEFAULT 'AMOUNT'`로 지정되어, 기존 데이터 마이그레이션 시에도 안전하다.
 
 ### 고객 정보 스냅샷
 Invoice에 `customerName`, `customerEmail`, `customerCompanyName` 등을 별도로 저장.
@@ -233,7 +256,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | `view-invoice.html` | 인보이스 상세 조회 (읽기 전용) |
 | `new-template.html` | 반복 템플릿 생성 (template-form 프래그먼트 사용) |
 | `edit-template.html` | 반복 템플릿 수정 |
-| `view-template.html` | 반복 템플릿 상세 조회 |
+| `view-template.html` | 반복 템플릿 상세 조회 (Start/Stop 버튼 포함) |
 | `login.html` | 로그인 폼 |
 | `signup.html` | 다단계 회원가입 (개인정보 → 이메일 인증 → 회사 정보) |
 | `subscribe.html` | PayPal 구독 플랜 선택 |
@@ -262,7 +285,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | `css/viewinvoicestyle.css` | 인보이스 상세 보기 |
 | `css/authstyle.css` | 로그인/회원가입 페이지 |
 | `js/newinvoicescript.js` | 인보이스 폼 로직 (항목 추가/삭제, 금액 계산, 수동 연락처 토글, Select2/Flatpickr 초기화) |
-| `js/home-script.js` | 대시보드 로직 (일괄 선택, 상태 변경, 복사, 기간 필터) |
+| `js/home-script.js` | 대시보드 로직 (일괄 선택, 상태 변경, 복사, 기간 필터, Stop Recurring, PDF 다운로드) |
 | `js/signup.js` | 회원가입 다단계 폼 (ABN 조회, 이메일 인증, 유효성 검사) |
 
 ---
@@ -271,10 +294,10 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 
 | 파일 | 설명 |
 |---|---|
-| `application.yaml` | 메인 설정 - DB 연결, JPA(DDL auto=update, SQL 로깅), Gmail SMTP |
-| `application-secret.yml` | **gitignored** - Gmail 비밀번호, ABN API GUID |
+| `application.yaml` | 메인 설정 - DB 연결, JPA(DDL auto=update, SQL 로깅), Gmail SMTP, prod 프로필 |
+| `application-secret.yml` | **gitignored** - DB 계정, SUPER_ADMIN 계정, Gmail 비밀번호, ABN API GUID |
 | `docker-compose.yml` | PostgreSQL 15 컨테이너 설정 |
-| `build.gradle` | 의존성: spring-boot-starter-{data-jpa, thymeleaf, web, security, mail}, postgresql, lombok |
+| `build.gradle` | 의존성: spring-boot-starter-{data-jpa, thymeleaf, web, security, mail}, postgresql, lombok, openhtmltopdf |
 
 ---
 
@@ -294,6 +317,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | POST | `/api/invoices/submit` | 일괄 제출 (DRAFT → IN_REVIEW) |
 | POST | `/api/invoices/approve` | 일괄 승인 |
 | POST | `/api/invoices/delete` | 일괄 삭제 (소프트) |
+| GET | `/api/invoices/{uuid}/pdf` | PDF 다운로드 |
 
 ### 반복 템플릿 (`InvoiceController`)
 
@@ -343,7 +367,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 
 ## 미구현/진행중 기능
 
-- **PDF Export**: 미구현
+- **PDF Export**: 기본 구현 완료 (view-invoice 화면 기반, 디자인 개선 필요)
 - **알림 센터**: 상단바 아이콘 비활성
 - **Credit Notes**: 버튼만 존재, 로직 없음
 - **Payment Link**: 모달 UI 존재, 실제 연동 없음
