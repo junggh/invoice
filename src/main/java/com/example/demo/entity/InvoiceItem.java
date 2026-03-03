@@ -17,6 +17,8 @@ public class InvoiceItem {
     private Integer quantity;    // 수량
     private BigDecimal discount; // 개별 할인
     @Enumerated(EnumType.STRING)
+    private DiscountType discountType = DiscountType.AMOUNT; // 할인 방식 (기본값: 금액 할인)
+    @Enumerated(EnumType.STRING)
     private GstCode gstCode = GstCode.GST_ON_INCOME; // 기본값: 10%
     private BigDecimal amount;   // 최종 금액 ( (단가 * 수량) - 할인 )
     private BigDecimal taxAmount;// 최종 세금

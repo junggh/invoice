@@ -344,7 +344,7 @@
             <td style="color: #666666;" th:text="${item.product.description}">Description</td>
             <td class="text-right" th:text="${item.product.price != null ? #numbers.formatDecimal(item.product.price, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td>
             <td class="text-right" th:text="${item.quantity}">0</td>
-            <td class="text-right" th:text="${item.discount != null ? #numbers.formatDecimal(item.discount, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td>
+            <td class="text-right" th:text="${item.discount != null ? #numbers.formatDecimal(item.discount, 1, 'COMMA', 2, 'POINT') + (item.discountType != null and item.discountType.name() == 'PERCENT' ? '%' : '$') : '-'}">-</td>
             <td th:text="${item.gstCode != null ? item.gstCode.displayValue : '-'}">GST</td>
             <td class="text-right amount-cell" th:text="${item.amount != null ? #numbers.formatDecimal(item.amount, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td>
         </tr>

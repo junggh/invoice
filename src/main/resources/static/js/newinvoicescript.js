@@ -243,6 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const priceInput = row.querySelector('input[name$=".price"]');
         const qtyInput = row.querySelector('input[name$=".quantity"]');
         const discountInput = row.querySelector('input[name$=".discount"]');
+        const discountTypeSelect = row.querySelector('.discount-type-select');
 
         // GST 요소 가져오기
         const gstSelect = row.querySelector('.gst-select');
@@ -255,6 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const price = parseFloat(priceInput.value) || 0;
         const qty = parseFloat(qtyInput.value) || 0;
         const discount = parseFloat(discountInput.value) || 0;
+        const discountType = discountTypeSelect ? discountTypeSelect.value : 'AMOUNT';
 
         // GST 세율 가져오기 (data-rate 속성 활용)
         const selectedGstOption = gstSelect.options[gstSelect.selectedIndex];
@@ -263,7 +265,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const taxType = taxTypeSelect.value; // TAX_INCLUSIVE, TAX_EXCLUSIVE, NO_TAX
 
         // 1. 기본 라인 합계 (할인 적용 후)
-        let lineTotal = (price * qty) - discount;
+        let lineTotal;
+        if (discountType === 'PERCENT') {
+            lineTotal = (price * qty) * (1 - discount / 100);
+        } else {
+            lineTotal = (price * qty) - discount;
+        }
         if (lineTotal < 0) lineTotal = 0;
 
         let calculatedTax = 0;

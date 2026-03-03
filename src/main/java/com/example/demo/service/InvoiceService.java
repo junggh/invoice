@@ -244,6 +244,7 @@ public class InvoiceService {
             newItem.setProduct(sourceItem.getProduct());
             newItem.setQuantity(sourceItem.getQuantity());
             newItem.setDiscount(sourceItem.getDiscount());
+            newItem.setDiscountType(sourceItem.getDiscountType());
             newItem.setAmount(sourceItem.getAmount());
             newItem.setGstCode(sourceItem.getGstCode());
             newItem.setTaxAmount(sourceItem.getTaxAmount());

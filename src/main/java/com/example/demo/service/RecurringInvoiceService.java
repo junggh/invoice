@@ -109,6 +109,7 @@ public class RecurringInvoiceService {
                 newItem.setProduct(originalItem.getProduct());
                 newItem.setQuantity(originalItem.getQuantity());
                 newItem.setDiscount(originalItem.getDiscount());
+                newItem.setDiscountType(originalItem.getDiscountType());
                 newItem.setAmount(originalItem.getAmount());
                 newItem.setGstCode(originalItem.getGstCode());
                 newItem.setTaxAmount(originalItem.getTaxAmount());
@@ -285,6 +286,7 @@ public class RecurringInvoiceService {
             item.setProduct(tItem.getProduct());
             item.setQuantity(tItem.getQuantity());
             item.setDiscount(tItem.getDiscount());
+            item.setDiscountType(tItem.getDiscountType());
             item.setAmount(tItem.getAmount());
             item.setGstCode(tItem.getGstCode());
             item.setTaxAmount(tItem.getTaxAmount());
