@@ -4,10 +4,8 @@ spring:
   datasource:
     # docker-compose에 설정한 포트(5432)와 DB이름(invoicedb)
     url: jdbc:postgresql://localhost:5432/invoicedb
-    # docker-compose에 설정한 아이디
-    username: newzen
-    # docker-compose에 설정한 비밀번호
-    password: 1234
+    username: ${db.username}
+    password: ${db.password}
     driver-class-name: org.postgresql.Driver
 
   jpa:
