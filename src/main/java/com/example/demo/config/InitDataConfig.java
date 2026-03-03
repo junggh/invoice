@@ -2,6 +2,7 @@ package com.example.demo.config;
 
 import com.example.demo.entity.Member;
 import com.example.demo.repository.MemberRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,16 +11,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class InitDataConfig {
 
+    @Value("${init.admin.email}")
+    private String superAdminEmail;
+
+    @Value("${init.admin.password}")
+    private String superAdminPassword;
+
     @Bean
     public CommandLineRunner initSuperAdmin(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
         return args -> {
-            // 개발자 이메일이 DB에 없는 경우에만 계정 생성
-            String superAdminEmail = "dev@myerp.com";
-
             if (memberRepository.findByEmail(superAdminEmail).isEmpty()) {
                 Member superAdmin = new Member();
                 superAdmin.setEmail(superAdminEmail);
-                superAdmin.setPassword(passwordEncoder.encode("1234")); // 실제 사용할 비밀번호
+                superAdmin.setPassword(passwordEncoder.encode(superAdminPassword));
                 superAdmin.setFirstName("Super");
                 superAdmin.setLastName("Admin");
                 superAdmin.setRole("SUPER_ADMIN"); // 권한 부여
