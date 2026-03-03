@@ -167,7 +167,17 @@
             <div class="actions">
                 <button type="button" onclick="location.href='/invoices?status=Recurring'" class="btn btn-secondary">Close</button>
 
-                <button th:if="${#strings.toString(invoice.status) == 'ACTIVE'}" type="button" class="btn btn-secondary" style="margin-left: auto;">Pause Subscription</button>
+                <form th:if="${#strings.toString(invoice.status) == 'IN_REVIEW'}"
+                      th:action="@{/api/invoices/recurring/approve}" method="POST" style="margin-left: auto;">
+                    <input type="hidden" name="ids" th:value="${invoice.id}">
+                    <button type="submit" class="btn btn-primary">Start Recurring</button>
+                </form>
+
+                <form th:if="${#strings.toString(invoice.status) == 'ACTIVE'}"
+                      th:action="@{/api/invoices/recurring/complete}" method="POST" style="margin-left: auto;">
+                    <input type="hidden" name="ids" th:value="${invoice.id}">
+                    <button type="submit" class="btn btn-secondary">Stop Recurring</button>
+                </form>
             </div>
         </div>
     </div>
