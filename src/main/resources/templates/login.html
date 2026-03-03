@@ -9,7 +9,7 @@
 
 <div class="auth-container small"> <h2>Welcome Back</h2>
 
-    <form action="/login" method="post">
+    <form th:action="@{/login}" method="post">
 
         <input type="hidden" name="token" th:value="${param.token}" th:if="${param.token != null}">
 

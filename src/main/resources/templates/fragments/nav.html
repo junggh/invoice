@@ -41,7 +41,8 @@
         <a href="#">Setting</a>
         <a href="#">Files</a>
         <a href="#">Help page</a>
-        <a href="/logout">Log out</a>
+        <a href="#" onclick="document.getElementById('logoutForm').submit()">Log out</a>
+        <form id="logoutForm" th:action="@{/logout}" method="post" style="display:none"></form>
       </div>
     </div>
   </div>

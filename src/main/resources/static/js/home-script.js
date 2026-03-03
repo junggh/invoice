@@ -262,6 +262,16 @@ document.addEventListener('DOMContentLoaded', function() {
         form.method = 'POST';
         form.action = actionUrl;
 
+        const csrfMeta = document.querySelector('meta[name="_csrf"]');
+        const csrfParamMeta = document.querySelector('meta[name="_csrf_param"]');
+        if (csrfMeta) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = csrfParamMeta ? csrfParamMeta.getAttribute('content') : '_csrf';
+            csrfInput.value = csrfMeta.getAttribute('content');
+            form.appendChild(csrfInput);
+        }
+
         checkedBoxes.forEach(cb => {
             const input = document.createElement('input');
             input.type = 'hidden';

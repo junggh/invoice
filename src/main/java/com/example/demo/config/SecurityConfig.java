@@ -77,7 +77,7 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
-                .csrf(csrf -> csrf.disable()); // 개발 편의를 위해 CSRF 잠시 끔 (필요 시 켜야 함)
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/auth/**")); // /api/auth/**는 비인증 공개 API라 CSRF 제외
 
         return http.build();
     }
