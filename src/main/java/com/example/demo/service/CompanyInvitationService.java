@@ -54,6 +54,7 @@ public class CompanyInvitationService {
 
         if (invitation.getExpiresAt().isBefore(LocalDateTime.now())) {
             invitation.setStatus(CompanyInvitation.InvitationStatus.EXPIRED);
+            invitationRepository.save(invitation);
             throw new IllegalStateException("The invitation has expired (valid for 7 days). Please request a new one from the administrator.");
         }
 
