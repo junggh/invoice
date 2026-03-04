@@ -57,7 +57,7 @@ public class InvoiceService {
     public Page<Invoice> getInvoices(String statusCondition, String sortField, String sortDir, Company company, String keyword, int page) {
         // 1. 정렬 설정 (기본값: ID 내림차순 - 최신순)
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
-        if (sortField != null && !sortField.isEmpty()) {
+        if ("issuedDate".equals(sortField) || "dueDate".equals(sortField)) {
             Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
             sort = Sort.by(direction, sortField);
         }
