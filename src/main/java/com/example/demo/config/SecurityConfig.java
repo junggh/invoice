@@ -24,6 +24,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/super-admin/**").hasAuthority("SUPER_ADMIN") // 개발자 전용
+                        .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "SUPER_ADMIN")
                         // 1. 누구나 접근 가능한 페이지 (로그인, 회원가입, 정적 리소스, API)
                         .requestMatchers(
                                 "/login", "/signup",           // 페이지
@@ -77,7 +78,15 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/auth/**")); // /api/auth/**는 비인증 공개 API라 CSRF 제외
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/auth/**")) // /api/auth/**는 비인증 공개 API라 CSRF 제외
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            String referer = request.getHeader("Referer");
+                            String redirectUrl = (referer != null && !referer.isEmpty()) ? referer : "/invoices";
+                            redirectUrl += (redirectUrl.contains("?") ? "&" : "?") + "forbidden=true";
+                            response.sendRedirect(redirectUrl);
+                        })
+                );
 
         return http.build();
     }

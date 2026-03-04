@@ -55,6 +55,14 @@
         }
     };
 
+    // 권한 부족 알림
+    if (new URLSearchParams(window.location.search).get('forbidden') === 'true') {
+        alert('You do not have permission to access that page.');
+        const url = new URL(window.location);
+        url.searchParams.delete('forbidden');
+        window.history.replaceState({}, '', url);
+    }
+
     // 바탕 화면 클릭 시 메뉴 닫기
     document.addEventListener('click', function(event) {
         if (!event.target.closest('.profile-avatar')) {
