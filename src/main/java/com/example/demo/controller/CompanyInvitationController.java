@@ -10,6 +10,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Controller
@@ -63,10 +65,12 @@ public class CompanyInvitationController {
         }
 
         try {
-            invitationService.acceptInvitation(token, userDetails.getUsername());
-            return "redirect:/invoices"; // 성공 시 대시보드로 즉시 이동
+            String companyName = invitationService.acceptInvitation(token, userDetails.getUsername());
+            String encoded = URLEncoder.encode("You have been connected to " + companyName + ".", StandardCharsets.UTF_8);
+            return "redirect:/invoices?tokenSuccess=" + encoded;
         } catch (Exception e) {
-            return "redirect:/invoices?error=invalid_token";
+            String encoded = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            return "redirect:/invoices?tokenError=" + encoded;
         }
     }
 }

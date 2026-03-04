@@ -44,12 +44,12 @@ public class CompanyInvitationService {
 
     // 2. 초대장 수락 로직
     @Transactional
-    public void acceptInvitation(String token, String loggedInEmail) {
+    public String acceptInvitation(String token, String loggedInEmail) {
         CompanyInvitation invitation = invitationRepository.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or incorrect invitation link."));
 
         if (invitation.getStatus() != CompanyInvitation.InvitationStatus.PENDING) {
-            throw new IllegalStateException("This invitation has already been accepted or expired.");
+            throw new IllegalStateException("This invitation has already been " + invitation.getStatus().name() + ".");
         }
 
         if (invitation.getExpiresAt().isBefore(LocalDateTime.now())) {
@@ -72,6 +72,8 @@ public class CompanyInvitationService {
 
         // 초대장 상태를 '수락됨'으로 변경
         invitation.setStatus(CompanyInvitation.InvitationStatus.ACCEPTED);
+
+        return invitation.getCompany().getBusinessName();
     }
 
     // [추가] 토큰으로 초대받은 이메일 주소 알아내기 (회원가입 창 자동 입력을 위해)

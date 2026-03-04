@@ -4,6 +4,8 @@ import com.example.demo.service.AuthService;
 import com.example.demo.service.CompanyInvitationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -45,24 +47,28 @@ public class SecurityConfig {
                             authService.updateLoginAndActivityDates(email);
 
                             // 폼에서 넘어온 토큰이 있다면 즉시 초대 수락(회사 연결) 처리
+                            String tokenParam = null;
+                            String tokenParamKey = null;
                             String token = request.getParameter("token");
                             if (token != null && !token.isEmpty()) {
                                 try {
-                                    invitationService.acceptInvitation(token, email);
+                                    String companyName = invitationService.acceptInvitation(token, email);
+                                    tokenParam = "You have been connected to " + companyName + ".";
+                                    tokenParamKey = "tokenSuccess";
                                 } catch (Exception e) {
-                                    System.out.println("invite matching failed: " + e.getMessage());
+                                    tokenParam = e.getMessage();
+                                    tokenParamKey = "tokenError";
                                 }
                             }
 
                             boolean isSuperAdmin = authentication.getAuthorities().stream()
                                     .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("SUPER_ADMIN"));
 
-                            // 권한에 따라 리다이렉트할 페이지 분기
-                            if (isSuperAdmin) {
-                                response.sendRedirect("/super-admin/companies"); // 개발자는 전체 회사 목록으로
-                            } else {
-                                response.sendRedirect("/invoices"); // 일반 유저는 인보이스 대시보드로
+                            String redirectUrl = isSuperAdmin ? "/super-admin/companies" : "/invoices";
+                            if (tokenParam != null) {
+                                redirectUrl += "?" + tokenParamKey + "=" + URLEncoder.encode(tokenParam, StandardCharsets.UTF_8);
                             }
+                            response.sendRedirect(redirectUrl);
                         })
                         .failureHandler((request, response, exception) -> {
                             String email = request.getParameter("email");

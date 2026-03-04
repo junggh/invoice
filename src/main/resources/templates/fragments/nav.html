@@ -55,6 +55,22 @@
         }
     };
 
+    // 초대장 성공/오류 알림
+    const params = new URLSearchParams(window.location.search);
+    const tokenSuccess = params.get('tokenSuccess');
+    const tokenError = params.get('tokenError');
+    if (tokenSuccess) {
+        alert(tokenSuccess);
+        const u = new URL(window.location);
+        u.searchParams.delete('tokenSuccess');
+        window.history.replaceState({}, '', u);
+    } else if (tokenError) {
+        alert(tokenError);
+        const u = new URL(window.location);
+        u.searchParams.delete('tokenError');
+        window.history.replaceState({}, '', u);
+    }
+
     // 권한 부족 알림
     if (new URLSearchParams(window.location.search).get('forbidden') === 'true') {
         alert('You do not have permission to access that page.');
