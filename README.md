@@ -49,11 +49,181 @@ http://localhost:8080 에서 접속.
 `InitDataConfig`에 의해 서버 시작 시 자동 생성됨.
 이메일과 비밀번호는 `application-secret.yml`의 `init.admin.email`, `init.admin.password`에서 읽어온다.
 
-### 4. 프로덕션 배포
+### 4. 프로덕션 배포 (Azure Rocky Linux + Nginx)
+
+#### 서버 전제 조건
+- nginx/1.20.1 설치 완료
+- 인바운드 포트 **80(HTTP)**, **443(HTTPS)** 개방
+
+#### Phase 0: 로컬에서 JAR 빌드 (로컬 머신)
+
 ```bash
-java -jar demo.jar --spring.profiles.active=prod
+./gradlew build
 ```
-`prod` 프로필 활성화 시 SQL 로깅이 비활성화된다.
+
+`build/libs/` 폴더에 생성된 실행 가능한 JAR 파일을 FileZilla 등으로 서버의 `/home/newzen/`에 업로드한다.
+(`application-secret.yml`, `docker-compose.yml`은 JAR에 포함되어 있으므로 별도 업로드 불필요)
+
+#### Phase 1: 서버 기초 공사 및 권한 설정 (root 권한)
+
+**1. Rocky Linux용 Docker 설치 및 권한 부여**
+
+Docker 공식 저장소를 연결하여 도커를 설치하고, `newzen` 계정에 도커 권한을 부여한다.
+
+```bash
+yum install -y yum-utils
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+systemctl start docker
+systemctl enable docker
+usermod -aG docker newzen
+```
+
+**2. Java 17을 공식 폴더로 이동 (SELinux 권한 문제 해결)**
+
+SELinux가 systemd 서비스의 홈 디렉토리 접근을 막는 것을 방지하기 위해, Java를 공식 폴더로 옮기고 보안 레이블을 다시 설정한다.
+
+```bash
+mv /home/newzen/java /opt/java
+restorecon -Rv /opt/java
+ln -s /opt/java /home/newzen/java  # 기존 경로 유지를 위한 바로가기
+```
+
+#### Phase 2: Nginx 웹 서버 연결 (root 권한)
+
+**1. 리버스 프록시 설정 (80 포트 → 8080 포트)**
+
+```bash
+vi /etc/nginx/nginx.conf
+```
+
+`server { }` 블록 안에서 다음과 같이 수정한다.
+
+```nginx
+# 아래 줄을 주석 처리:
+# root /usr/share/nginx/html;
+
+# include /etc/nginx/default.d/*.conf; 바로 아래에 추가:
+location / {
+    proxy_pass http://localhost:8080;
+}
+```
+
+**2. SELinux 통신 허용 및 Nginx 재시작**
+
+Nginx가 내부 포트(8080)로 통신하는 것을 SELinux가 차단하지 않도록 허용한다.
+
+```bash
+setsebool -P httpd_can_network_connect 1
+systemctl restart nginx
+systemctl enable nginx
+```
+
+#### Phase 3: DB 실행 (newzen 권한)
+
+`docker-compose.yml` 파일이 있는 홈 폴더(`/home/newzen`)에서 PostgreSQL DB를 백그라운드로 실행한다.
+
+```bash
+docker compose up -d
+```
+
+> DB를 완전히 초기화하려면: `docker compose down -v` 후 다시 `docker compose up -d`
+
+#### Phase 4: systemd 기반 무중단 서비스 등록 (root 권한)
+
+스프링부트 서버가 꺼져도 자동 재시작되고, 부팅 시 DB가 켜진 후 안전하게 켜지도록 시스템 설정 파일을 만든다.
+
+**1. 서비스 파일 생성**
+
+```bash
+vi /etc/systemd/system/erp.service
+```
+
+```ini
+[Unit]
+Description=Spring Boot ERP Web Service
+After=network.target docker.service
+
+[Service]
+User=newzen
+WorkingDirectory=/home/newzen
+# prod 프로필 활성화 시 SQL 로깅이 비활성화됨
+ExecStart=/opt/java/bin/java -jar /home/newzen/erp-app.jar --spring.profiles.active=prod
+Restart=always
+RestartSec=10
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**2. newzen 계정에 서비스 제어 sudo 권한 부여**
+
+`deploy.sh`/`stop.sh` 스크립트에서 `sudo systemctl`을 사용하므로, 이 권한이 없으면 스크립트가 실행되지 않는다.
+
+```bash
+echo "newzen ALL=(ALL) NOPASSWD: /bin/systemctl restart erp, /bin/systemctl stop erp" \
+  > /etc/sudoers.d/newzen-erp
+chmod 440 /etc/sudoers.d/newzen-erp
+```
+
+**3. 시스템 적용**
+
+```bash
+systemctl daemon-reload
+systemctl enable erp
+```
+
+#### Phase 5: 자동화 스크립트 구축 (newzen 권한)
+
+매번 긴 명령어를 치지 않도록 배포 스크립트(`deploy.sh`)와 종료 스크립트(`stop.sh`)를 만든다.
+
+**1. 배포 스크립트 생성 (`vi ~/deploy.sh`)**
+
+```bash
+#!/bin/bash
+echo "=== systemd 기반 무중단 배포를 시작합니다 ==="
+
+NEW_JAR=$(ls -tr *.jar | grep -v "erp-app.jar" | tail -n 1)
+echo "> 실행할 최신 파일: $NEW_JAR"
+
+ln -sf /home/newzen/$NEW_JAR /home/newzen/erp-app.jar
+
+echo "> 구버전 파일 정리를 시작합니다."
+for file in *.jar; do
+    if [ "$file" != "$NEW_JAR" ] && [ "$file" != "erp-app.jar" ]; then
+        rm -f "$file"
+    fi
+done
+
+echo "> ERP 서비스를 재시작합니다."
+sudo systemctl restart erp
+echo "=== 배포가 완료되었습니다! ==="
+```
+
+**2. 종료 스크립트 생성 (`vi ~/stop.sh`)**
+
+```bash
+#!/bin/bash
+echo "=== ERP 웹 서비스를 종료합니다 ==="
+sudo systemctl stop erp
+echo "> 서비스가 안전하게 종료되었습니다."
+```
+
+**3. 스크립트 실행 권한 부여**
+
+```bash
+chmod +x ~/deploy.sh ~/stop.sh
+```
+
+#### 운영 꿀팁
+
+| 작업 | 명령 |
+|---|---|
+| 새 버전 배포 | FileZilla로 새 `.jar` 업로드 후 `./deploy.sh` |
+| 실시간 로그 확인 | `sudo journalctl -u erp -f` |
+| 로컬 DB 접속 (HeidiSQL) | `ssh -L 15432:localhost:5432 newzen@서버IP` 후 `localhost:15432`로 접속 |
 
 ---
 
