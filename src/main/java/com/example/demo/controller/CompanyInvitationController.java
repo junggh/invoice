@@ -4,6 +4,7 @@ import com.example.demo.entity.CompanyInvitation;
 import com.example.demo.service.CompanyInvitationService;
 import com.example.demo.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,6 +22,9 @@ public class CompanyInvitationController {
     private final CompanyInvitationService invitationService;
     private final EmailService emailService;
 
+    @Value("${app.base-url}")
+    private String baseUrl;
+
     // 1. 관리자가 초대 모달에서 'Send Invite' 버튼을 누를 때 호출됨
     @PostMapping("/api/invitations")
     @ResponseBody
@@ -31,9 +35,7 @@ public class CompanyInvitationController {
             // 초대장 토큰 생성 및 DB 저장
             CompanyInvitation invitation = invitationService.createInvitation(userDetails.getUsername(), inviteeEmail);
 
-            // 실제 가입 링크 생성 (나중에 실제 도메인으로 변경 필요)
-            String inviteLink = "http://localhost:8080/invitations/accept?token=" + invitation.getToken();
-            //String inviteLink = "http://20.194.25.99/invitations/accept?token=" + invitation.getToken();
+            String inviteLink = baseUrl + "/invitations/accept?token=" + invitation.getToken();
 
             // 이메일 제목 및 본문(HTML) 구성
             String subject = "[ZeniBooks] You've been invited to join a team!";

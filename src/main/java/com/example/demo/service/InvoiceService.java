@@ -5,6 +5,7 @@ import com.example.demo.repository.CompanyRepository;
 import com.example.demo.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,9 @@ public class InvoiceService {
     private final CompanyRepository companyRepository;
     private final PdfService pdfService;
 
+    @Value("${app.base-url}")
+    private String baseUrl;
+
     // ===================================================================================
     // 1. Read Operations (조회 및 대시보드)
     // ===================================================================================
@@ -39,6 +43,17 @@ public class InvoiceService {
     public Invoice getInvoice(Long id) {
         return invoiceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invoice not found. id=" + id));
+    }
+
+    // [조회] 공개 링크용 단건 조회 (비회원 접근, DRAFT/DELETED 차단)
+    public Invoice getPublicInvoice(String uuid) {
+        Invoice invoice = invoiceRepository.findByUuid(uuid)
+                .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
+
+        if (invoice.getStatus() == InvoiceStatus.DRAFT || invoice.getStatus() == InvoiceStatus.DELETED) {
+            throw new IllegalArgumentException("This invoice is not publicly available.");
+        }
+        return invoice;
     }
 
     // [조회] 주소로 단건 조회
@@ -375,23 +390,47 @@ public class InvoiceService {
 
         String companyName = invoice.getCompany().getBusinessName();
         String subject = "[Invoice] New invoice " + invoice.getInvoiceNumber() + " from " + companyName;
+        String invoiceLink = baseUrl + "/public/invoice/" + invoice.getUuid();
+        String currency = invoice.getCustomerCurrency() != null ? invoice.getCustomerCurrency() : "";
+        String totalFormatted = currency + " " + String.format("%,.2f", invoice.getTotal());
 
-        String content = String.format(
-                "<div style='font-family: Arial, sans-serif; line-height: 1.6;'>" +
-                        "<h2>New Invoice Received</h2>" +
-                        "<p>Hello <strong>%s</strong>,</p>" +
-                        "<p>You have received a new invoice from <strong>%s</strong>.</p>" +
-                        "<p><strong>Invoice Number:</strong> %s<br>" +
-                        "<strong>Total Amount:</strong> %s %s</p>" +
-                        "<p>Please log in to your portal to view the details and make a payment.</p>" +
-                        "<p>Thank you.</p>" +
-                        "</div>",
-                invoice.getCustomerName(),
-                companyName,
-                invoice.getInvoiceNumber(),
-                invoice.getCustomerCurrency() != null ? invoice.getCustomerCurrency() : "",
-                invoice.getTotal().toString()
-        );
+        String content =
+            "<div style='font-family: Arial, sans-serif; background-color: #f5f7fa; padding: 40px 20px;'>" +
+            "  <div style='max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);'>" +
+            "    <div style='background-color: #00A3FF; padding: 32px 40px;'>" +
+            "      <h1 style='margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;'>" + companyName + "</h1>" +
+            "      <p style='margin: 6px 0 0; color: #d0efff; font-size: 14px;'>Invoice Notification</p>" +
+            "    </div>" +
+            "    <div style='padding: 36px 40px;'>" +
+            "      <p style='margin: 0 0 6px; font-size: 15px; color: #555;'>Hello <strong style='color: #222;'>" + invoice.getCustomerName() + "</strong>,</p>" +
+            "      <p style='margin: 0 0 28px; font-size: 15px; color: #555; line-height: 1.6;'>" +
+            "        You have received a new invoice from <strong style='color: #222;'>" + companyName + "</strong>. Please review the details below.</p>" +
+            "      <div style='background: #f8fafc; border-radius: 8px; padding: 20px 24px; margin-bottom: 28px;'>" +
+            "        <table style='width: 100%; border-collapse: collapse; font-size: 14px;'>" +
+            "          <tr><td style='padding: 7px 0; color: #888;'>Invoice Number</td>" +
+            "              <td style='padding: 7px 0; text-align: right; font-weight: 600; color: #222;'>" + invoice.getInvoiceNumber() + "</td></tr>" +
+            "          <tr><td style='padding: 7px 0; color: #888;'>Invoice Date</td>" +
+            "              <td style='padding: 7px 0; text-align: right; color: #444;'>" + invoice.getIssuedDate() + "</td></tr>" +
+            "          <tr><td style='padding: 7px 0; color: #888;'>Due Date</td>" +
+            "              <td style='padding: 7px 0; text-align: right; color: #444;'>" + invoice.getDueDate() + "</td></tr>" +
+            "          <tr style='border-top: 1px solid #e2e8f0;'>" +
+            "              <td style='padding: 12px 0 7px; font-weight: 700; color: #222; font-size: 15px;'>Amount Due</td>" +
+            "              <td style='padding: 12px 0 7px; text-align: right; font-weight: 700; color: #00A3FF; font-size: 18px;'>" + totalFormatted + "</td></tr>" +
+            "        </table>" +
+            "      </div>" +
+            "      <div style='text-align: center; margin-bottom: 28px;'>" +
+            "        <a href='" + invoiceLink + "' style='display: inline-block; padding: 14px 36px; background-color: #00A3FF; color: #ffffff;" +
+            "           text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 15px;'>View Invoice</a>" +
+            "      </div>" +
+            "      <p style='margin: 0; font-size: 12px; color: #aaa; text-align: center; line-height: 1.6;'>" +
+            "        If the button doesn't work, copy and paste this link into your browser:<br>" +
+            "        <a href='" + invoiceLink + "' style='color: #00A3FF; word-break: break-all;'>" + invoiceLink + "</a></p>" +
+            "    </div>" +
+            "    <div style='background: #f8fafc; padding: 20px 40px; text-align: center; border-top: 1px solid #eee;'>" +
+            "      <p style='margin: 0; font-size: 12px; color: #bbb;'>Powered by ZeniBooks &mdash; " + companyName + "</p>" +
+            "    </div>" +
+            "  </div>" +
+            "</div>";
 
         byte[] pdfBytes = pdfService.generateInvoicePdf(invoice);
         String pdfFilename = invoice.getInvoiceNumber() + ".pdf";

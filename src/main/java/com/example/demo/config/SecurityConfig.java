@@ -32,7 +32,8 @@ public class SecurityConfig {
                                 "/login", "/signup",           // 페이지
                                 "/css/**", "/js/**", "/data/**", "/images/**", // 정적 리소스
                                 "/api/auth/**",                 // 회원가입용 API (중복체크, ABN 등)
-                                "/invitations/accept"           // 초대 링크 허용
+                                "/invitations/accept",          // 초대 링크 허용
+                                "/public/**"                    // 공개 인보이스 뷰
                         ).permitAll()
                         // 2. 그 외 모든 페이지는 로그인 필요
                         .anyRequest().authenticated()

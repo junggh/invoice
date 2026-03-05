@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Invoice ' + (${invoice.invoiceNumber} ?: '')">Invoice</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/viewinvoicestyle.css">
+    <style>
+        body {
+            background-color: #F5F7FA;
+            padding: 40px 20px;
+        }
+        .public-wrapper {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+        .public-footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 13px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+<div class="public-wrapper">
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <h1 th:text="${invoice.company.businessName}">Company Name</h1>
+                <span class="status-badge" th:classappend="'status-' + ${#strings.toLowerCase(invoice.status)}"
+                      th:text="${#strings.replace(#strings.toLowerCase(invoice.status), '_', ' ')}"></span>
+            </div>
+            <span style="color: #888;" th:text="'# ' + (${invoice.invoiceNumber} ?: '-')"></span>
+        </div>
+
+        <div class="details-container">
+            <div class="details-column">
+                <div class="details-header">Contact Details</div>
+                <div class="info-row">
+                    <span class="info-label">Contact</span>
+                    <span class="info-value"
+                          th:text="${invoice.customerCompanyName != null ? invoice.customerCompanyName + ' (' + invoice.customerName + ')' : invoice.customerName}">
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Bill To</span>
+                    <span class="info-value" th:text="${invoice.customerBillTo} ?: '-'"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Currency</span>
+                    <span class="info-value" th:text="${invoice.customerCurrency} ?: '-'"></span>
+                </div>
+            </div>
+
+            <div class="details-column">
+                <div class="details-header">Invoice Details</div>
+                <div class="info-row">
+                    <span class="info-label">Invoice Number</span>
+                    <span class="info-value" th:text="${invoice.invoiceNumber} ?: '-'"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Reference</span>
+                    <span class="info-value" th:text="${invoice.reference} ?: '-'"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Invoice Date</span>
+                    <span class="info-value" th:text="${#temporals.format(invoice.issuedDate, 'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Due Date</span>
+                    <span class="info-value" th:text="${#temporals.format(invoice.dueDate, 'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Salesperson</span>
+                    <span class="info-value" th:text="${invoice.salesPerson} ?: '-'"></span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 15px;">
+            <h3 style="margin: 0;">Items</h3>
+            <span style="font-size: 13px; color: #666;">
+                Amounts are <span style="font-weight: 600; color: #333;"
+                                   th:text="${invoice.taxType != null ? invoice.taxType.displayValue : '-'}">Tax Exclusive</span>
+            </span>
+        </div>
+        <table class="items-table">
+            <thead>
+            <tr>
+                <th>Product</th>
+                <th>Description</th>
+                <th class="text-right">Price</th>
+                <th class="text-right">Quantity</th>
+                <th class="text-right">Discount</th>
+                <th>GST</th>
+                <th class="text-right">Amount</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${invoice.items}">
+                <td th:text="${item.product.name}">Product Name</td>
+                <td th:text="${item.product.description}" style="color: #666;">Description</td>
+                <td class="text-right" th:text="${item.product.price != null ? #numbers.formatDecimal(item.product.price, 1, 'COMMA', 2, 'POINT') : '0.00'}">0</td>
+                <td class="text-right" th:text="${item.quantity}">0</td>
+                <td class="text-right" th:text="${item.discount != null ? #numbers.formatDecimal(item.discount, 1, 'COMMA', 2, 'POINT') + (item.discountType != null and item.discountType.name() == 'PERCENT' ? '%' : '$') : '-'}">-</td>
+                <td th:text="${item.gstCode != null ? item.gstCode.displayValue : '-'}">GST on Income</td>
+                <td class="text-right" style="font-weight: 600;">
+                    <span th:text="${item.amount != null ? #numbers.formatDecimal(item.amount, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <div style="width: 250px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span>Subtotal</span>
+                    <span style="font-weight: bold;"
+                          th:text="${subtotal != null ? #numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
+                    <span>Tax (10%)</span>
+                    <span th:text="${tax != null ? #numbers.formatDecimal(tax, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 2px solid #333; padding-top: 10px; font-size: 18px; font-weight: bold;">
+                    <span>Total Amount</span>
+                    <span style="color: var(--primary-color);"
+                          th:text="${invoice.total != null ? #numbers.formatDecimal(invoice.total, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 18px; font-weight: bold; color: #333;">
+                    <span>Balance Due</span>
+                    <span th:text="${invoice.balanceDue != null ? #numbers.formatDecimal(invoice.balanceDue, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="public-footer">
+        <span th:text="${invoice.company.businessName}">Company</span> &middot; Powered by ZeniBooks
+    </div>
+</div>
+
+</body>
+</html>

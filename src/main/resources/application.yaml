@@ -1,3 +1,6 @@
+app:
+  base-url: http://localhost:8080
+
 spring:
   application:
     name: demo
@@ -36,6 +39,9 @@ spring:
           writetimeout: 5000
 
 ---
+app:
+  base-url: http://20.194.25.99
+
 spring:
   config:
     activate:
