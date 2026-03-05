@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -155,11 +155,51 @@
                     </form>
                 </div>
                 <button type="button" onclick="location.href='/invoices'" class="btn btn-secondary">Cancel</button>
+
+                <button type="button" class="btn btn-primary"
+                        th:if="${#strings.toString(invoice.status) == 'IN_REVIEW'}"
+                        sec:authorize="hasAuthority('ADMIN') or hasAuthority('SUPER_ADMIN')"
+                        onclick="openApproveModal()">Approve</button>
             </div>
         </div>
+
+        <!-- Approve + Send Email Modal -->
+        <div id="approveEmailModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+             background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: center;">
+            <div style="background: white; width: 450px; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 700;">Send Invoice</h3>
+                    <span style="font-size: 24px; cursor: pointer; color: #aaa;" onclick="closeApproveModal()">&times;</span>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #444;">Email Address</label>
+                    <input type="email" id="approveEmailInput" th:value="${invoice.customerEmail}"
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px;">
+                    <form th:action="@{/api/invoices/{uuid}/approve(uuid=${invoice.uuid})}" method="post" style="display: inline;">
+                        <input type="hidden" name="sendEmail" value="false">
+                        <button type="submit" class="btn btn-secondary">Send Later</button>
+                    </form>
+                    <form th:action="@{/api/invoices/{uuid}/approve(uuid=${invoice.uuid})}" method="post" style="display: inline;"
+                          onsubmit="document.getElementById('approveEmailHidden').value = document.getElementById('approveEmailInput').value;">
+                        <input type="hidden" name="sendEmail" value="true">
+                        <input type="hidden" name="email" id="approveEmailHidden">
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 <script>
+    function openApproveModal() {
+        document.getElementById('approveEmailModal').style.display = 'flex';
+    }
+    function closeApproveModal() {
+        document.getElementById('approveEmailModal').style.display = 'none';
+    }
     function togglePaymentForm() {
         const form = document.getElementById('paymentForm');
         if (form.style.display === 'none') {

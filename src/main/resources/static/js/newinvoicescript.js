@@ -411,11 +411,13 @@ document.addEventListener('DOMContentLoaded', function() {
             contactSelect.setAttribute('required', 'required');
             contactSelect.setAttribute('name', 'contact.id');
 
-            // 3. 수동 필드 권한 박탈 및 숨김 필드로 복구
+            // 3. 수동 필드 권한 박탈 및 값 초기화 (type="email" 형식 검증 방지)
             manualName.removeAttribute('required');
             manualName.removeAttribute('name');
+            manualName.value = '';
             manualEmail.removeAttribute('required');
             manualEmail.removeAttribute('name');
+            manualEmail.value = '';
             hiddenName.setAttribute('name', 'customerName');
             hiddenEmail.setAttribute('name', 'customerEmail');
 
@@ -533,7 +535,56 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ============================================================
-    // 6. Payment Link Modal Logic [신규 추가]
+    // 6. Send Email Modal Logic (Save & Send)
+    // ============================================================
+
+    window.openSendEmailModal = function() {
+        // hiddenEmail 또는 manualEmail에서 현재 이메일 값 가져오기
+        const isManual = document.getElementById('manualContactToggle').checked;
+        let currentEmail = '';
+        if (isManual) {
+            currentEmail = document.getElementById('manualEmail').value || '';
+        } else {
+            currentEmail = document.getElementById('hiddenEmail').value || '';
+        }
+        document.getElementById('sendEmailAddress').value = currentEmail;
+        document.getElementById('sendEmailModal').style.display = 'flex';
+    };
+
+    window.closeSendEmailModal = function() {
+        document.getElementById('sendEmailModal').style.display = 'none';
+    };
+
+    window.submitSendEmail = function() {
+        const email = document.getElementById('sendEmailAddress').value;
+
+        // 현재 모드에 맞는 이메일 필드에 반영
+        const isManual = document.getElementById('manualContactToggle').checked;
+        if (isManual) {
+            document.getElementById('manualEmail').value = email;
+        } else {
+            document.getElementById('hiddenEmail').value = email;
+        }
+
+        document.getElementById('hiddenStatus').value = 'UNPAID';
+        document.getElementById('hiddenSendEmail').value = 'true';
+        closeSendEmailModal();
+
+        // 폼 제출 (requestSubmit으로 HTML5 validation 수행)
+        document.getElementById('invoiceForm').requestSubmit();
+    };
+
+    window.submitSendLater = function() {
+        document.getElementById('hiddenStatus').value = 'UNPAID';
+        document.getElementById('hiddenSendEmail').value = 'false';
+        closeSendEmailModal();
+
+        // 폼 제출
+        document.getElementById('invoiceForm').requestSubmit();
+    };
+
+    // ============================================================
+    // 7. Payment Link Modal Logic [신규 추가]
     // ============================================================
 
     // 모달 열기
@@ -590,9 +641,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 모달 배경 클릭 시 닫기
     window.onclick = function(event) {
-        const modal = document.getElementById('paymentLinkModal');
-        if (event.target == modal) {
+        const paymentModal = document.getElementById('paymentLinkModal');
+        const sendModal = document.getElementById('sendEmailModal');
+        if (event.target == paymentModal) {
             window.closePaymentModal();
+        }
+        if (event.target == sendModal) {
+            window.closeSendEmailModal();
         }
         // 기존 드롭다운 닫기 로직 유지
         if (!event.target.matches('.btn-secondary') && !event.target.closest('.dropdown-content')) {

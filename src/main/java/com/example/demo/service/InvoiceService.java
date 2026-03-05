@@ -325,23 +325,33 @@ public class InvoiceService {
         }
     }
 
-    // [상태변경] 승인 (In Review -> Unpaid/Approved)
+    // [상태변경] 승인 (In Review -> Unpaid)
     @Transactional
     public void approveInvoices(List<Long> ids, Member member) {
         List<Invoice> invoices = invoiceRepository.findAllById(ids);
-        LocalDate today = LocalDate.now();
 
         for (Invoice invoice : invoices) {
-            // 발행일이 오늘 이전이면 즉시 발송(Unpaid)
-            if (!invoice.getIssuedDate().isAfter(today)) {
-                invoice.setStatus(InvoiceStatus.UNPAID);
-                if (invoice.getInvoiceNumber() == null) {
-                    invoice.setInvoiceNumber(generateNextInvoiceNumber(member.getCompany()));
-                }
+            invoice.setStatus(InvoiceStatus.UNPAID);
+            if (invoice.getInvoiceNumber() == null) {
+                invoice.setInvoiceNumber(generateNextInvoiceNumber(member.getCompany()));
+            }
+        }
+    }
+
+    // [상태변경] 단건 승인 + 선택적 이메일 발송 (view-invoice에서 사용)
+    @Transactional
+    public void approveSingleInvoice(String uuid, Member member, boolean sendEmail, String email) {
+        Invoice invoice = getInvoiceByUuid(uuid, member.getCompany());
+        if (invoice.getStatus() == InvoiceStatus.IN_REVIEW) {
+            invoice.setStatus(InvoiceStatus.UNPAID);
+            if (invoice.getInvoiceNumber() == null) {
+                invoice.setInvoiceNumber(generateNextInvoiceNumber(member.getCompany()));
+            }
+            if (email != null && !email.isBlank()) {
+                invoice.setCustomerEmail(email);
+            }
+            if (sendEmail) {
                 sendUnpaidInvoiceEmail(invoice);
-            } else {
-                // 미래 날짜면 대기(Approved)
-                invoice.setStatus(InvoiceStatus.APPROVED);
             }
         }
     }
@@ -369,8 +379,7 @@ public class InvoiceService {
 
         for (Invoice invoice : scheduledInvoices) {
             invoice.setStatus(InvoiceStatus.UNPAID);
-            sendUnpaidInvoiceEmail(invoice);
-            System.out.println("Auto-sending Invoice ID: " + invoice.getId());
+            System.out.println("Auto-activating Invoice ID: " + invoice.getId());
         }
     }
 

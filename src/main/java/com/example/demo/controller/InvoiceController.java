@@ -164,7 +164,9 @@ public class InvoiceController {
 
     // [등록] 처리
     @PostMapping("/api/invoices")
-    public String createInvoice(Invoice invoice, Model model, @AuthenticationPrincipal CustomUserDetails user) {
+    public String createInvoice(Invoice invoice,
+                                @RequestParam(defaultValue = "false") boolean sendEmail,
+                                Model model, @AuthenticationPrincipal CustomUserDetails user) {
         Member member = user.getMember();
         Company company = member.getCompany();
 
@@ -201,6 +203,13 @@ public class InvoiceController {
 
         // 중복이 아니면 정상 저장
         invoiceService.createInvoice(invoice, member);
+
+        // ADMIN의 Save & Send 처리: 이메일 발송
+        if (sendEmail) {
+            Invoice saved = invoiceService.getInvoice(invoice.getId());
+            invoiceService.sendUnpaidInvoiceEmail(saved);
+        }
+
         return "redirect:/invoices";
     }
 
@@ -220,11 +229,18 @@ public class InvoiceController {
 
     // [수정] 처리
     @PostMapping("/api/invoices/update")
-    public String updateInvoice(Invoice invoice) {
+    public String updateInvoice(Invoice invoice,
+                                @RequestParam(defaultValue = "false") boolean sendEmail) {
         Invoice existingInvoice = invoiceService.getInvoice(invoice.getId());
 
         if (existingInvoice.getStatus() == InvoiceStatus.DRAFT) {
             invoiceService.updateInvoice(invoice);
+
+            // ADMIN의 Save & Send 처리: 이메일 발송
+            if (sendEmail) {
+                Invoice saved = invoiceService.getInvoice(invoice.getId());
+                invoiceService.sendUnpaidInvoiceEmail(saved);
+            }
         }
         return "redirect:/invoices";
     }
@@ -249,11 +265,21 @@ public class InvoiceController {
         return "redirect:/invoices?status=DRAFT";
     }
 
-    // [상태변경] 승인 (IN_REVIEW -> UNPAID)
+    // [상태변경] 승인 (IN_REVIEW -> UNPAID) - 목록에서 일괄 승인
     @PostMapping("/api/invoices/approve")
     public String approveInvoices(@RequestParam List<Long> ids, @AuthenticationPrincipal CustomUserDetails user) {
         if (ids != null && !ids.isEmpty()) invoiceService.approveInvoices(ids, user.getMember());
         return "redirect:/invoices?status=IN_REVIEW";
+    }
+
+    // [상태변경] 단건 승인 + 이메일 모달 (view-invoice에서 사용)
+    @PostMapping("/api/invoices/{uuid}/approve")
+    public String approveSingleInvoice(@PathVariable String uuid,
+                                       @RequestParam(defaultValue = "false") boolean sendEmail,
+                                       @RequestParam(required = false) String email,
+                                       @AuthenticationPrincipal CustomUserDetails user) {
+        invoiceService.approveSingleInvoice(uuid, user.getMember(), sendEmail, email);
+        return "redirect:/invoices/" + uuid;
     }
 
     // [삭제] 처리

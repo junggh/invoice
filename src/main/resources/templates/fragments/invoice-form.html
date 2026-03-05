@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 
 <div th:fragment="invoiceForm(actionUrl, title)">
 
-    <form th:action="${actionUrl}" method="POST" th:object="${invoice}">
+    <form id="invoiceForm" th:action="${actionUrl}" method="POST" th:object="${invoice}">
         <input type="hidden" name="id" th:if="${invoice.id != null}" th:value="${invoice.id}">
         <input type="hidden" id="hiddenStatus" name="status" th:value="${invoice.status}">
+        <input type="hidden" id="hiddenSendEmail" name="sendEmail" value="false">
         <input type="hidden" name="_manualContact" value="on">
         <input type="hidden" id="hiddenCompanyName" name="customerCompanyName" th:value="${invoice.customerCompanyName}">
         <input type="hidden" id="hiddenEmail" name="customerEmail" th:value="${invoice.customerEmail}">
@@ -242,9 +243,29 @@
             <button type="button" class="btn btn-secondary" onclick="openPaymentModal()" style="margin-right: auto;">Create payment link</button>
             <button type="button" onclick="location.href='/invoices'" class="btn btn-secondary">Cancel</button>
             <button type="submit" class="btn btn-primary" onclick="setStatusAndSubmit('DRAFT')">Save Changes</button>
-            <button type="submit" class="btn btn-primary" onclick="setStatusAndSubmit('IN_REVIEW')">Save & Submit</button>
+            <button type="submit" class="btn btn-primary" sec:authorize="hasAuthority('USER')" onclick="setStatusAndSubmit('IN_REVIEW')">Save &amp; Submit</button>
+            <button type="button" class="btn btn-primary" sec:authorize="hasAuthority('ADMIN') or hasAuthority('SUPER_ADMIN')" onclick="openSendEmailModal()">Save &amp; Send</button>
         </div>
     </form>
+
+    <div id="sendEmailModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>Send Invoice</h3>
+                <span class="close-btn" onclick="closeSendEmailModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="sendEmailAddress" placeholder="Enter email address">
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="submitSendLater()">Send Later</button>
+                <button type="button" class="btn btn-primary" onclick="submitSendEmail()">Send</button>
+            </div>
+        </div>
+    </div>
 
     <div id="paymentLinkModal" class="modal-overlay">
         <div class="modal-content">
