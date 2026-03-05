@@ -367,22 +367,6 @@ public class InvoiceService {
     // 4. Scheduled & System Operations (자동화 로직)
     // ===================================================================================
 
-    // [스케줄러] 승인된 예약 인보이스 발송 처리 (Approved -> Unpaid)
-    @Scheduled(cron = "0 0 0 * * *")
-    @EventListener(ApplicationReadyEvent.class)
-    @Transactional
-    public void processScheduledInvoices() {
-        LocalDate today = LocalDate.now();
-        List<Invoice> scheduledInvoices = invoiceRepository.findByStatusAndIssuedDateLessThanEqual(
-                InvoiceStatus.APPROVED, today
-        );
-
-        for (Invoice invoice : scheduledInvoices) {
-            invoice.setStatus(InvoiceStatus.UNPAID);
-            System.out.println("Auto-activating Invoice ID: " + invoice.getId());
-        }
-    }
-
     // [이메일] 미납 인보이스 알림 메일 발송
     public void sendUnpaidInvoiceEmail(Invoice invoice) {
         if (invoice.getCustomerEmail() == null || invoice.getCustomerEmail().isEmpty()) {

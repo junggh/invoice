@@ -95,9 +95,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
     // 3. Scheduler & System (자동화 작업용)
     // ===================================================================================
 
-    // [발행 스케줄러] 승인 상태(APPROVED)이면서, 발행일이 도래한(오늘 포함) 인보이스 찾기
-    List<Invoice> findByStatusAndIssuedDateLessThanEqual(InvoiceStatus status, LocalDate date);
-
     // [연체 스케줄러] 미납 상태(UNPAID)이면서, 납기일이 지난 인보이스 찾기
     List<Invoice> findByStatusAndDueDateBefore(InvoiceStatus status, LocalDate date);
 

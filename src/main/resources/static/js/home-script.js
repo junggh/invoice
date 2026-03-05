@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const allowList = ['DRAFT', 'IN_REVIEW', 'APPROVED'];
+        const allowList = ['DRAFT', 'IN_REVIEW'];
         const urlParams = new URLSearchParams(window.location.search);
         const currentTab = urlParams.get('status');
 
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (hasInvalidItem) {
-                alert("Only invoices in 'DRAFT', 'IN_REVIEW', or 'APPROVED' status can be deleted.\n(Published invoices cannot be deleted.)");
+                alert("Only invoices in 'DRAFT' or 'IN_REVIEW' status can be deleted.\n(Published invoices cannot be deleted.)");
                 return;
             }
         }

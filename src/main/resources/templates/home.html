@@ -31,8 +31,6 @@
                            th:classappend="${currentStatus == 'DRAFT'} ? 'active'">Draft</a></li>
                     <li><a th:href="@{/invoices(status='IN_REVIEW', period=${selectedPeriod})}"
                            th:classappend="${currentStatus == 'IN_REVIEW'} ? 'active'">In Review</a></li>
-                    <li><a th:href="@{/invoices(status='APPROVED', period=${selectedPeriod})}"
-                           th:classappend="${currentStatus == 'APPROVED'} ? 'active'">Approved</a></li>
                     <li><a th:href="@{/invoices(status='UNPAID', period=${selectedPeriod})}"
                            th:classappend="${currentStatus == 'UNPAID'} ? 'active'">Unpaid</a></li>
                     <li><a th:href="@{/invoices(status='PAID', period=${selectedPeriod})}"
@@ -151,7 +149,7 @@
                         <i class="bi bi-stop-fill"></i>
                     </button>
 
-                    <button type="button" class="btn btn-icon" onclick="deleteSelected()" title="Delete" th:if="${currentStatus == 'DRAFT' or currentStatus == 'IN_REVIEW' or currentStatus == 'APPROVED' or currentStatus == 'Recurring'}">
+                    <button type="button" class="btn btn-icon" onclick="deleteSelected()" title="Delete" th:if="${currentStatus == 'DRAFT' or currentStatus == 'IN_REVIEW' or currentStatus == 'Recurring'}">
                         <i class="bi bi-trash3"></i>
                     </button>
 
@@ -205,7 +203,7 @@
                         <th>Bill To</th>
                         <th style="width: 90px;">Status</th>
                         <th class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" style="width: 110px;">
-                            <span th:unless="${currentStatus == 'DRAFT' or currentStatus == 'IN_REVIEW' or currentStatus == 'APPROVED'}">Balance due</span>
+                            <span th:unless="${currentStatus == 'DRAFT' or currentStatus == 'IN_REVIEW'}">Balance due</span>
                         </th>
                         <th class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" style="width: 110px;">Total</th>
                         <th th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" style="width: 80px; padding-left: 20px;">
@@ -265,7 +263,7 @@
                               th:text="${#strings.replace(#strings.toLowerCase(inv.status), '_', ' ')}">Draft</span>
                     </td>
                     <td class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
-                        <th:block th:unless="${#strings.toString(inv.status) == 'DRAFT' or #strings.toString(inv.status) == 'IN_REVIEW' or #strings.toString(inv.status) == 'APPROVED'}">
+                        <th:block th:unless="${#strings.toString(inv.status) == 'DRAFT' or #strings.toString(inv.status) == 'IN_REVIEW'}">
                             <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span>
                             <span th:text="${#numbers.formatDecimal(inv.balanceDue, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
                         </th:block>

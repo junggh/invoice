@@ -47,7 +47,6 @@ h1 { margin: 0; font-size: 28px; color: #333; }
 
 .status-draft { color: #64748B; background-color: #F1F5F9; }
 .status-in_review { color: #A880FF; background-color: #F8F5FF; }
-.status-approved { color: #10B981; background-color: #ECFDF5; }
 .status-unpaid { color: #F59E0B; background-color: #FFF7ED; }
 .status-paid { color: #3B82F6; background-color: #EFF6FF; }
 .status-overdue { color: #FF3838; background-color: #FFF4F4; }
