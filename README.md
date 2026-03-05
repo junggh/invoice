@@ -251,7 +251,7 @@ Spring Security form login. `Member.email`을 로그인 ID로 사용.
 
 | 경로 | 접근 권한 |
 |---|---|
-| `/login`, `/signup`, `/api/auth/**`, `/invitations/accept` | 공개 |
+| `/login`, `/signup`, `/api/auth/**`, `/invitations/accept`, `/public/**` | 공개 |
 | `/super-admin/**` | SUPER_ADMIN만 |
 | `/admin/**` | ADMIN 또는 SUPER_ADMIN |
 | 그 외 모든 경로 | 인증 필요 |
@@ -281,6 +281,7 @@ src/main/java/com/example/demo/
 │   ├── AdminController             # Super Admin 회사 목록, Company Admin 멤버 관리
 │   ├── SubscriptionController      # PayPal 구독 플랜 페이지 및 활성화
 │   ├── CompanyInvitationController # 팀 초대 생성/수락
+│   ├── PublicController               # 비회원용 공개 인보이스 조회
 │   ├── TempDataController          # Product/Contact 간편 등록
 │   └── GlobalControllerAdvice      # 모든 요청에 회사명/유저 이니셜 주입
 │
@@ -363,6 +364,7 @@ UNPAID ──[납기일 초과, 자정 스케줄러]──> OVERDUE
 ```
 
 **이메일 발송**: 자동 발송 없음. ADMIN이 Save & Send 또는 Approve 시 모달창에서 이메일 주소를 확인하고 **Send**(발송) 또는 **Send Later**(발송 없이 UNPAID 저장)를 선택한다.
+인보이스, 초대, 인증코드 이메일은 모두 동일한 브랜드 스타일(파란 헤더, 카드형 레이아웃)로 통일되어 있다.
 
 ### 반복 인보이스 상태 흐름
 ```
@@ -408,10 +410,14 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 - `newBalance > 0` → `balanceDue = newBalance`, 기존 상태 유지
 
 ### 팀 초대 플로우
-1. Admin이 이메일로 초대 → UUID 토큰 생성 (7일 만료)
-2. 초대 메일에 `/invitations/accept?token=...` 링크 포함
+1. Admin이 이메일로 초대 → 이미 같은 회사 소속 이메일이면 초대 차단
+2. UUID 토큰 생성 (7일 만료), 브랜드 스타일 초대 메일에 `/invitations/accept?token=...` 링크 포함
 3. 수락 시 Member.company 연결, role = USER 설정
 4. 로그인 성공 핸들러에서 토큰 자동 수락 처리
+
+### 공개 인보이스 조회
+`/public/invoice/{uuid}` 경로로 비회원도 인보이스를 열람할 수 있다. DRAFT/DELETED 상태의 인보이스는 접근 차단.
+인보이스 이메일 발송 시 이 공개 링크가 포함된다.
 
 ---
 
@@ -428,6 +434,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | `new-template.html` | 반복 템플릿 생성 (template-form 프래그먼트 사용) |
 | `edit-template.html` | 반복 템플릿 수정 |
 | `view-template.html` | 반복 템플릿 상세 조회 (상태 배지, Start/Stop 버튼 포함) |
+| `public-invoice.html` | 비회원용 인보이스 공개 조회 (nav 없음, 읽기 전용) |
 | `login.html` | 로그인 폼 |
 | `signup.html` | 다단계 회원가입 (개인정보 → 이메일 인증 → 회사 정보) |
 | `subscribe.html` | PayPal 구독 플랜 선택 |
@@ -465,7 +472,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 
 | 파일 | 설명 |
 |---|---|
-| `application.yaml` | 메인 설정 - DB 연결, JPA(DDL auto=update, SQL 로깅), Gmail SMTP, prod 프로필 |
+| `application.yaml` | 메인 설정 - DB 연결, JPA(DDL auto=update, SQL 로깅), Gmail SMTP, `app.base-url`(이메일 링크용), prod 프로필 |
 | `application-secret.yml` | **gitignored** - DB 계정, SUPER_ADMIN 계정, Gmail 비밀번호, ABN API GUID |
 | `docker-compose.yml` | PostgreSQL 15 컨테이너 설정 |
 | `build.gradle` | 의존성: spring-boot-starter-{data-jpa, thymeleaf, web, security, mail}, postgresql, lombok, openhtmltopdf |
@@ -528,8 +535,9 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 
 | Method | URL | 설명 |
 |---|---|---|
-| POST | `/api/invitations` | 팀 초대 생성 |
+| POST | `/api/invitations` | 팀 초대 생성 (기존 멤버 중복 체크) |
 | GET | `/invitations/accept` | 초대 수락 |
+| GET | `/public/invoice/{uuid}` | 공개 인보이스 조회 (비회원 접근 가능) |
 | GET | `/subscribe` | 구독 플랜 페이지 |
 | POST | `/api/subscription/success` | PayPal 구독 활성화 |
 | GET/POST | `/product` | Product 등록 |
