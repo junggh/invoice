@@ -121,12 +121,27 @@ public class AuthController {
         session.setAttribute("verifyExpiry", System.currentTimeMillis() + (3 * 60 * 1000));
 
         // (3) 이메일 본문 생성 (HTML)
-        String subject = "[Service Name] Your verification code";
-        String content = "<div style='text-align:center; border:1px solid #ddd; padding:20px;'>"
-                + "<h2>Your Verification Code</h2>"
-                + "<h1 style='color:#00A3FF; letter-spacing:5px;'>" + code + "</h1>"
-                + "<p>This code will expire in 3 minutes.</p>"
-                + "</div>";
+        String subject = "[ZeniBooks] Your email verification code";
+        String content =
+            "<div style='font-family: Arial, sans-serif; background-color: #f5f7fa; padding: 40px 20px;'>" +
+            "  <div style='max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);'>" +
+            "    <div style='background-color: #00A3FF; padding: 32px 40px;'>" +
+            "      <h1 style='margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;'>ZeniBooks</h1>" +
+            "      <p style='margin: 6px 0 0; color: #d0efff; font-size: 14px;'>Email Verification</p>" +
+            "    </div>" +
+            "    <div style='padding: 36px 40px; text-align: center;'>" +
+            "      <p style='margin: 0 0 24px; font-size: 15px; color: #555; line-height: 1.6;'>" +
+            "        Use the verification code below to complete your sign-up.</p>" +
+            "      <div style='display: inline-block; background: #f0f9ff; border: 2px dashed #00A3FF; border-radius: 10px; padding: 20px 48px; margin-bottom: 24px;'>" +
+            "        <span style='font-size: 36px; font-weight: 700; color: #00A3FF; letter-spacing: 10px;'>" + code + "</span>" +
+            "      </div>" +
+            "      <p style='margin: 0; font-size: 13px; color: #aaa;'>This code expires in <strong style='color: #555;'>3 minutes</strong>.</p>" +
+            "    </div>" +
+            "    <div style='background: #f8fafc; padding: 20px 40px; text-align: center; border-top: 1px solid #eee;'>" +
+            "      <p style='margin: 0; font-size: 12px; color: #bbb;'>If you didn't request this, you can safely ignore this email.</p>" +
+            "    </div>" +
+            "  </div>" +
+            "</div>";
 
         // (4) 발송
         emailService.sendEmail(email, subject, content);

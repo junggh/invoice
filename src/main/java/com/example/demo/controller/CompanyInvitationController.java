@@ -37,16 +37,35 @@ public class CompanyInvitationController {
 
             String inviteLink = baseUrl + "/invitations/accept?token=" + invitation.getToken();
 
+            String companyName = invitation.getCompany().getBusinessName();
+
             // 이메일 제목 및 본문(HTML) 구성
-            String subject = "[ZeniBooks] You've been invited to join a team!";
-            String content = "<div style='font-family: Arial, sans-serif; text-align:center; border:1px solid #ddd; padding:30px; border-radius: 8px; max-width: 500px; margin: 0 auto;'>"
-                    + "<h2 style='color:#333; margin-top:0;'>Team Invitation</h2>"
-                    + "<p style='color:#555; font-size: 16px; line-height: 1.5; margin-bottom: 25px;'>"
-                    + "You have been invited to join the company on ZeniBooks.<br>Click the button below to accept the invitation and join the team.</p>"
-                    + "<a href='" + inviteLink + "' style='display:inline-block; padding:12px 24px; background-color:#00A3FF; color:#fff; text-decoration:none; border-radius:6px; font-weight:bold; font-size: 16px;'>Accept Invitation</a>"
-                    + "<p style='margin-top: 30px; font-size: 12px; color: #999; word-break: break-all;'>"
-                    + "If the button doesn't work, copy and paste this link into your browser:<br>" + inviteLink + "</p>"
-                    + "</div>";
+            String subject = "[ZeniBooks] You've been invited to join " + companyName + "!";
+            String content =
+                "<div style='font-family: Arial, sans-serif; background-color: #f5f7fa; padding: 40px 20px;'>" +
+                "  <div style='max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);'>" +
+                "    <div style='background-color: #00A3FF; padding: 32px 40px;'>" +
+                "      <h1 style='margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;'>" + companyName + "</h1>" +
+                "      <p style='margin: 6px 0 0; color: #d0efff; font-size: 14px;'>Team Invitation</p>" +
+                "    </div>" +
+                "    <div style='padding: 36px 40px;'>" +
+                "      <p style='margin: 0 0 16px; font-size: 15px; color: #555; line-height: 1.6;'>" +
+                "        You have been invited to join <strong style='color: #222;'>" + companyName + "</strong> on ZeniBooks.</p>" +
+                "      <p style='margin: 0 0 28px; font-size: 15px; color: #555; line-height: 1.6;'>" +
+                "        Click the button below to accept the invitation and get started.</p>" +
+                "      <div style='text-align: center; margin-bottom: 28px;'>" +
+                "        <a href='" + inviteLink + "' style='display: inline-block; padding: 14px 36px; background-color: #00A3FF; color: #ffffff;" +
+                "           text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 15px;'>Accept Invitation</a>" +
+                "      </div>" +
+                "      <p style='margin: 0; font-size: 12px; color: #aaa; text-align: center; line-height: 1.6;'>" +
+                "        If the button doesn't work, copy and paste this link into your browser:<br>" +
+                "        <a href='" + inviteLink + "' style='color: #00A3FF; word-break: break-all;'>" + inviteLink + "</a></p>" +
+                "    </div>" +
+                "    <div style='background: #f8fafc; padding: 20px 40px; text-align: center; border-top: 1px solid #eee;'>" +
+                "      <p style='margin: 0; font-size: 12px; color: #bbb;'>Powered by ZeniBooks &mdash; " + companyName + "</p>" +
+                "    </div>" +
+                "  </div>" +
+                "</div>";
 
             // EmailService를 호출하여 실제 비동기 메일 발송
             emailService.sendEmail(inviteeEmail, subject, content);
