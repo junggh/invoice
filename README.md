@@ -253,6 +253,7 @@ Spring Security form login. `Member.email`을 로그인 ID로 사용.
 |---|---|
 | `/login`, `/signup`, `/api/auth/**`, `/invitations/accept` | 공개 |
 | `/super-admin/**` | SUPER_ADMIN만 |
+| `/admin/**` | ADMIN 또는 SUPER_ADMIN |
 | 그 외 모든 경로 | 인증 필요 |
 
 로그인 성공 시 역할별 리다이렉트:
@@ -285,7 +286,7 @@ src/main/java/com/example/demo/
 │
 ├── service/          # 비즈니스 로직
 │   ├── AuthService                 # 회원가입 처리, 이메일/ABN 중복 확인, 로그인 일시 갱신
-│   ├── InvoiceService              # 인보이스 CRUD, 상태변경, 결제, 스케줄러(연체/예약발송)
+│   ├── InvoiceService              # 인보이스 CRUD, 상태변경, 결제, 이메일 발송, 스케줄러(연체)
 │   ├── RecurringInvoiceService     # 반복 템플릿 CRUD, 자동 인보이스 생성 스케줄러
 │   ├── PdfService                  # Thymeleaf HTML → PDF 변환 (openhtmltopdf)
 │   ├── EmailService                # 비동기 이메일 발송 (@Async, PDF 첨부)
@@ -352,22 +353,23 @@ Product ←── InvoiceItem.product (N:1)
 ## 인보이스 상태 흐름
 
 ```
-DRAFT ──[Submit]──> IN_REVIEW ──[Approve]──┬──> UNPAID (발행일 ≤ 오늘, 이메일 발송)
-                                           │      ├──[결제 완료]──> PAID
-                                           │      └──[납기일 초과, 자정 스케줄러]──> OVERDUE
-                                           │
-                                           └──> APPROVED (발행일 > 오늘, 예약)
-                                                  └──[발행일 도래, 자정 스케줄러]──> UNPAID
+[USER]  DRAFT ──[Save & Submit]──> IN_REVIEW ──[ADMIN Approve + 이메일 모달]──> UNPAID
+[ADMIN] DRAFT ──[Save & Send + 이메일 모달]──> UNPAID
+
+UNPAID ──[결제 완료]──> PAID
+UNPAID ──[납기일 초과, 자정 스케줄러]──> OVERDUE
 
 모든 상태 ──[Delete]──> DELETED (소프트 삭제)
 ```
 
+**이메일 발송**: 자동 발송 없음. ADMIN이 Save & Send 또는 Approve 시 모달창에서 이메일 주소를 확인하고 **Send**(발송) 또는 **Send Later**(발송 없이 UNPAID 저장)를 선택한다.
+
 ### 반복 인보이스 상태 흐름
 ```
-DRAFT ──[Approve]──> ACTIVE ──[자정 스케줄러]──> 인보이스 자동 생성
-                       │                           (autoSend=true → UNPAID, false → DRAFT)
-                       ├──[종료일 초과]──> COMPLETED
-                       └──[Stop Recurring]──> COMPLETED
+DRAFT ──[Submit]──> IN_REVIEW ──[Approve]──> ACTIVE ──[자정 스케줄러]──> 인보이스 자동 생성
+                                               │        (autoSend=true → UNPAID + 이메일 발송, false → DRAFT)
+                                               ├──[종료일 초과]──> COMPLETED
+                                               └──[Stop Recurring]──> COMPLETED
 ```
 
 ---
@@ -396,7 +398,6 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 ### 스케줄러 (매일 자정 실행)
 | 스케줄러 | 위치 | 동작 |
 |---|---|---|
-| 예약 인보이스 발송 | `InvoiceService.processScheduledInvoices()` | APPROVED → UNPAID (발행일 도래 시) |
 | 연체 상태 갱신 | `InvoiceService.updateOverdueInvoices()` | UNPAID → OVERDUE (납기일 초과 시) |
 | 반복 인보이스 생성 | `RecurringInvoiceService.generateRecurringInvoices()` | ACTIVE 템플릿 → Invoice 자동 생성 |
 
@@ -423,10 +424,10 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | `home.html` | 대시보드 - 탭 필터, 검색, 페이징, 기간별 통계, 일괄 작업 |
 | `new-invoice.html` | 인보이스 생성 (invoice-form 프래그먼트 사용) |
 | `edit-invoice.html` | 인보이스 수정 (DRAFT만 가능) |
-| `view-invoice.html` | 인보이스 상세 조회 (읽기 전용) |
+| `view-invoice.html` | 인보이스 상세 조회 (상태 배지, ADMIN용 Approve 버튼 + 이메일 모달) |
 | `new-template.html` | 반복 템플릿 생성 (template-form 프래그먼트 사용) |
 | `edit-template.html` | 반복 템플릿 수정 |
-| `view-template.html` | 반복 템플릿 상세 조회 (Start/Stop 버튼 포함) |
+| `view-template.html` | 반복 템플릿 상세 조회 (상태 배지, Start/Stop 버튼 포함) |
 | `login.html` | 로그인 폼 |
 | `signup.html` | 다단계 회원가입 (개인정보 → 이메일 인증 → 회사 정보) |
 | `subscribe.html` | PayPal 구독 플랜 선택 |
@@ -442,7 +443,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 |---|---|
 | `nav.html` | 사이드바 + 상단바 (메뉴, 회사명, 유저 이니셜) |
 | `super-admin-nav.html` | Super Admin 전용 네비게이션 |
-| `invoice-form.html` | 인보이스 입력 폼 (고객 선택/수동입력, 항목 테이블, 금액 계산) |
+| `invoice-form.html` | 인보이스 입력 폼 (고객 선택/수동입력, 항목 테이블, 금액 계산, 역할별 버튼, 이메일 발송 모달) |
 | `template-form.html` | 반복 템플릿 입력 폼 (빈도, 기간, 자동발송 토글) |
 
 ### 정적 파일 (`src/main/resources/static/`)
@@ -454,7 +455,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | `css/newinvoicestyle.css` | 인보이스 폼 (그리드, 항목 테이블, Select2 오버라이드, 모달) |
 | `css/viewinvoicestyle.css` | 인보이스 상세 보기 |
 | `css/authstyle.css` | 로그인/회원가입 페이지 |
-| `js/newinvoicescript.js` | 인보이스 폼 로직 (항목 추가/삭제, 금액 계산, 수동 연락처 토글, Select2/Flatpickr 초기화) |
+| `js/newinvoicescript.js` | 인보이스 폼 로직 (항목 추가/삭제, 금액 계산, 수동 연락처 토글, Select2/Flatpickr 초기화, 이메일 발송 모달) |
 | `js/home-script.js` | 대시보드 로직 (일괄 선택, 상태 변경, 복사, 기간 필터, Stop Recurring, PDF 다운로드) |
 | `js/signup.js` | 회원가입 다단계 폼 (ABN 조회, 이메일 인증, 유효성 검사) |
 
@@ -485,7 +486,8 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | POST | `/api/invoices/update` | 수정 |
 | POST | `/api/invoices/{uuid}/pay` | 결제 기록 |
 | POST | `/api/invoices/submit` | 일괄 제출 (DRAFT → IN_REVIEW) |
-| POST | `/api/invoices/approve` | 일괄 승인 |
+| POST | `/api/invoices/approve` | 일괄 승인 (IN_REVIEW → UNPAID) |
+| POST | `/api/invoices/{uuid}/approve` | 단건 승인 + 선택적 이메일 발송 (view-invoice에서 사용) |
 | POST | `/api/invoices/delete` | 일괄 삭제 (소프트) |
 | GET | `/api/invoices/{uuid}/pdf` | PDF 다운로드 |
 
@@ -541,5 +543,5 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 - **알림 센터**: 상단바 아이콘 비활성
 - **Credit Notes**: 버튼만 존재, 로직 없음
 - **Payment Link**: 모달 UI 존재, 실제 연동 없음
-- **역할별 세분화 권한**: 기본적인 역할 체크만 존재
+- **역할별 세분화 권한**: USER/ADMIN별 인보이스 생성 플로우 분리 완료, 추가 세분화 가능
 - **Audit Logging**: 상세 감사 추적 미구현
