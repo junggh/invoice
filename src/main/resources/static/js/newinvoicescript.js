@@ -394,10 +394,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // 4. customerCompanyName 초기화 (contact에서 가져온 회사명 제거)
             document.getElementById('hiddenCompanyName').value = '';
 
-            // 5. Currency, Bill To 입력창 잠금 해제
-            currencyInput.removeAttribute('readonly');
-            billToInput.removeAttribute('readonly');
-
             // 시각적 피드백
             currencyInput.style.backgroundColor = '#fff';
             billToInput.style.backgroundColor = '#fff';
@@ -420,13 +416,6 @@ document.addEventListener('DOMContentLoaded', function() {
             manualEmail.value = '';
             hiddenName.setAttribute('name', 'customerName');
             hiddenEmail.setAttribute('name', 'customerEmail');
-
-            // 4. 입력창 다시 잠금
-            currencyInput.setAttribute('readonly', 'readonly');
-            billToInput.setAttribute('readonly', 'readonly');
-
-            currencyInput.style.backgroundColor = '#f9f9f9';
-            billToInput.style.backgroundColor = '#f9f9f9';
         }
     };
 
