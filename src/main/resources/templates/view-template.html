@@ -21,7 +21,11 @@
 
         <div class="container">
             <div class="header">
-                <h1>View Template</h1>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <h1>View Template</h1>
+                    <span class="status-badge" th:classappend="'status-recurring-' + ${#strings.toLowerCase(invoice.status)}"
+                          th:text="${#strings.replace(#strings.toLowerCase(invoice.status), '_', ' ')}"></span>
+                </div>
                 <span style="color: #888;" th:text="'# ' + (${invoice.templateNumber} ?: '-')"></span>
             </div>
 
@@ -85,7 +89,7 @@
                     </div>
 
                     <div class="info-row">
-                        <span class="info-label">Due Date Term</span>
+                        <span class="info-label">Terms</span>
                         <span class="info-value" th:text="${invoice.dueDateDays} + ' Days'"></span>
                     </div>
 

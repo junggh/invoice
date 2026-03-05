@@ -22,7 +22,11 @@
 
         <div class="container">
             <div class="header">
-                <h1>View Invoice</h1>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <h1>View Invoice</h1>
+                    <span class="status-badge" th:classappend="'status-' + ${#strings.toLowerCase(invoice.status)}"
+                          th:text="${#strings.replace(#strings.toLowerCase(invoice.status), '_', ' ')}"></span>
+                </div>
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <a th:href="@{/api/invoices/{uuid}/pdf(uuid=${invoice.uuid})}"
                        class="btn-icon" title="Download PDF">
