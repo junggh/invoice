@@ -34,6 +34,12 @@ public class CompanyInvitationService {
             throw new IllegalStateException("No company affiliation found.");
         }
 
+        boolean alreadyMember = memberRepository.findByCompanyId(company.getId()).stream()
+                .anyMatch(m -> m.getEmail().equalsIgnoreCase(inviteeEmail));
+        if (alreadyMember) {
+            throw new IllegalStateException("This email is already a member of your company.");
+        }
+
         CompanyInvitation invitation = new CompanyInvitation();
         invitation.setCompany(company);
         invitation.setInviteeEmail(inviteeEmail);

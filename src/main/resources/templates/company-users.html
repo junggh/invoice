@@ -128,12 +128,12 @@
         })
         .then(response => {
             if (!response.ok) {
-                response.text().then(text => alert('Error: ' + text));
+                return response.text().then(text => { alert(text); });
             }
+            closeInviteModal();
+            alert('Invitation email successfully sent.');
         })
         .catch(error => { console.error('Error:', error); });
-        // fetch 응답을 기다리지 않고, 버튼을 누르자마자 즉시 모달창을 닫습니다.
-        closeInviteModal();
     }
 </script>
 
