@@ -149,7 +149,7 @@
                         <i class="bi bi-stop-fill"></i>
                     </button>
 
-                    <button type="button" class="btn btn-icon" onclick="deleteSelected()" title="Delete" th:if="${currentStatus == 'DRAFT' or currentStatus == 'IN_REVIEW' or currentStatus == 'Recurring'}">
+                    <button type="button" class="btn btn-icon" onclick="deleteSelected()" title="Delete" th:if="${currentStatus == 'DRAFT' or currentStatus == 'IN_REVIEW' or currentStatus == 'Recurring' or ((currentStatus == 'UNPAID' or currentStatus == 'OVERDUE') and #authorization.expression('hasAuthority(''ADMIN'')'))}">
                         <i class="bi bi-trash3"></i>
                     </button>
 
@@ -157,11 +157,11 @@
                         <i class="bi bi-files"></i>
                     </button>
 
-                    <button type="button" class="btn btn-icon" title="Show Payment Link" th:if="${currentStatus != 'Overview' and currentStatus != 'DRAFT' and currentStatus != 'PAID' and currentStatus != 'Recurring'}">
+                    <button type="button" class="btn btn-icon" title="Show Payment Link" th:if="${currentStatus != 'Overview' and currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW' and currentStatus != 'PAID' and currentStatus != 'Recurring'}">
                         <i class="bi bi-link-45deg"></i>
                     </button>
 
-                    <button type="button" class="btn btn-icon" title="Send E-Mail" th:if="${currentStatus != 'Overview' and currentStatus != 'DRAFT' and currentStatus != 'PAID' and currentStatus != 'Recurring'}">
+                    <button type="button" class="btn btn-icon" title="Send E-Mail" th:if="${currentStatus != 'Overview' and currentStatus != 'DRAFT' and currentStatus != 'IN_REVIEW' and currentStatus != 'PAID' and currentStatus != 'Recurring'}">
                         <i class="bi bi-send-fill"></i>
                     </button>
 
@@ -173,9 +173,6 @@
                         <i class="bi bi-printer"></i>
                     </button>
 
-                    <button type="button" class="btn btn-icon" title="Download" th:if="${currentStatus != 'Overview' and currentStatus != 'Recurring'}">
-                        <i class="bi bi-download"></i>
-                    </button>
                 </div>
             </div>
 

@@ -122,12 +122,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const allowList = ['DRAFT', 'IN_REVIEW'];
         const urlParams = new URLSearchParams(window.location.search);
         const currentTab = urlParams.get('status');
+        const adminAllowList = ['DRAFT', 'IN_REVIEW', 'UNPAID', 'OVERDUE'];
+        const defaultAllowList = ['DRAFT', 'IN_REVIEW'];
 
         // Recurring 탭이 아닐 경우 상태 검증
         if (currentTab !== 'Recurring') {
+            const allowList = (currentTab === 'UNPAID' || currentTab === 'OVERDUE') ? adminAllowList : defaultAllowList;
             let hasInvalidItem = false;
             checkedBoxes.forEach(cb => {
                 if (!allowList.includes(cb.getAttribute('data-status'))) {
