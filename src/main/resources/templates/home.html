@@ -56,18 +56,18 @@
                 <div class="summary-metrics">
                     <div class="metric-item">
                         <label>Total</label>
-                        <span th:text="'A$' + ${#numbers.formatDecimal(totalAmount, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
+                        <span th:text="${globalCurrencySymbol} + ${#numbers.formatDecimal(totalAmount, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
                     </div>
                     <div class="metric-item">
                         <a th:href="@{/invoices(status='UNPAID', period=${selectedPeriod})}" style="text-decoration: none; display: block; cursor: pointer; color: inherit;">
                             <label style="cursor: pointer;">Balance Due</label>
-                            <span th:text="'A$' + ${#numbers.formatDecimal(totalBalance, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
+                            <span th:text="${globalCurrencySymbol} + ${#numbers.formatDecimal(totalBalance, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
                         </a>
                     </div>
                     <div class="metric-item">
                         <a th:href="@{/invoices(status='OVERDUE', period=${selectedPeriod})}" style="text-decoration: none; display: block; cursor: pointer;">
                             <label class="text-red" style="cursor: pointer;">Overdue</label>
-                            <span class="text-red" th:text="'A$' + ${#numbers.formatDecimal(totalOverdue, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
+                            <span class="text-red" th:text="${globalCurrencySymbol} + ${#numbers.formatDecimal(totalOverdue, 1, 'COMMA', 2, 'POINT')}">A$00.00</span>
                         </a>
                     </div>
                 </div>
@@ -264,12 +264,12 @@
                     </td>
                     <td class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
                         <th:block th:unless="${#strings.toString(inv.status) == 'DRAFT' or #strings.toString(inv.status) == 'IN_REVIEW'}">
-                            <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span>
+                            <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'" th:text="${globalCurrencySymbol}">A$</span>
                             <span th:text="${#numbers.formatDecimal(inv.balanceDue, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
                         </th:block>
                     </td>
                     <td class="text-right" th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'">
-                        <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'">A$</span>
+                        <span th:class="${currentStatus == 'OVERDUE'} ? '' : 'text-gray'" th:text="${globalCurrencySymbol}">A$</span>
                         <span th:text="${#numbers.formatDecimal(inv.total, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
                     </td>
                     <td th:classappend="${currentStatus == 'OVERDUE'} ? 'text-red'" th:text="${#temporals.format(inv.dueDate, 'dd/MM/yyyy')}" style="padding-left: 20px;">07/08/2025</td>
@@ -296,7 +296,7 @@
                     <td th:text="${tpl.lastIssuedDate != null ? #temporals.format(tpl.lastIssuedDate, 'dd/MM/yyyy') : '-'}">-</td>
                     <td th:text="${tpl.nextInvoiceDate != null ? #temporals.format(tpl.nextInvoiceDate, 'dd/MM/yyyy') : '-'}">-</td>
                     <td class="text-right">
-                        <span class="text-gray">A$</span>
+                        <span class="text-gray" th:text="${globalCurrencySymbol}">A$</span>
                         <span th:text="${#numbers.formatDecimal(tpl.total, 1, 'COMMA', 2, 'POINT')}">1,000.00</span>
                     </td>
                     <td class="text-center">
