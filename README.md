@@ -397,6 +397,12 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 - `false`: Contact 드롭다운에서 선택 (contact 참조 연결됨)
 - `true`: 일회성 고객 직접 입력 (contact 참조 없음)
 
+### OVERDUE 처리
+납기일 초과 시 OVERDUE 상태 전환은 두 단계에서 이루어진다.
+
+- **즉시 판정**: 인보이스 생성(`createInvoice`) 또는 수정(`updateInvoice`), 승인(`approveInvoices`, `approveSingleInvoice`) 시 UNPAID로 설정되는 순간 dueDate가 이미 지났다면 즉시 OVERDUE로 저장.
+- **야간 스케줄러**: 이미 UNPAID인 인보이스 중 당일 기준 납기일 초과분을 OVERDUE로 일괄 갱신.
+
 ### 스케줄러 (매일 자정 실행)
 | 스케줄러 | 위치 | 동작 |
 |---|---|---|
