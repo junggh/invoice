@@ -176,7 +176,7 @@
                                style="border-right: none; border-top-right-radius: 0; border-bottom-right-radius: 0;">
                         <select th:name="|items[${stat.index}].discountType|" class="discount-type-select calc-input"
                                 style="width: 45px; padding: 5px !important; background: #f9f9f9; border-left: 1px solid #ddd; border-top-left-radius: 0; border-bottom-left-radius: 0; cursor: pointer;">
-                            <option value="AMOUNT" th:selected="${item.discountType == null or item.discountType.name() == 'AMOUNT'}">$</option>
+                            <option value="AMOUNT" th:selected="${item.discountType == null or item.discountType.name() == 'AMOUNT'}" th:text="${globalCurrencySymbol}">$</option>
                             <option value="PERCENT" th:selected="${item.discountType != null and item.discountType.name() == 'PERCENT'}">%</option>
                         </select>
                     </div>
