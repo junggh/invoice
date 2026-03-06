@@ -206,6 +206,7 @@ public class InvoiceService {
     public void createInvoice(Invoice invoice, Member member) {
         invoice.setBalanceDue(invoice.getTotal());
         invoice.setCompany(member.getCompany());
+        invoice.setCustomerCurrency(member.getCompany().getCurrency());
 
         // [추가] 저장되는 상태가 UNPAID이면서 마감일이 지났다면 OVERDUE로 변경
         if (invoice.getStatus() == InvoiceStatus.UNPAID && invoice.getDueDate() != null) {

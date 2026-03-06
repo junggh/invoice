@@ -272,7 +272,7 @@ public class RecurringInvoiceService {
         newInvoice.setCustomerEmail(c.getEmail());
         newInvoice.setCustomerCompanyName(c.getCompanyName());
         newInvoice.setCustomerBillTo(c.getBillTo());
-        newInvoice.setCustomerCurrency(c.getCurrency());
+        newInvoice.setCustomerCurrency(ownerCompany.getCurrency());
         newInvoice.setSalesPerson(template.getSalesPerson());
         newInvoice.setReference(template.getReference());
         newInvoice.setTaxType(template.getTaxType());

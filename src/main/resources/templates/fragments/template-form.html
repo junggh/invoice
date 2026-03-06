@@ -40,8 +40,8 @@
                     <div class="form-group">
                         <label for="customerCurrency">Currency</label>
                         <input type="text" id="customerCurrency" name="customerCurrency"
-                               th:value="${invoice.contact != null ? invoice.contact.currency : ''}"
-                               placeholder="KRW" readonly>
+                               th:value="${globalCompanyCurrency}"
+                               readonly style="background-color: #f9f9f9;">
                     </div>
 
                     <div class="form-group">

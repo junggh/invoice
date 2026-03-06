@@ -22,9 +22,10 @@ public class GlobalControllerAdvice {
         if (principal != null) {
             memberRepository.findByEmail(principal.getName()).ifPresent(member -> {
 
-                // 1. 회사 이름 세팅
+                // 1. 회사 이름/통화 세팅
                 if (member.getCompany() != null) {
                     model.addAttribute("globalCompanyName", member.getCompany().getBusinessName());
+                    model.addAttribute("globalCompanyCurrency", member.getCompany().getCurrency());
                 } else if ("SUPER_ADMIN".equals(member.getRole())) {
                     model.addAttribute("globalCompanyName", "System Admin"); // 개발자 계정용
                 } else {

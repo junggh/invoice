@@ -356,7 +356,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectWrapper = document.getElementById('contactSelectWrapper');
         const manualWrapper = document.getElementById('manualContactWrapper');
         const contactSelect = document.getElementById('contactSelect');
-        const currencyInput = document.getElementById('customerCurrency');
         const billToInput = document.getElementById('customerBillTo');
 
         // 데이터 전송(name) 제어 요소들
@@ -393,10 +392,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // 4. customerCompanyName 초기화 (contact에서 가져온 회사명 제거)
             document.getElementById('hiddenCompanyName').value = '';
-
-            // 시각적 피드백
-            currencyInput.style.backgroundColor = '#fff';
-            billToInput.style.backgroundColor = '#fff';
 
         } else {
             // 1. 기존 Contact 선택 모드 복구
@@ -458,14 +453,12 @@ document.addEventListener('DOMContentLoaded', function() {
     window.updateContactDetails = function(selectElement) {
         // console.log("=== updateContactDetails 실행 ===");
         const nameInput = document.getElementById('hiddenName');
-        const currencyInput = document.getElementById('customerCurrency');
         const billToInput = document.getElementById('customerBillTo');
         const companyInput = document.getElementById('hiddenCompanyName');
         const emailInput = document.getElementById('hiddenEmail');
 
         if (selectElement.value === "") {
             if (nameInput) nameInput.value = "";
-            if (currencyInput) currencyInput.value = "";
             if (billToInput) billToInput.value = "";
             if (companyInput) companyInput.value = "";
             if (emailInput) emailInput.value = "";
@@ -474,7 +467,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const selectedOption = selectElement.options[selectElement.selectedIndex];
         if (nameInput) nameInput.value = selectedOption.getAttribute('data-name');
-        if (currencyInput) currencyInput.value = selectedOption.getAttribute('data-currency');
         if (billToInput) billToInput.value = selectedOption.getAttribute('data-address');
         if (companyInput) companyInput.value = selectedOption.getAttribute('data-company');
         if (emailInput) emailInput.value = selectedOption.getAttribute('data-email');
