@@ -3,6 +3,7 @@ package com.example.demo.repository;
 import com.example.demo.entity.Company;
 import com.example.demo.entity.Invoice;
 import com.example.demo.entity.InvoiceStatus;
+import com.example.demo.entity.Timezone;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -97,6 +98,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
 
     // [연체 스케줄러] 미납 상태(UNPAID)이면서, 납기일이 지난 인보이스 찾기
     List<Invoice> findByStatusAndDueDateBefore(InvoiceStatus status, LocalDate date);
+
+    // [연체 스케줄러] 특정 timezone의 회사 인보이스 중 미납+납기일 초과 조회
+    List<Invoice> findByCompanyTimezoneAndStatusAndDueDateBefore(Timezone timezone, InvoiceStatus status, LocalDate date);
 
     boolean existsByCompanyAndInvoiceNumber(Company company, String invoiceNumber);
 }

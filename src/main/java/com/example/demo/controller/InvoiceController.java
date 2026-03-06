@@ -154,7 +154,7 @@ public class InvoiceController {
             invoice = new Invoice();
             invoice.setInvoiceNumber(invoiceService.generateNextInvoiceNumber(company));
             invoice.setStatus(InvoiceStatus.DRAFT);
-            invoice.setIssuedDate(LocalDate.now());
+            invoice.setIssuedDate(LocalDate.now(company.getTimezone() != null ? company.getTimezone().toZoneId() : java.time.ZoneId.of("UTC")));
             invoice.getItems().add(new InvoiceItem());
         }
 
@@ -331,7 +331,7 @@ public class InvoiceController {
             template = new RecurringInvoice();
             template.setTemplateNumber(recurringService.generateNextTemplateNumber(company));
             template.setStatus(RecurringStatus.DRAFT);
-            template.setStartDate(LocalDate.now());
+            template.setStartDate(LocalDate.now(company.getTimezone() != null ? company.getTimezone().toZoneId() : java.time.ZoneId.of("UTC")));
             template.getItems().add(new RecurringInvoiceItem());
         }
 
@@ -418,8 +418,8 @@ public class InvoiceController {
 
     // [상태변경] 종료 (ACTIVE -> COMPLETED)
     @PostMapping("/api/invoices/recurring/complete")
-    public String completeRecurringInvoices(@RequestParam List<Long> ids) {
-        if (ids != null && !ids.isEmpty()) recurringService.completeRecurringInvoices(ids);
+    public String completeRecurringInvoices(@RequestParam List<Long> ids, @AuthenticationPrincipal CustomUserDetails user) {
+        if (ids != null && !ids.isEmpty()) recurringService.completeRecurringInvoices(ids, user.getMember().getCompany());
         return "redirect:/invoices?status=Recurring";
     }
 

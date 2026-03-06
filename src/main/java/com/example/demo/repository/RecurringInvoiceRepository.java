@@ -1,9 +1,9 @@
 package com.example.demo.repository;
 
 import com.example.demo.entity.Company;
-import com.example.demo.entity.Invoice;
 import com.example.demo.entity.RecurringInvoice;
 import com.example.demo.entity.RecurringStatus;
+import com.example.demo.entity.Timezone;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -62,6 +62,9 @@ public interface RecurringInvoiceRepository extends JpaRepository<RecurringInvoi
 
     // [자동생성] 상태가 ACTIVE이고, 다음 예정일이 오늘 이전(포함)인 템플릿 조회
     List<RecurringInvoice> findByStatusAndNextInvoiceDateLessThanEqual(RecurringStatus status, LocalDate date);
+
+    // [자동생성] 특정 timezone의 회사 템플릿 중 ACTIVE+예정일 도래 조회
+    List<RecurringInvoice> findByCompanyTimezoneAndStatusAndNextInvoiceDateLessThanEqual(Timezone timezone, RecurringStatus status, LocalDate date);
 
     boolean existsByCompanyAndTemplateNumber(Company company, String templateNumber);
 }

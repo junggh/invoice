@@ -40,7 +40,7 @@ public class Member {
 
     // --- 연관 관계 (N:1) ---
     // 회원은 반드시 하나의 회사에 소속됨
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "company_id")
     private Company company;
 

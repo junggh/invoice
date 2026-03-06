@@ -16,6 +16,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,7 +101,7 @@ public class RecurringInvoiceService {
         // 2. 초기값 재설정
         copy.setTemplateNumber(generateNextTemplateNumber(original.getCompany()));
         copy.setStatus(RecurringStatus.DRAFT);
-        copy.setStartDate(LocalDate.now());
+        copy.setStartDate(LocalDate.now(getZoneId(original.getCompany())));
 
         // 3. 아이템 딥 카피
         List<RecurringInvoiceItem> newItems = new ArrayList<>();
@@ -170,7 +172,7 @@ public class RecurringInvoiceService {
     @Transactional
     public void approveRecurringInvoices(List<Long> ids, Member member) {
         List<RecurringInvoice> templates = recurringRepository.findAllById(ids);
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(getZoneId(member.getCompany()));
 
         for (RecurringInvoice template : templates) {
             if (template.getStatus() == RecurringStatus.IN_REVIEW) {
@@ -189,9 +191,9 @@ public class RecurringInvoiceService {
 
     // [상태변경] 종료 (Active -> Completed)
     @Transactional
-    public void completeRecurringInvoices(List<Long> ids) {
+    public void completeRecurringInvoices(List<Long> ids, Company company) {
         List<RecurringInvoice> templates = recurringRepository.findAllById(ids);
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(getZoneId(company));
 
         for (RecurringInvoice template : templates) {
             template.setStatus(RecurringStatus.COMPLETED);
@@ -211,16 +213,30 @@ public class RecurringInvoiceService {
     // 4. Scheduler & System Operations (자동화 로직)
     // ===================================================================================
 
-    // [스케줄러] 정기 인보이스 자동 생성
-    @Scheduled(cron = "0 0 0 * * *")
-    @EventListener(ApplicationReadyEvent.class)
+    // [스케줄러] 매 정각마다 실행 — 해당 시각에 자정인 timezone의 회사만 반복 인보이스 자동 생성
+    @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void generateRecurringInvoices() {
-        LocalDate today = LocalDate.now();
-        List<RecurringInvoice> templates = recurringRepository
-                .findByStatusAndNextInvoiceDateLessThanEqual(RecurringStatus.ACTIVE, today);
+        for (Timezone tz : Timezone.values()) {
+            if (LocalTime.now(tz.toZoneId()).getHour() == 0) {
+                LocalDate today = LocalDate.now(tz.toZoneId());
+                List<RecurringInvoice> templates = recurringRepository
+                        .findByCompanyTimezoneAndStatusAndNextInvoiceDateLessThanEqual(tz, RecurringStatus.ACTIVE, today);
+                templates.forEach(this::processInvoiceGeneration);
+            }
+        }
+    }
 
-        templates.forEach(this::processInvoiceGeneration);
+    // [서버 시작 시] 모든 timezone에 대해 반복 인보이스 일괄 생성 (다운타임 보정)
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void onStartupGenerateRecurring() {
+        for (Timezone tz : Timezone.values()) {
+            LocalDate today = LocalDate.now(tz.toZoneId());
+            List<RecurringInvoice> templates = recurringRepository
+                    .findByCompanyTimezoneAndStatusAndNextInvoiceDateLessThanEqual(tz, RecurringStatus.ACTIVE, today);
+            templates.forEach(this::processInvoiceGeneration);
+        }
     }
 
     // [유틸] 템플릿 번호 생성 (INVT-0000#)
@@ -241,7 +257,7 @@ public class RecurringInvoiceService {
     private void processInvoiceGeneration(RecurringInvoice template) {
         createInvoiceFromTemplate(template);
 
-        template.setLastIssuedDate(LocalDate.now());
+        template.setLastIssuedDate(LocalDate.now(getZoneId(template.getCompany())));
         template.calculateNextDate();
 
         // 종료일 체크
@@ -261,7 +277,7 @@ public class RecurringInvoiceService {
 
         // [핵심] 그 회사의 번호 체계에 맞춰 다음 번호 생성
         newInvoice.setInvoiceNumber(invoiceService.generateNextInvoiceNumber(ownerCompany));
-        newInvoice.setIssuedDate(LocalDate.now());
+        newInvoice.setIssuedDate(LocalDate.now(getZoneId(ownerCompany)));
         newInvoice.setDueDate(newInvoice.getIssuedDate().plusDays(template.getDueDateDays()));
         newInvoice.setStatus(template.isAutoSend() ? InvoiceStatus.UNPAID : InvoiceStatus.DRAFT);
 
@@ -309,5 +325,13 @@ public class RecurringInvoiceService {
     // [추가] 템플릿 번호 중복 체크
     public boolean isTemplateNumberExists(String templateNumber, Company company) {
         return recurringRepository.existsByCompanyAndTemplateNumber(company, templateNumber);
+    }
+
+    // [유틸] 회사의 timezone에서 ZoneId를 안전하게 가져오기 (null이면 UTC 폴백)
+    private ZoneId getZoneId(Company company) {
+        if (company != null && company.getTimezone() != null) {
+            return company.getTimezone().toZoneId();
+        }
+        return ZoneId.of("UTC");
     }
 }

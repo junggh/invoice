@@ -19,6 +19,8 @@ import org.springframework.context.event.EventListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,7 +98,7 @@ public class InvoiceService {
     private record DateRange(LocalDate startDate, LocalDate endDate) {}
 
     private DateRange getDateRangeFromPeriod(String period, Company company) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(getZoneId(company));
 
         return switch (period) {
             case "LAST_60_DAYS" -> new DateRange(today.minusDays(60), today);
@@ -210,7 +212,7 @@ public class InvoiceService {
 
         // [추가] 저장되는 상태가 UNPAID이면서 마감일이 지났다면 OVERDUE로 변경
         if (invoice.getStatus() == InvoiceStatus.UNPAID && invoice.getDueDate() != null) {
-            if (invoice.getDueDate().isBefore(LocalDate.now())) {
+            if (invoice.getDueDate().isBefore(LocalDate.now(getZoneId(member.getCompany())))) {
                 invoice.setStatus(InvoiceStatus.OVERDUE);
             }
         }
@@ -241,7 +243,7 @@ public class InvoiceService {
         // 1. 기본 정보 리셋
         newInvoice.setInvoiceNumber(generateNextInvoiceNumber(source.getCompany()));
         newInvoice.setStatus(InvoiceStatus.DRAFT);
-        newInvoice.setIssuedDate(LocalDate.now());
+        newInvoice.setIssuedDate(LocalDate.now(getZoneId(source.getCompany())));
 
         // 2. 고객 및 메타데이터 복사 (스냅샷)
         newInvoice.setManualContact(source.isManualContact());
@@ -294,7 +296,7 @@ public class InvoiceService {
 
         // [추가] 폼에서 UNPAID로 요청이 왔는데 마감일이 지났다면 OVERDUE로 변경
         if (formInvoice.getStatus() == InvoiceStatus.UNPAID && formInvoice.getDueDate() != null) {
-            if (formInvoice.getDueDate().isBefore(LocalDate.now())) {
+            if (formInvoice.getDueDate().isBefore(LocalDate.now(getZoneId(existingInvoice.getCompany())))) {
                 formInvoice.setStatus(InvoiceStatus.OVERDUE);
             }
         }
@@ -360,7 +362,7 @@ public class InvoiceService {
     @Transactional
     public void approveInvoices(List<Long> ids, Member member) {
         List<Invoice> invoices = invoiceRepository.findAllById(ids);
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(getZoneId(member.getCompany()));
 
         for (Invoice invoice : invoices) {
             if (invoice.getDueDate() != null && invoice.getDueDate().isBefore(today)) {
@@ -380,7 +382,7 @@ public class InvoiceService {
         Invoice invoice = getInvoiceByUuid(uuid, member.getCompany());
         if (invoice.getStatus() == InvoiceStatus.IN_REVIEW) {
             // [수정] 무조건 UNPAID로 바꾸는 대신 날짜 비교 로직 적용
-            if (invoice.getDueDate() != null && invoice.getDueDate().isBefore(LocalDate.now())) {
+            if (invoice.getDueDate() != null && invoice.getDueDate().isBefore(LocalDate.now(getZoneId(member.getCompany())))) {
                 invoice.setStatus(InvoiceStatus.OVERDUE);
             } else {
                 invoice.setStatus(InvoiceStatus.UNPAID);
@@ -464,17 +466,34 @@ public class InvoiceService {
         emailService.sendEmailWithAttachment(invoice.getCustomerEmail(), subject, content, pdfBytes, pdfFilename);
     }
 
-    // [스케줄러] 연체 상태 업데이트 (Unpaid -> Overdue)
-    @Scheduled(cron = "0 0 0 * * *")
-    @EventListener(ApplicationReadyEvent.class)
+    // [스케줄러] 매 정각마다 실행 — 해당 시각에 자정인 timezone의 회사만 연체 처리
+    @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void updateOverdueInvoices() {
-        LocalDate today = LocalDate.now();
-        List<Invoice> overdueInvoices = invoiceRepository.findByStatusAndDueDateBefore(InvoiceStatus.UNPAID, today);
+        for (Timezone tz : Timezone.values()) {
+            if (LocalTime.now(tz.toZoneId()).getHour() == 0) {
+                LocalDate today = LocalDate.now(tz.toZoneId());
+                List<Invoice> overdueInvoices = invoiceRepository
+                        .findByCompanyTimezoneAndStatusAndDueDateBefore(tz, InvoiceStatus.UNPAID, today);
+                if (!overdueInvoices.isEmpty()) {
+                    overdueInvoices.forEach(invoice -> invoice.setStatus(InvoiceStatus.OVERDUE));
+                    System.out.println("[Scheduler] Marked " + overdueInvoices.size() + " invoices as OVERDUE (timezone: " + tz.getDisplayValue() + ")");
+                }
+            }
+        }
+    }
 
-        if (!overdueInvoices.isEmpty()) {
-            overdueInvoices.forEach(invoice -> invoice.setStatus(InvoiceStatus.OVERDUE));
-            System.out.println("✅ [System] Marked " + overdueInvoices.size() + " invoices as OVERDUE.");
+    // [서버 시작 시] 모든 timezone에 대해 연체 상태 일괄 갱신 (다운타임 보정)
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void onStartupUpdateOverdue() {
+        for (Timezone tz : Timezone.values()) {
+            LocalDate today = LocalDate.now(tz.toZoneId());
+            List<Invoice> overdueInvoices = invoiceRepository
+                    .findByCompanyTimezoneAndStatusAndDueDateBefore(tz, InvoiceStatus.UNPAID, today);
+            if (!overdueInvoices.isEmpty()) {
+                overdueInvoices.forEach(invoice -> invoice.setStatus(InvoiceStatus.OVERDUE));
+            }
         }
     }
 
@@ -491,5 +510,13 @@ public class InvoiceService {
     // [중복 체크] 해당 번호가 이미 존재하는지 확인
     public boolean isInvoiceNumberExists(String invoiceNumber, Company company) {
         return invoiceRepository.existsByCompanyAndInvoiceNumber(company, invoiceNumber);
+    }
+
+    // [유틸] 회사의 timezone에서 ZoneId를 안전하게 가져오기 (null이면 UTC 폴백)
+    private ZoneId getZoneId(Company company) {
+        if (company != null && company.getTimezone() != null) {
+            return company.getTimezone().toZoneId();
+        }
+        return ZoneId.of("UTC");
     }
 }

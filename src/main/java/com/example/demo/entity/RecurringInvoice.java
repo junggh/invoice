@@ -29,7 +29,7 @@ public class RecurringInvoice {
     @Column(nullable = false, unique = true, updatable = false)
     private String uuid;
 
-    @Column(unique = true)
+    @Column(nullable = false)
     private String templateNumber; // 템플릿 번호 (예: INVT-00001)
 
     @Enumerated(EnumType.STRING)
