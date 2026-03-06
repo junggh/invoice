@@ -237,7 +237,7 @@ chmod +x ~/deploy.sh ~/stop.sh
 | Build | Gradle |
 | Email | Gmail SMTP (비동기 `@Async`) |
 | PDF | openhtmltopdf (HTML → PDF 변환) |
-| Scheduling | Spring `@Scheduled` (매일 자정 cron) |
+| Scheduling | Spring `@Scheduled` (매 정각 cron, 회사별 timezone 자정 처리) |
 
 ---
 
@@ -283,7 +283,7 @@ src/main/java/com/example/demo/
 │   ├── CompanyInvitationController # 팀 초대 생성/수락
 │   ├── PublicController               # 비회원용 공개 인보이스 조회
 │   ├── TempDataController          # Product/Contact 간편 등록
-│   └── GlobalControllerAdvice      # 모든 요청에 회사명/유저 이니셜 주입
+│   └── GlobalControllerAdvice      # 모든 요청에 회사명/유저 이니셜/통화 기호 주입
 │
 ├── service/          # 비즈니스 로직
 │   ├── AuthService                 # 회원가입 처리, 이메일/ABN 중복 확인, 로그인 일시 갱신
@@ -307,7 +307,7 @@ src/main/java/com/example/demo/
 │   ├── RecurringInvoiceItem    # 반복 템플릿 항목
 │   ├── CompanyInvitation       # 팀 초대 (토큰, 7일 만료)
 │   └── Enums                   # InvoiceStatus, RecurringStatus, TaxType, GstCode,
-│                               # RecurringFrequency, PlanType, Timezone, DiscountType
+│                               # RecurringFrequency, PlanType, Timezone(ZoneId 매핑), DiscountType
 │
 ├── repository/       # Spring Data JPA 리포지토리
 │   ├── InvoiceRepository           # 검색+페이징, 대시보드 집계, 스케줄러 조회
@@ -389,6 +389,11 @@ DRAFT ──[Submit]──> IN_REVIEW ──[Approve]──> ACTIVE ──[자�
 
 기본값은 `AMOUNT`. DB 레벨에서 `DEFAULT 'AMOUNT'`로 지정되어, 기존 데이터 마이그레이션 시에도 안전하다.
 
+### 통화 (Currency)
+`customerCurrency`는 항상 **발행 회사의 통화**로 고정된다. Contact의 통화와 무관하게 인보이스 폼에서 readonly로 표시되며, 생성/자동 발행 시에도 서버에서 회사 통화를 강제 설정한다.
+
+`GlobalControllerAdvice`에서 통화 코드(`globalCompanyCurrency`)와 통화 기호(`globalCurrencySymbol`)를 모든 뷰에 주입한다. 통화 기호는 주요 16개 통화의 정적 매핑 + `java.util.Currency` 폴백으로 변환된다.
+
 ### 고객 정보 스냅샷
 Invoice에 `customerName`, `customerEmail`, `customerCompanyName` 등을 별도로 저장.
 Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된다.
@@ -397,17 +402,29 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 - `false`: Contact 드롭다운에서 선택 (contact 참조 연결됨)
 - `true`: 일회성 고객 직접 입력 (contact 참조 없음)
 
+### Timezone 기반 날짜 처리
+`Timezone` enum은 UTC-12 ~ UTC+12의 25개 timezone을 정의하며, 각각 `ZoneOffset`을 매핑하여 `toZoneId()`로 `java.time.ZoneId`를 반환한다.
+
+로그인 기록(`lastLoginDate`)과 가입일(`joinedDate`)을 제외한 **모든 `LocalDate.now()` 호출**은 해당 회사의 timezone 기준으로 계산된다.
+- 인보이스/템플릿 생성·수정·승인·복사 시 발행일, OVERDUE 판정, 기간별 통계 등
+- timezone이 null인 경우 UTC로 폴백
+
+`Member.company`는 `FetchType.EAGER`로 설정되어 있어, 컨트롤러에서 `company.getTimezone()`에 안전하게 접근할 수 있다.
+
 ### OVERDUE 처리
-납기일 초과 시 OVERDUE 상태 전환은 두 단계에서 이루어진다.
+납기일 초과 시 OVERDUE 상태 전환은 두 단계에서 이루어진다. 모든 날짜 비교는 회사 timezone 기준.
 
 - **즉시 판정**: 인보이스 생성(`createInvoice`) 또는 수정(`updateInvoice`), 승인(`approveInvoices`, `approveSingleInvoice`) 시 UNPAID로 설정되는 순간 dueDate가 이미 지났다면 즉시 OVERDUE로 저장.
-- **야간 스케줄러**: 이미 UNPAID인 인보이스 중 당일 기준 납기일 초과분을 OVERDUE로 일괄 갱신.
+- **정각 스케줄러**: 매 정각 실행, 해당 시각에 자정인 timezone의 회사 인보이스만 처리.
 
-### 스케줄러 (매일 자정 실행)
+### 스케줄러 (매 정각 실행, timezone별 자정 처리)
+매 정각(`0 0 * * * *`)마다 실행되며, 25개 timezone 중 현재 시각이 자정(hour == 0)인 timezone의 회사만 대상으로 처리한다. 서버 시작 시에는 모든 timezone에 대해 일괄 보정(다운타임 보상)을 수행한다.
+
 | 스케줄러 | 위치 | 동작 |
 |---|---|---|
 | 연체 상태 갱신 | `InvoiceService.updateOverdueInvoices()` | UNPAID → OVERDUE (납기일 초과 시) |
 | 반복 인보이스 생성 | `RecurringInvoiceService.generateRecurringInvoices()` | ACTIVE 템플릿 → Invoice 자동 생성 |
+| 서버 시작 보정 | `onStartupUpdateOverdue()` / `onStartupGenerateRecurring()` | 모든 timezone 일괄 처리 |
 
 ### 결제 처리
 `InvoiceService.recordPayment(uuid, amount, company)`:
