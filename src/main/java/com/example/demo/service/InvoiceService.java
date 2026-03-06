@@ -206,6 +206,14 @@ public class InvoiceService {
     public void createInvoice(Invoice invoice, Member member) {
         invoice.setBalanceDue(invoice.getTotal());
         invoice.setCompany(member.getCompany());
+
+        // [추가] 저장되는 상태가 UNPAID이면서 마감일이 지났다면 OVERDUE로 변경
+        if (invoice.getStatus() == InvoiceStatus.UNPAID && invoice.getDueDate() != null) {
+            if (invoice.getDueDate().isBefore(LocalDate.now())) {
+                invoice.setStatus(InvoiceStatus.OVERDUE);
+            }
+        }
+
         // 양방향 연관관계 설정
         if (invoice.getItems() != null) {
             invoice.getItems().forEach(item -> item.setInvoice(invoice));
@@ -283,6 +291,13 @@ public class InvoiceService {
 
         formInvoice.setBalanceDue(formInvoice.getTotal());
 
+        // [추가] 폼에서 UNPAID로 요청이 왔는데 마감일이 지났다면 OVERDUE로 변경
+        if (formInvoice.getStatus() == InvoiceStatus.UNPAID && formInvoice.getDueDate() != null) {
+            if (formInvoice.getDueDate().isBefore(LocalDate.now())) {
+                formInvoice.setStatus(InvoiceStatus.OVERDUE);
+            }
+        }
+
         // 기본 정보 복사 (ID, UUID, Items 제외)
         BeanUtils.copyProperties(formInvoice, existingInvoice, "id", "items", "uuid", "company", "invoiceNumber");
 
@@ -344,9 +359,14 @@ public class InvoiceService {
     @Transactional
     public void approveInvoices(List<Long> ids, Member member) {
         List<Invoice> invoices = invoiceRepository.findAllById(ids);
+        LocalDate today = LocalDate.now();
 
         for (Invoice invoice : invoices) {
-            invoice.setStatus(InvoiceStatus.UNPAID);
+            if (invoice.getDueDate() != null && invoice.getDueDate().isBefore(today)) {
+                invoice.setStatus(InvoiceStatus.OVERDUE);
+            } else {
+                invoice.setStatus(InvoiceStatus.UNPAID);
+            }
             if (invoice.getInvoiceNumber() == null) {
                 invoice.setInvoiceNumber(generateNextInvoiceNumber(member.getCompany()));
             }
@@ -358,7 +378,13 @@ public class InvoiceService {
     public void approveSingleInvoice(String uuid, Member member, boolean sendEmail, String email) {
         Invoice invoice = getInvoiceByUuid(uuid, member.getCompany());
         if (invoice.getStatus() == InvoiceStatus.IN_REVIEW) {
-            invoice.setStatus(InvoiceStatus.UNPAID);
+            // [수정] 무조건 UNPAID로 바꾸는 대신 날짜 비교 로직 적용
+            if (invoice.getDueDate() != null && invoice.getDueDate().isBefore(LocalDate.now())) {
+                invoice.setStatus(InvoiceStatus.OVERDUE);
+            } else {
+                invoice.setStatus(InvoiceStatus.UNPAID);
+            }
+
             if (invoice.getInvoiceNumber() == null) {
                 invoice.setInvoiceNumber(generateNextInvoiceNumber(member.getCompany()));
             }
