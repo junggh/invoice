@@ -68,9 +68,9 @@
                 <a href="/invoices" class="btn" style="background: white; border: 1px solid #ddd; color: #555; text-decoration: none; padding: 8px 16px; border-radius: 4px;">Back</a>
             </div>
 
-            <div th:if="${currentPlan != null and currentPlan.name() == 'PRO'}">
+            <div th:if="${currentPlan != null and currentPlan.name() == 'BASIC'}">
                 <div class="subscribed-message">
-                    <h3>🎉 You are a PRO member!</h3>
+                    <h3>🎉 You are a BASIC member!</h3>
                     <p>You have access to all features.</p>
                 </div>
                 <br>
@@ -79,9 +79,9 @@
                 </div>
             </div>
 
-            <div class="plans-wrapper" th:unless="${currentPlan != null and currentPlan.name() == 'PRO'}">
+            <div class="plans-wrapper" th:unless="${currentPlan != null and currentPlan.name() == 'BASIC'}">
 
-                <div class="plan-card" th:if="${currentPlan == null}">
+<!--                <div class="plan-card" th:if="${currentPlan == null}">
                     <div class="plan-title">Lite</div>
                     <div class="price-tag">$5.00 / m</div>
                     <ul class="features">
@@ -89,7 +89,7 @@
                         <li>✅ Single User</li>
                     </ul>
                     <div id="paypal-button-container-LITE"></div>
-                </div>
+                </div>-->
 
                 <div class="plan-card" th:if="${currentPlan == null or currentPlan.name() == 'LITE'}">
                     <div class="plan-title">Basic</div>
@@ -101,7 +101,7 @@
                     <div id="paypal-button-container-BASIC"></div>
                 </div>
 
-                <div class="plan-card">
+<!--                <div class="plan-card">
                     <div class="plan-title">Pro</div>
                     <div class="price-tag">$20.00 / m</div>
                     <ul class="features">
@@ -110,7 +110,7 @@
                         <li>✅ Priority Support</li>
                     </ul>
                     <div id="paypal-button-container-PRO"></div>
-                </div>
+                </div>-->
 
             </div>
         </div>
