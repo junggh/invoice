@@ -158,24 +158,24 @@
                 </td>
                 <td class="col-desc">
                     <input type="text" th:name="|items[${stat.index}].description|"
-                           th:value="${item.product != null ? item.product.description : ''}" readonly>
+                           th:value="${item.product != null ? item.product.description : ''}">
                 </td>
                 <td class="col-price">
-                    <input type="number" th:name="|items[${stat.index}].price|"
+                    <input type="text" inputmode="decimal" th:name="|items[${stat.index}].price|"
                            th:value="${item.product != null ? item.product.price : ''}"
-                           class="text-right calc-input" readonly>
+                           class="text-right calc-input comma-format">
                 </td>
                 <td class="col-qty">
-                    <input type="number" th:name="|items[${stat.index}].quantity|"
-                           th:value="${item.quantity}" class="text-right calc-input">
+                    <input type="text" inputmode="decimal" th:name="|items[${stat.index}].quantity|"
+                           th:value="${item.quantity}" class="text-right calc-input comma-format">
                 </td>
                 <td class="col-discount">
                     <div class="discount-input-group" style="display: flex; align-items: center;">
-                        <input type="number" th:name="|items[${stat.index}].discount|"
-                               th:value="${item.discount}" class="text-right calc-input"
+                        <input type="text" inputmode="decimal" th:name="|items[${stat.index}].discount|"
+                               th:value="${item.discount}" class="text-right calc-input comma-format"
                                style="border-right: none; border-top-right-radius: 0; border-bottom-right-radius: 0;">
                         <select th:name="|items[${stat.index}].discountType|" class="discount-type-select calc-input"
-                                style="width: 45px; padding: 5px !important; background: #f9f9f9; border-left: 1px solid #ddd; border-top-left-radius: 0; border-bottom-left-radius: 0; cursor: pointer;">
+                                style="width: 45px; padding: 2px !important; background: #f9f9f9; border-left: 1px solid #ddd; border-top-left-radius: 0; border-bottom-left-radius: 0; cursor: pointer;">
                             <option value="AMOUNT" th:selected="${item.discountType == null or item.discountType.name() == 'AMOUNT'}" th:text="${globalCurrencySymbol}">$</option>
                             <option value="PERCENT" th:selected="${item.discountType != null and item.discountType.name() == 'PERCENT'}">%</option>
                         </select>

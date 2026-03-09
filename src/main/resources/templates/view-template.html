@@ -135,7 +135,7 @@
 
                     <td class="text-right" th:text="${item.product.price != null ? #numbers.formatDecimal(item.product.price, 1, 'COMMA', 2, 'POINT') : '0.00'}">0</td>
 
-                    <td class="text-right" th:text="${item.quantity}">0</td>
+                    <td class="text-right" th:text="${#numbers.formatDecimal(item.quantity, 1, 'COMMA', 0, 'POINT')}">0</td>
 
                     <td class="text-right" th:text="${item.discount != null ? #numbers.formatDecimal(item.discount, 1, 'COMMA', 2, 'POINT') + (item.discountType != null and item.discountType.name() == 'PERCENT' ? '%' : '$') : '-'}">-</td>
 

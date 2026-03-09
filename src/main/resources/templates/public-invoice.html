@@ -104,7 +104,7 @@
                 <td th:text="${item.product.name}">Product Name</td>
                 <td th:text="${item.product.description}" style="color: #666;">Description</td>
                 <td class="text-right" th:text="${item.product.price != null ? #numbers.formatDecimal(item.product.price, 1, 'COMMA', 2, 'POINT') : '0.00'}">0</td>
-                <td class="text-right" th:text="${item.quantity}">0</td>
+                <td class="text-right" th:text="${#numbers.formatDecimal(item.quantity, 1, 'COMMA', 0, 'POINT')}">0</td>
                 <td class="text-right" th:text="${item.discount != null ? #numbers.formatDecimal(item.discount, 1, 'COMMA', 2, 'POINT') + (item.discountType != null and item.discountType.name() == 'PERCENT' ? '%' : '$') : '-'}">-</td>
                 <td th:text="${item.gstCode != null ? item.gstCode.displayValue : '-'}">GST on Income</td>
                 <td class="text-right" style="font-weight: 600;">

@@ -239,6 +239,32 @@ document.addEventListener('DOMContentLoaded', function() {
         return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
 
+    // 입력 필드에 콤마 포맷 적용 (커서 위치 보정 포함)
+    function applyCommaFormat(input) {
+        const cursorPos = input.selectionStart;
+        const oldLength = input.value.length;
+
+        // 콤마 제거 후 숫자/점만 남기기 (소수점 중복 방지)
+        let raw = input.value.replace(/[^0-9.]/g, '');
+        const dotIndex = raw.indexOf('.');
+        if (dotIndex !== -1) {
+            raw = raw.slice(0, dotIndex + 1) + raw.slice(dotIndex + 1).replace(/\./g, '');
+        }
+
+        const parts = raw.split('.');
+        const intFormatted = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        input.value = parts.length > 1 ? intFormatted + '.' + parts[1] : intFormatted;
+
+        // 커서 위치 보정
+        const diff = input.value.length - oldLength;
+        const newCursor = Math.max(0, cursorPos + diff);
+        input.setSelectionRange(newCursor, newCursor);
+    }
+
+    function stripCommas(val) {
+        return val ? val.replace(/,/g, '') : val;
+    }
+
     window.calculateRow = function(row) {
         const priceInput = row.querySelector('input[name$=".price"]');
         const qtyInput = row.querySelector('input[name$=".quantity"]');
@@ -253,9 +279,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const amountDisplay = row.querySelector('.amount-display');
         const taxInput = row.querySelector('.row-tax');
 
-        const price = parseFloat(priceInput.value) || 0;
-        const qty = parseFloat(qtyInput.value) || 0;
-        const discount = parseFloat(discountInput.value) || 0;
+        const price = parseFloat(stripCommas(priceInput.value)) || 0;
+        const qty = parseFloat(stripCommas(qtyInput.value)) || 0;
+        const discount = parseFloat(stripCommas(discountInput.value)) || 0;
         const discountType = discountTypeSelect ? discountTypeSelect.value : 'AMOUNT';
 
         // GST 세율 가져오기 (data-rate 속성 활용)
@@ -442,6 +468,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (price && priceInput) {
             priceInput.value = price;
+            applyCommaFormat(priceInput);
             window.calculateRow(row);
         }
         if (desc && descInput) {
@@ -483,10 +510,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // 입력 감지 (계산 자동화)
+    // 입력 감지 (계산 자동화 + 콤마 포맷)
     const itemsBody = document.getElementById('invoiceItems');
     if (itemsBody) {
         itemsBody.addEventListener('input', function(e) {
+            if (e.target.classList.contains('comma-format')) {
+                applyCommaFormat(e.target);
+            }
             if (e.target.classList.contains('calc-input')) {
                 window.calculateRow(e.target.closest('tr'));
             }
@@ -502,9 +532,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // 따라서 화면이 열리자마자 Price, Qty, GST, TaxType을 보고 세금을 다시 계산해서 채워넣어야 함.
     const existingRows = document.querySelectorAll('#invoiceItems .item-row');
     existingRows.forEach(row => {
-        // Select2가 적용된 경우 데이터가 늦게 로딩될 수 있으므로 안전하게 처리
+        // DB에서 불러온 값에 콤마 포맷 적용
+        row.querySelectorAll('.comma-format').forEach(input => applyCommaFormat(input));
         window.calculateRow(row);
     });
+
+    // 폼 submit 전 콤마 제거 (서버 파싱 오류 방지)
+    const invoiceForm = document.getElementById('invoiceForm');
+    if (invoiceForm) {
+        invoiceForm.addEventListener('submit', function() {
+            document.querySelectorAll('#invoiceItems .comma-format').forEach(input => {
+                input.value = stripCommas(input.value);
+            });
+        });
+    }
 
     // 2. 각 행의 계산이 끝난 후 전체 합계 계산
     window.calculateTotal();
