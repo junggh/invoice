@@ -310,7 +310,7 @@ src/main/java/com/example/demo/
 │                               # RecurringFrequency, PlanType, Timezone(ZoneId 매핑), DiscountType
 │
 ├── repository/       # Spring Data JPA 리포지토리
-│   ├── InvoiceRepository           # 검색+페이징, 대시보드 집계, 스케줄러 조회
+│   ├── InvoiceRepository           # 검색+페이징, 대시보드 집계, 스케줄러 조회, PDF용 JOIN FETCH
 │   ├── RecurringInvoiceRepository  # 검색+페이징, 스케줄러 조회
 │   ├── CompanyRepository           # ABN 중복 확인
 │   ├── MemberRepository            # 이메일 조회, 회사별 멤버 조회
@@ -360,11 +360,13 @@ Product ←── InvoiceItem.product (N:1)
 UNPAID ──[결제 완료]──> PAID
 UNPAID ──[납기일 초과, 자정 스케줄러]──> OVERDUE
 
-모든 상태 ──[Delete]──> DELETED (소프트 삭제)
+DRAFT, IN_REVIEW ──[Delete]──> DELETED (소프트 삭제, 모든 유저)
+UNPAID, OVERDUE  ──[Delete]──> DELETED (소프트 삭제, ADMIN만)
 ```
 
 **이메일 발송**: 자동 발송 없음. ADMIN이 Save & Send 또는 Approve 시 모달창에서 이메일 주소를 확인하고 **Send**(발송) 또는 **Send Later**(발송 없이 UNPAID 저장)를 선택한다.
 인보이스, 초대, 인증코드 이메일은 모두 동일한 브랜드 스타일(파란 헤더, 카드형 레이아웃)로 통일되어 있다.
+PDF 첨부 시 `entityManager.clear()` + JOIN FETCH로 Hibernate 1st-level 캐시의 stub Product 문제를 방지한다 (Save & Send 시 form binding이 만든 불완전한 Product 엔티티가 캐시에 잔존하는 문제).
 
 ### 반복 인보이스 상태 흐름
 ```
@@ -393,6 +395,9 @@ DRAFT ──[Submit]──> IN_REVIEW ──[Approve]──> ACTIVE ──[자�
 `customerCurrency`는 항상 **발행 회사의 통화**로 고정된다. Contact의 통화와 무관하게 인보이스 폼에서 readonly로 표시되며, 생성/자동 발행 시에도 서버에서 회사 통화를 강제 설정한다.
 
 `GlobalControllerAdvice`에서 통화 코드(`globalCompanyCurrency`)와 통화 기호(`globalCurrencySymbol`)를 모든 뷰에 주입한다. 통화 기호는 주요 16개 통화의 정적 매핑 + `java.util.Currency` 폴백으로 변환된다.
+
+### 숫자 포맷 (세 자리 콤마)
+인보이스/템플릿 작성 폼의 Price, Quantity, Discount 입력 시 실시간으로 세 자리마다 콤마가 자동 삽입된다 (`type="text" inputmode="decimal"`). 폼 submit 전 콤마를 제거하여 서버 파싱 오류를 방지한다. 조회 화면(view-invoice, view-template)과 PDF, 공개 인보이스에서도 Quantity에 콤마 포맷이 적용된다.
 
 ### 고객 정보 스냅샷
 Invoice에 `customerName`, `customerEmail`, `customerCompanyName` 등을 별도로 저장.
@@ -460,7 +465,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | `public-invoice.html` | 비회원용 인보이스 공개 조회 (nav 없음, 읽기 전용) |
 | `login.html` | 로그인 폼 |
 | `signup.html` | 다단계 회원가입 (개인정보 → 이메일 인증 → 회사 정보) |
-| `subscribe.html` | PayPal 구독 플랜 선택 |
+| `subscribe.html` | PayPal 구독 플랜 선택 (BASIC 플랜만 표시) |
 | `company-users.html` | Company Admin - 멤버 관리 |
 | `super-admin-companies.html` | Super Admin - 전체 회사 목록 |
 | `super-admin-company-users.html` | Super Admin - 특정 회사 멤버 조회 |
@@ -485,7 +490,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | `css/newinvoicestyle.css` | 인보이스 폼 (그리드, 항목 테이블, Select2 오버라이드, 모달) |
 | `css/viewinvoicestyle.css` | 인보이스 상세 보기 |
 | `css/authstyle.css` | 로그인/회원가입 페이지 |
-| `js/newinvoicescript.js` | 인보이스 폼 로직 (항목 추가/삭제, 금액 계산, 수동 연락처 토글, Select2/Flatpickr 초기화, 이메일 발송 모달) |
+| `js/newinvoicescript.js` | 인보이스 폼 로직 (항목 추가/삭제, 금액 계산, 세 자리 콤마 포맷, 수동 연락처 토글, Select2/Flatpickr 초기화, 이메일 발송 모달) |
 | `js/home-script.js` | 대시보드 로직 (일괄 선택, 상태 변경, 복사, 기간 필터, Stop Recurring, PDF 다운로드) |
 | `js/signup.js` | 회원가입 다단계 폼 (ABN 조회, 이메일 인증, 유효성 검사) |
 
