@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.entity.*;
 import com.example.demo.repository.CompanyRepository;
 import com.example.demo.repository.InvoiceRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,7 @@ public class InvoiceService {
     private final EmailService emailService;
     private final CompanyRepository companyRepository;
     private final PdfService pdfService;
+    private final EntityManager entityManager;
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -412,10 +414,17 @@ public class InvoiceService {
     // ===================================================================================
 
     // [이메일] 미납 인보이스 알림 메일 발송
+    @Transactional(readOnly = true)
     public void sendUnpaidInvoiceEmail(Invoice invoice) {
         if (invoice.getCustomerEmail() == null || invoice.getCustomerEmail().isEmpty()) {
             return;
         }
+
+        // Save & Send 시 form binding으로 생성된 stub Product(id만 있고 나머지 null)가
+        // Hibernate 1st-level 캐시에 남아있어 PDF에 product 정보가 빈칸으로 나오는 문제 해결
+        entityManager.clear();
+        invoice = invoiceRepository.findByIdWithItemsAndProducts(invoice.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
 
         String companyName = invoice.getCompany().getBusinessName();
         String subject = "[Invoice] New invoice " + invoice.getInvoiceNumber() + " from " + companyName;

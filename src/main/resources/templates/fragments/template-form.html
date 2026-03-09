@@ -4,7 +4,7 @@
 
 <div th:fragment="invoiceForm(actionUrl, title)">
 
-    <form th:action="${actionUrl}" method="POST" th:object="${invoice}">
+    <form id="invoiceForm" th:action="${actionUrl}" method="POST" th:object="${invoice}">
 
         <input type="hidden" name="id" th:if="${invoice.id != null}" th:value="${invoice.id}">
         <input type="hidden" id="hiddenStatus" name="status" th:value="${invoice.status}">

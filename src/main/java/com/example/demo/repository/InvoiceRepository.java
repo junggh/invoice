@@ -56,6 +56,10 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
     // UUID 주소로 Invoice 조회
     Optional<Invoice> findByUuid(String uuid);
 
+    // PDF 생성용 — items와 product를 JOIN FETCH (1st-level 캐시 clear 후 사용)
+    @Query("SELECT DISTINCT i FROM Invoice i LEFT JOIN FETCH i.items it LEFT JOIN FETCH it.product WHERE i.id = :id")
+    Optional<Invoice> findByIdWithItemsAndProducts(@Param("id") Long id);
+
     // ===================================================================================
     // 2. Dashboard Statistics (대시보드 차트/지표용 JPQL)
     // ===================================================================================
