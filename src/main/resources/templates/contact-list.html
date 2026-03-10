@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Contacts</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/homestyle.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <style>
+        .list-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .list-table th, .list-table td { border-bottom: 1px solid var(--border-color); padding: 10px 15px; text-align: left; font-size: 14px; }
+        .list-table th { font-weight: 600; color: #555; font-size: 13px; }
+        .list-table tbody tr:hover { background-color: #f9f9f9; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state i { font-size: 48px; margin-bottom: 15px; display: block; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/nav :: sidebar}"></div>
+
+<div class="main-wrapper">
+
+    <div th:replace="~{fragments/nav :: topbar}"></div>
+
+    <div class="content-area">
+        <div class="container">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                <h2 style="margin: 0;">Contacts</h2>
+                <a href="/contact/new" class="btn btn-primary" style="text-decoration: none;">+ Add Contact</a>
+            </div>
+
+            <div th:if="${#lists.isEmpty(contacts)}" class="empty-state">
+                <i class="fas fa-address-book"></i>
+                <p>No contacts yet.</p>
+                <a href="/contact/new" style="color: var(--primary-color);">Create your first contact</a>
+            </div>
+
+            <table th:if="${!#lists.isEmpty(contacts)}" class="list-table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Company</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Currency</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${contacts}">
+                    <td><strong th:text="${c.name}">John Doe</strong></td>
+                    <td th:text="${c.companyName}" style="color: #555;">Company</td>
+                    <td th:text="${c.email}" style="color: #555;">email@example.com</td>
+                    <td th:text="${c.phoneNumber}" style="color: #555;">000-0000</td>
+                    <td th:text="${c.currency}" style="color: #555;">AUD</td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

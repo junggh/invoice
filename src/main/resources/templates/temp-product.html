@@ -34,7 +34,7 @@
         <div class="container form-container">
             <h2 style="margin-top: 0; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 15px;">Create New Product</h2>
 
-            <form th:action="@{/product}" th:object="${product}" method="post">
+            <form th:action="@{/product}" th:object="${product}" method="post" autocomplete="off">
 
                 <div class="temp-form-group">
                     <label>Product Name <span style="color:red;">*</span></label>

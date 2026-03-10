@@ -33,7 +33,7 @@
         <div class="container form-container">
             <h2 style="margin-top: 0; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 15px;">Create New Contact</h2>
 
-            <form th:action="@{/contact}" th:object="${contact}" method="post">
+            <form th:action="@{/contact}" th:object="${contact}" method="post" autocomplete="off">
 
                 <div class="temp-form-group">
                     <label>Contact Person Name <span style="color:red;">*</span></label>

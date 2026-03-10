@@ -21,10 +21,17 @@ public class TempDataController {
     private final ContactRepository contactRepository;
 
     // ==========================================
-    // 1. Product (상품) 생성
+    // 1. Product (상품)
     // ==========================================
 
     @GetMapping("/product")
+    public String productList(@AuthenticationPrincipal CustomUserDetails user, Model model) {
+        Company company = user.getMember().getCompany();
+        model.addAttribute("products", productRepository.findByCompany(company));
+        return "product-list";
+    }
+
+    @GetMapping("/product/new")
     public String productForm(Model model) {
         model.addAttribute("product", new Product());
         return "temp-product";
@@ -32,20 +39,24 @@ public class TempDataController {
 
     @PostMapping("/product")
     public String createProduct(Product product, @AuthenticationPrincipal CustomUserDetails user) {
-        // 로그인한 멤버의 회사 정보 자동 주입
         Company company = user.getMember().getCompany();
         product.setCompany(company);
-
         productRepository.save(product);
-
-        return "redirect:/product"; // 연속 입력을 위해 폼으로 리다이렉트
+        return "redirect:/product";
     }
 
     // ==========================================
-    // 2. Contact (거래처/고객) 생성
+    // 2. Contact (거래처/고객)
     // ==========================================
 
     @GetMapping("/contact")
+    public String contactList(@AuthenticationPrincipal CustomUserDetails user, Model model) {
+        Company company = user.getMember().getCompany();
+        model.addAttribute("contacts", contactRepository.findByCompany(company));
+        return "contact-list";
+    }
+
+    @GetMapping("/contact/new")
     public String contactForm(Model model) {
         model.addAttribute("contact", new Contact());
         return "temp-contact";
@@ -53,12 +64,9 @@ public class TempDataController {
 
     @PostMapping("/contact")
     public String createContact(Contact contact, @AuthenticationPrincipal CustomUserDetails user) {
-        // 로그인한 멤버의 회사 정보 자동 주입
         Company company = user.getMember().getCompany();
         contact.setCompany(company);
-
         contactRepository.save(contact);
-
-        return "redirect:/contact"; // 연속 입력을 위해 폼으로 리다이렉트
+        return "redirect:/contact";
     }
 }
