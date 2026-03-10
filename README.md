@@ -1,4 +1,4 @@
-# ZeniBooks - Invoice Management SaaS
+# ZenyBooks - Invoice Management SaaS
 
 Spring Boot + Thymeleaf 기반의 호주 사업자용 멀티테넌트 인보이스 관리 시스템.
 회사(Company)를 테넌트 루트로 하여, 인보이스 생성/승인/발송/결제 전 과정을 관리한다.
@@ -282,7 +282,7 @@ src/main/java/com/example/demo/
 │   ├── SubscriptionController      # PayPal 구독 플랜 페이지 및 활성화
 │   ├── CompanyInvitationController # 팀 초대 생성/수락
 │   ├── PublicController               # 비회원용 공개 인보이스 조회
-│   ├── TempDataController          # Product/Contact 간편 등록
+│   ├── TempDataController          # Product/Contact 목록 조회 및 등록
 │   └── GlobalControllerAdvice      # 모든 요청에 회사명/유저 이니셜/통화 기호 주입
 │
 ├── service/          # 비즈니스 로직
@@ -469,8 +469,10 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | `company-users.html` | Company Admin - 멤버 관리 |
 | `super-admin-companies.html` | Super Admin - 전체 회사 목록 |
 | `super-admin-company-users.html` | Super Admin - 특정 회사 멤버 조회 |
-| `temp-product.html` | Product 간편 등록 |
-| `temp-contact.html` | Contact 간편 등록 |
+| `contact-list.html` | Contact 목록 조회 |
+| `product-list.html` | Product 목록 조회 |
+| `temp-contact.html` | Contact 등록 폼 |
+| `temp-product.html` | Product 등록 폼 |
 
 ### 프래그먼트 (`templates/fragments/`)
 
@@ -568,8 +570,12 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | GET | `/public/invoice/{uuid}` | 공개 인보이스 조회 (비회원 접근 가능) |
 | GET | `/subscribe` | 구독 플랜 페이지 |
 | POST | `/api/subscription/success` | PayPal 구독 활성화 |
-| GET/POST | `/product` | Product 등록 |
-| GET/POST | `/contact` | Contact 등록 |
+| GET | `/product` | Product 목록 조회 |
+| GET | `/product/new` | Product 등록 폼 |
+| POST | `/product` | Product 등록 |
+| GET | `/contact` | Contact 목록 조회 |
+| GET | `/contact/new` | Contact 등록 폼 |
+| POST | `/contact` | Contact 등록 |
 
 ---
 
