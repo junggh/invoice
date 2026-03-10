@@ -108,14 +108,7 @@ public class RecurringInvoiceService {
         if (original.getItems() != null) {
             for (RecurringInvoiceItem originalItem : original.getItems()) {
                 RecurringInvoiceItem newItem = new RecurringInvoiceItem();
-                newItem.setProduct(originalItem.getProduct());
-                newItem.setQuantity(originalItem.getQuantity());
-                newItem.setDiscount(originalItem.getDiscount());
-                newItem.setDiscountType(originalItem.getDiscountType());
-                newItem.setAmount(originalItem.getAmount());
-                newItem.setGstCode(originalItem.getGstCode());
-                newItem.setTaxAmount(originalItem.getTaxAmount());
-
+                BeanUtils.copyProperties(originalItem, newItem, "id", "recurringInvoice");
                 newItem.setRecurringInvoice(copy);
                 newItems.add(newItem);
             }

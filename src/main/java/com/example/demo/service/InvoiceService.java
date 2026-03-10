@@ -242,49 +242,28 @@ public class InvoiceService {
         Invoice source = getInvoice(sourceId);
         Invoice newInvoice = new Invoice();
 
-        // 1. 기본 정보 리셋
+        // 1. 대부분 필드 복사 (식별자/상태/날짜/items 제외)
+        BeanUtils.copyProperties(source, newInvoice,
+                "id", "uuid", "invoiceNumber", "status", "issuedDate", "dueDate", "items", "balanceDue");
+
+        // 2. 새 값으로 재설정
         newInvoice.setInvoiceNumber(generateNextInvoiceNumber(source.getCompany()));
         newInvoice.setStatus(InvoiceStatus.DRAFT);
         newInvoice.setIssuedDate(LocalDate.now(getZoneId(source.getCompany())));
-
-        // 2. 고객 및 메타데이터 복사 (스냅샷)
-        newInvoice.setManualContact(source.isManualContact());
+        newInvoice.setBalanceDue(source.getTotal());
         if (source.isManualContact()) {
             newInvoice.setContact(null);
-        } else {
-            newInvoice.setContact(source.getContact());
         }
-        newInvoice.setCustomerName(source.getCustomerName());
-        newInvoice.setCustomerEmail(source.getCustomerEmail());
-        newInvoice.setCustomerCompanyName(source.getCustomerCompanyName());
-        newInvoice.setCustomerBillTo(source.getCustomerBillTo());
-        newInvoice.setCustomerCurrency(source.getCustomerCurrency());
-        newInvoice.setSalesPerson(source.getSalesPerson());
-        newInvoice.setReference(source.getReference());
-        newInvoice.setTaxType(source.getTaxType());
-        newInvoice.setTax(source.getTax());
-        newInvoice.setSubtotal(source.getSubtotal());
 
-        // 3. 아이템 딥 카피 (Deep Copy)
+        // 3. 아이템 딥 카피
         List<InvoiceItem> newItems = new ArrayList<>();
         for (InvoiceItem sourceItem : source.getItems()) {
             InvoiceItem newItem = new InvoiceItem();
-            newItem.setProduct(sourceItem.getProduct());
-            newItem.setQuantity(sourceItem.getQuantity());
-            newItem.setDiscount(sourceItem.getDiscount());
-            newItem.setDiscountType(sourceItem.getDiscountType());
-            newItem.setAmount(sourceItem.getAmount());
-            newItem.setGstCode(sourceItem.getGstCode());
-            newItem.setTaxAmount(sourceItem.getTaxAmount());
-
-            newItem.setInvoice(newInvoice); // 연관관계 설정
+            BeanUtils.copyProperties(sourceItem, newItem, "id", "invoice");
+            newItem.setInvoice(newInvoice);
             newItems.add(newItem);
         }
         newInvoice.setItems(newItems);
-
-        // 4. 금액 복사
-        newInvoice.setTotal(source.getTotal());
-        newInvoice.setBalanceDue(source.getTotal());
 
         return newInvoice;
     }
