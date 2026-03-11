@@ -19,7 +19,14 @@ public class CompanyInvitationService {
     private final CompanyInvitationRepository invitationRepository;
     private final MemberRepository memberRepository;
 
-    // 1. 초대장 생성 로직
+    // ===================================================================================
+    // 1. 초대 생성
+    // ===================================================================================
+
+    /**
+     * 팀원 초대장 생성. ADMIN만 호출할 수 있으며, 이미 같은 회사 소속인 이메일에는 중복 초대를 차단한다.
+     * UUID 기반 토큰을 생성하여 DB에 저장하고 반환한다 (이메일 발송은 컨트롤러에서 처리).
+     */
     @Transactional
     public CompanyInvitation createInvitation(String adminEmail, String inviteeEmail) {
         Member admin = memberRepository.findByEmail(adminEmail)
@@ -34,6 +41,7 @@ public class CompanyInvitationService {
             throw new IllegalStateException("No company affiliation found.");
         }
 
+        // 이미 같은 회사 소속인 이메일에는 초대 차단
         boolean alreadyMember = memberRepository.findByCompanyId(company.getId()).stream()
                 .anyMatch(m -> m.getEmail().equalsIgnoreCase(inviteeEmail));
         if (alreadyMember) {
@@ -43,12 +51,21 @@ public class CompanyInvitationService {
         CompanyInvitation invitation = new CompanyInvitation();
         invitation.setCompany(company);
         invitation.setInviteeEmail(inviteeEmail);
-        invitation.setToken(UUID.randomUUID().toString()); // 해킹이 불가능한 랜덤 문자열 생성
+        invitation.setToken(UUID.randomUUID().toString());
 
         return invitationRepository.save(invitation);
     }
 
-    // 2. 초대장 수락 로직
+    // ===================================================================================
+    // 2. 초대 수락
+    // ===================================================================================
+
+    /**
+     * 초대 수락 처리. 토큰 유효성, 만료 여부, 로그인 이메일 일치 여부를 순서대로 검증한다.
+     * 모든 검증을 통과하면 Member에 회사를 연결하고 역할을 USER로 설정한다.
+     *
+     * @return 연결된 회사명 (성공 알림 메시지 생성용)
+     */
     @Transactional
     public String acceptInvitation(String token, String loggedInEmail) {
         CompanyInvitation invitation = invitationRepository.findByToken(token)
@@ -58,13 +75,14 @@ public class CompanyInvitationService {
             throw new IllegalStateException("This invitation has already been " + invitation.getStatus().name() + ".");
         }
 
+        // 만료 확인 (7일 유효)
         if (invitation.getExpiresAt().isBefore(LocalDateTime.now())) {
             invitation.setStatus(CompanyInvitation.InvitationStatus.EXPIRED);
             invitationRepository.save(invitation);
             throw new IllegalStateException("The invitation has expired (valid for 7 days). Please request a new one from the administrator.");
         }
 
-        // 로그인한 사람이 초대받은 사람이 맞는지 확인 (보안)
+        // 로그인한 사람이 초대받은 이메일과 일치하는지 확인
         if (!invitation.getInviteeEmail().equalsIgnoreCase(loggedInEmail)) {
             throw new IllegalStateException("Please log in with the invited email account (" + invitation.getInviteeEmail() + ").");
         }
@@ -72,17 +90,23 @@ public class CompanyInvitationService {
         Member member = memberRepository.findByEmail(loggedInEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Member information not found. Please sign up first."));
 
-        // 회사 연결 및 권한 일반 사용자(USER)로 부여
+        // 회사 연결 및 USER 권한 부여
         member.setCompany(invitation.getCompany());
         member.setRole("USER");
 
-        // 초대장 상태를 '수락됨'으로 변경
         invitation.setStatus(CompanyInvitation.InvitationStatus.ACCEPTED);
 
         return invitation.getCompany().getBusinessName();
     }
 
-    // [추가] 토큰으로 초대받은 이메일 주소 알아내기 (회원가입 창 자동 입력을 위해)
+    // ===================================================================================
+    // 3. 조회
+    // ===================================================================================
+
+    /**
+     * 초대 토큰으로 초대받은 이메일 주소를 조회한다.
+     * 회원가입 화면에서 이메일 필드를 미리 채우기 위해 사용된다.
+     */
     @Transactional(readOnly = true)
     public String getEmailByToken(String token) {
         return invitationRepository.findByToken(token)

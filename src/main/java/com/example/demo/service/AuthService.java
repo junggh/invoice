@@ -6,9 +6,9 @@ import com.example.demo.entity.Member;
 import com.example.demo.repository.CompanyRepository;
 import com.example.demo.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -22,14 +22,21 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // ===================================================================================
+    // 1. 회원가입
+    // ===================================================================================
+
+    /**
+     * 회원가입 처리. 이메일 중복 확인 후 accountType에 따라 분기한다.
+     * - "member" 타입: 회사 없이 USER 권한으로 가입 (초대 수락 후 회사에 연결됨)
+     * - "admin" 타입: 회사를 새로 생성하고 ADMIN 권한으로 가입
+     */
     @Transactional
     public Long processSignup(SignupForm form) {
-        // 1. 중복 검증 (ID)
         if (memberRepository.existsByEmail(form.getPersonalEmail())) {
             throw new IllegalArgumentException("Email is already registered.");
         }
 
-        // 공통 회원(Member) 객체 생성 및 기본 정보 세팅
         Member member = new Member();
         member.setEmail(form.getPersonalEmail());
         member.setPassword(passwordEncoder.encode(form.getPassword()));
@@ -41,19 +48,20 @@ public class AuthService {
         member.setAgreeTerms(form.isAgreeTerms());
         member.setMarketingConsent(form.isMarketingConsent());
 
-        // 2. 가입 유형에 따른 분기 처리
         if ("member".equals(form.getAccountType())) {
-            // 일반 직원(Member) 가입: 회사 정보 없음, 권한은 USER
+            // 일반 직원(USER) 가입: 회사 정보 없음, 초대 수락 후 연결됨
             member.setRole("USER");
             member.setCompany(null);
         } else {
-            // 관리자(Admin) 가입: 회사 생성 필요
+            // 관리자(ADMIN) 가입: 회사 신규 생성
             if (form.getAbn() != null && !form.getAbn().isEmpty() && companyRepository.existsByAbn(form.getAbn())) {
                 throw new IllegalArgumentException("ABN already exists.");
             }
 
             Company company = new Company();
             company.setBusinessName(form.getBusinessName());
+
+            // 빈 문자열 ABN은 null로 저장 (unique 제약 위반 방지)
             String inputAbn = form.getAbn();
             if (inputAbn != null && inputAbn.trim().isEmpty()) {
                 company.setAbn(null);
@@ -84,54 +92,52 @@ public class AuthService {
             member.setCompany(savedCompany);
         }
 
-        // 3. 회원(Member) 저장
         memberRepository.save(member);
-
         return member.getId();
     }
 
-    // 전화번호 포맷팅 메서드
+    /**
+     * 전화번호 포맷 정규화.
+     * 하이픈을 공백으로 변환하고, 숫자·'+'·공백 외의 문자를 제거하며 중복 공백을 정리한다.
+     */
     private String cleanPhoneNumber(String rawNumber) {
         if (rawNumber == null || rawNumber.trim().isEmpty()) {
             return "";
         }
-
-        // 1. 하이픈(-)을 공백( )으로 치환
         String str = rawNumber.replace("-", " ");
-
-        // 2. 숫자, '+', 공백만 남기고 나머지 제거 (괄호 등 제거)
         str = str.replaceAll("[^0-9+ ]", "");
-
-        // 3. 여러 개의 공백을 하나의 공백으로 치환 ("   " -> " ")
         str = str.replaceAll("\\s+", " ");
-
-        // 4. 양끝 공백 제거
         return str.trim();
     }
 
-    // [추가] 아이디 중복 확인용 메서드
+    // ===================================================================================
+    // 2. 유효성 검사
+    // ===================================================================================
+
+    /** 이메일 사용 가능 여부 확인. 사용 가능하면 true를 반환한다. */
     public boolean isEmailAvailable(String email) {
         return !memberRepository.existsByEmail(email);
     }
-    // [추가] ABN 중복 확인용
+
+    /** ABN 사용 가능 여부 확인. 사용 가능하면 true를 반환한다. */
     public boolean isAbnAvailable(String abn) {
         return !companyRepository.existsByAbn(abn);
     }
 
-    // [추가된 부분] 로그인 성공 시 시간 업데이트 로직
-    @Transactional // 읽기/쓰기가 가능하도록 트랜잭션을 새로 엽니다.
+    // ===================================================================================
+    // 3. 로그인 이후 처리
+    // ===================================================================================
+
+    /**
+     * 로그인 성공 시 Member의 lastLoginDate와 Company의 lastActiveDate를 현재 시각(UTC)으로 갱신한다.
+     */
+    @Transactional
     public void updateLoginAndActivityDates(String email) {
         memberRepository.findByEmail(email).ifPresent(member -> {
             LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
-
-            // 1. 멤버 마지막 로그인 시간 갱신
             member.setLastLoginDate(nowUtc);
-
-            // 2. 회사 마지막 활동 시간 갱신
-            // @Transactional 안에서 실행되므로 LazyInitializationException이 발생하지 않습니다!
             if (member.getCompany() != null) {
-                Company company = member.getCompany();
-                company.setLastActiveDate(nowUtc);
+                member.getCompany().setLastActiveDate(nowUtc);
             }
         });
     }

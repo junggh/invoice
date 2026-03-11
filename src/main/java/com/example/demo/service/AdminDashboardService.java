@@ -24,26 +24,17 @@ public class AdminDashboardService {
 
     private final CompanyRepository companyRepository;
     private final MemberRepository memberRepository;
-    // 날짜를 "Jan 15 2025" 형식으로 바꿔주는 포매터 (영문 표기)
+
+    // 날짜를 "Jan 15 2025" 형식으로 출력하는 포매터
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH);
 
-    // [추가] 상대 시간 계산 도우미 메서드
-    private String getRelativeTimeInfo(LocalDateTime pastTime) {
-        if (pastTime == null) {
-            return "Never"; // 한 번도 기록된 적이 없을 때
-        }
+    // ===================================================================================
+    // 1. Super Admin 조회
+    // ===================================================================================
 
-        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
-        Duration duration = Duration.between(pastTime, now);
-        long seconds = duration.getSeconds();
-
-        if (seconds < 60) return "Just now";
-        if (seconds < 3600) return (seconds / 60) + " mins ago";
-        if (seconds < 86400) return (seconds / 3600) + " hours ago";
-        return (seconds / 86400) + " days ago";
-    }
-
-    // 1. [개발자용] 모든 회사 목록 조회
+    /**
+     * 전체 회사 목록 조회. 각 회사의 플랜, 멤버 수, 가입일, 마지막 활동 시간을 포함한 요약 정보를 반환한다.
+     */
     @Transactional(readOnly = true)
     public List<CompanyDashboardDto> getAllCompaniesSummary() {
         List<Company> companies = companyRepository.findAll();
@@ -71,7 +62,14 @@ public class AdminDashboardService {
         }).collect(Collectors.toList());
     }
 
-    // 2. [공통용] 특정 회사의 멤버 목록 조회
+    // ===================================================================================
+    // 2. Company Admin 조회
+    // ===================================================================================
+
+    /**
+     * 특정 회사의 멤버 목록 조회. Super Admin과 Company Admin 모두 사용한다.
+     * 각 멤버의 역할, 가입일, 마지막 로그인 시간을 포함한 관리 정보를 반환한다.
+     */
     @Transactional(readOnly = true)
     public List<MemberManagementDto> getCompanyMembers(Long companyId) {
         List<Member> members = memberRepository.findByCompanyId(companyId);
@@ -90,5 +88,28 @@ public class AdminDashboardService {
                     .lastLogin(loginTimeAgo)
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    // ===================================================================================
+    // 3. 내부 헬퍼
+    // ===================================================================================
+
+    /**
+     * 과거 시각을 현재(UTC 기준)와 비교하여 상대 시간 문자열로 변환한다.
+     * 예: "Just now", "5 mins ago", "2 hours ago", "3 days ago"
+     */
+    private String getRelativeTimeInfo(LocalDateTime pastTime) {
+        if (pastTime == null) {
+            return "Never";
+        }
+
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        Duration duration = Duration.between(pastTime, now);
+        long seconds = duration.getSeconds();
+
+        if (seconds < 60) return "Just now";
+        if (seconds < 3600) return (seconds / 60) + " mins ago";
+        if (seconds < 86400) return (seconds / 3600) + " hours ago";
+        return (seconds / 86400) + " days ago";
     }
 }

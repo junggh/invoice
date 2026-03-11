@@ -15,10 +15,14 @@ import org.springframework.stereotype.Service;
 public class EmailService {
 
     private final JavaMailSender javaMailSender;
+
     @Value("${mail.user}")
     private String senderEmail;
 
-    @Async // 비동기 처리 (이메일 보내느라 화면이 멈추지 않게 함)
+    /**
+     * HTML 이메일 발송. @Async로 비동기 처리되어 이메일 발송이 완료될 때까지 화면을 블로킹하지 않는다.
+     */
+    @Async
     public void sendEmail(String to, String subject, String text) {
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
@@ -26,8 +30,8 @@ public class EmailService {
 
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(text, true); // true = HTML 허용
-            helper.setFrom(senderEmail); // [변경] 보내는 사람 (설정파일과 동일하게)
+            helper.setText(text, true);
+            helper.setFrom(senderEmail);
 
             javaMailSender.send(message);
         } catch (MessagingException e) {
@@ -36,6 +40,10 @@ public class EmailService {
         }
     }
 
+    /**
+     * PDF 첨부 이메일 발송. @Async로 비동기 처리된다.
+     * pdfBytes를 ByteArrayDataSource로 감싸 MimeMessageHelper에 첨부한다.
+     */
     @Async
     public void sendEmailWithAttachment(String to, String subject, String text, byte[] pdfBytes, String pdfFilename) {
         try {

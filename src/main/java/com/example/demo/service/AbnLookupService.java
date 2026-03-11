@@ -14,25 +14,25 @@ public class AbnLookupService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // ★ 발급받은 GUID를 여기에 넣으세요
     @Value("${abn.guid}")
     private String guid;
-    //private static final String GUID = "4ce52402-df10-43a4-94e2-75c50807d9ef";
 
+    /**
+     * 호주 정부 ABN Lookup API를 호출하여 사업자 정보를 조회한다.
+     * callback 파라미터를 빈 문자열로 설정하여 순수 JSON 응답을 받으며,
+     * 응답이 callback(...) 형태로 오는 경우 괄호를 제거하여 파싱한다.
+     */
     public AbnApiResponse lookupAbn(String abn) {
-        // 호주 정부 API URL (callback 파라미터를 빼면 순수 JSON이 나옵니다)
         String url = "https://abr.business.gov.au/json/AbnDetails.aspx?abn=" + abn + "&guid=" + guid + "&callback=";
 
         try {
-            // 1. API 호출 (문자열로 받음)
             String jsonResponse = restTemplate.getForObject(url, String.class);
 
-            // 2. 혹시 callback(...) 형태로 오면 괄호 제거 (안전장치)
+            // callback(...) 형태로 응답이 올 경우 괄호 제거
             if (jsonResponse != null && jsonResponse.startsWith("callback(")) {
                 jsonResponse = jsonResponse.substring(9, jsonResponse.length() - 1);
             }
 
-            // 3. JSON 파싱
             return objectMapper.readValue(jsonResponse, AbnApiResponse.class);
 
         } catch (Exception e) {

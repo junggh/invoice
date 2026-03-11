@@ -17,6 +17,10 @@ public class PdfService {
         this.templateEngine = templateEngine;
     }
 
+    /**
+     * 인보이스 PDF 생성.
+     * invoice-pdf.html 템플릿을 Thymeleaf로 렌더링한 뒤 openhtmltopdf로 PDF로 변환하여 byte[] 반환한다.
+     */
     public byte[] generateInvoicePdf(Invoice invoice) {
         Context context = new Context();
         context.setVariable("invoice", invoice);

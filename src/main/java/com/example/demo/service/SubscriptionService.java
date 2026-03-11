@@ -17,26 +17,35 @@ public class SubscriptionService {
     private final MemberRepository memberRepository;
     private final CompanyRepository companyRepository;
 
+    // PayPal 플랜 ID 상수 (각 플랜과 PayPal에 등록된 Plan ID를 매핑)
     private static final String PLAN_ID_LITE  = "P-48N26722YD0754634NGHLV5Y";
     private static final String PLAN_ID_BASIC = "P-89690056N4435424SNGF5RTQ";
     private static final String PLAN_ID_PRO   = "P-1BY31527JL143202MNGHLXEQ";
 
+    // ===================================================================================
+    // 1. 구독 활성화
+    // ===================================================================================
+
+    /**
+     * PayPal 결제 완료 후 구독 활성화.
+     * 요청의 planId를 내부 PlanType으로 변환하고, 회사의 plan과 subscriptionId를 업데이트한다.
+     * ADMIN만 구독 설정을 변경할 수 있다.
+     */
     @Transactional
     public void activateSubscription(String email, SubscriptionRequest request) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
-        // 1. 권한 체크 (안전장치)
         if (!"ADMIN".equals(member.getRole())) {
             throw new IllegalStateException("Only administrators can change subscription settings.");
         }
 
-        // 2. 회사 정보 가져오기
         Company company = member.getCompany();
         if (company == null) {
             throw new IllegalStateException("No company affiliation found.");
         }
 
+        // PayPal Plan ID를 내부 PlanType으로 변환
         String requestPlanId = request.getPlanId();
         PlanType newPlan = null;
 
@@ -50,27 +59,25 @@ public class SubscriptionService {
             throw new IllegalArgumentException("Invalid plan ID.");
         }
 
-        // 3. 회사의 구독 정보 업데이트
         company.setSubscriptionId(request.getSubscriptionId());
         company.setPlan(newPlan);
-
         companyRepository.save(company);
     }
 
-    // 회사의 현재 플랜 조회
+    // ===================================================================================
+    // 2. 구독 정보 조회
+    // ===================================================================================
+
+    /** 로그인한 사용자의 회사 현재 플랜을 조회한다. 회사가 없으면 null을 반환한다. */
     @Transactional(readOnly = true)
     public PlanType getCompanyPlan(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
-
-        if (member.getCompany() == null) {
-            return null; // 회사가 없으면 기본 LITE
-        }
-
+        if (member.getCompany() == null) return null;
         return member.getCompany().getPlan();
     }
 
-    // 회사의 현재 PayPal 구독 ID 가져오기
+    /** 로그인한 사용자의 회사 PayPal 구독 ID를 조회한다. 회사가 없으면 null을 반환한다. */
     @Transactional(readOnly = true)
     public String getCompanySubscriptionId(String email) {
         Member member = memberRepository.findByEmail(email)
@@ -79,7 +86,7 @@ public class SubscriptionService {
         return member.getCompany().getSubscriptionId();
     }
 
-    // 현재 접속자가 관리자인지 확인
+    /** 로그인한 사용자가 ADMIN 권한인지 확인한다. */
     @Transactional(readOnly = true)
     public boolean isAdmin(String email) {
         Member member = memberRepository.findByEmail(email)
