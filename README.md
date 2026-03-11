@@ -466,7 +466,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | `login.html` | 로그인 폼 |
 | `signup.html` | 다단계 회원가입 (개인정보 → 이메일 인증 → 회사 정보) |
 | `subscribe.html` | PayPal 구독 플랜 선택 (BASIC 플랜만 표시) |
-| `company-users.html` | Company Admin - 멤버 관리 |
+| `company-users.html` | Company Admin - 멤버 관리 (Role 변경 모달 포함) |
 | `super-admin-companies.html` | Super Admin - 전체 회사 목록 |
 | `super-admin-company-users.html` | Super Admin - 특정 회사 멤버 조회 |
 | `contact-list.html` | Contact 목록 조회 |
@@ -502,7 +502,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 
 | 파일 | 설명 |
 |---|---|
-| `application.yaml` | 메인 설정 - DB 연결, JPA(DDL auto=update, SQL 로깅), Gmail SMTP, `app.base-url`(이메일 링크용), prod 프로필 |
+| `application.yaml` | 메인 설정 - DB 연결, JPA(DDL auto=update, SQL 로깅), Gmail SMTP, `app.base-url`(이메일 링크용), prod 프로필(SQL 로깅 비활성화, DDL auto=validate) |
 | `application-secret.yml` | **gitignored** - DB 계정, SUPER_ADMIN 계정, Gmail 비밀번호, ABN API GUID |
 | `docker-compose.yml` | PostgreSQL 15 컨테이너 설정 |
 | `build.gradle` | 의존성: spring-boot-starter-{data-jpa, thymeleaf, web, security, mail}, postgresql, lombok, openhtmltopdf |
@@ -560,6 +560,7 @@ Contact 정보가 나중에 변경되어도 발행 시점의 정보가 보존된
 | GET | `/super-admin/companies` | 전체 회사 목록 (SUPER_ADMIN) |
 | GET | `/super-admin/companies/{id}/users` | 회사별 멤버 (SUPER_ADMIN) |
 | GET | `/admin/users` | 내 회사 멤버 (ADMIN) |
+| POST | `/admin/users/{memberId}/role` | 멤버 Role 변경 (자기 자신 제외) |
 
 ### 기타
 
