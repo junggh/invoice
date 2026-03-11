@@ -28,7 +28,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
     // 회사별 특정 상태 제외 조회 (주로 DELETED 제외 용도)
     List<Invoice> findByCompanyAndStatusNot(Company company, InvoiceStatus status, Sort sort);
 
-    // [추가] Overview용 (삭제된 것 제외) + 검색 + 페이징
+    // Overview 탭(삭제된 것 제외) + 키워드 검색 + 페이징
+    // 인보이스 번호, 고객명, 고객 회사명을 대소문자 무시하여 검색한다.
     @Query("SELECT i FROM Invoice i WHERE i.company = :company AND i.status != :status AND " +
             "(:keyword IS NULL OR :keyword = '' OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(i.customerName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -39,7 +40,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
             @Param("keyword") String keyword,
             Pageable pageable);
 
-    // [추가] 탭별 상태 조회 + 검색 + 페이징
+    // 탭별 상태 필터 + 키워드 검색 + 페이징
     @Query("SELECT i FROM Invoice i WHERE i.company = :company AND i.status = :status AND " +
             "(:keyword IS NULL OR :keyword = '' OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(i.customerName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -53,7 +54,10 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
     // 마지막 번호 조회 (INV-0000# 생성용)
     Optional<Invoice> findTopByCompanyAndInvoiceNumberStartingWithOrderByInvoiceNumberDesc(Company company, String s);
 
-    // UUID 주소로 Invoice 조회
+    // 인보이스 번호 중복 여부 확인 (번호 생성 시 충돌 방지용)
+    boolean existsByCompanyAndInvoiceNumber(Company company, String invoiceNumber);
+
+    // UUID로 인보이스 조회 (공개 URL 접근용)
     Optional<Invoice> findByUuid(String uuid);
 
     // PDF 생성용 — items와 product를 JOIN FETCH (1st-level 캐시 clear 후 사용)
@@ -100,11 +104,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>{
     // 3. Scheduler & System (자동화 작업용)
     // ===================================================================================
 
-    // [연체 스케줄러] 미납 상태(UNPAID)이면서, 납기일이 지난 인보이스 찾기
+    // 연체 스케줄러용 — UNPAID 상태이면서 납기일이 지난 인보이스 전체 조회 (startup 보정 시 사용)
     List<Invoice> findByStatusAndDueDateBefore(InvoiceStatus status, LocalDate date);
 
-    // [연체 스케줄러] 특정 timezone의 회사 인보이스 중 미납+납기일 초과 조회
+    // 연체 스케줄러용 — 특정 timezone 회사의 UNPAID+납기일 초과 인보이스 조회 (야간 배치 시 사용)
     List<Invoice> findByCompanyTimezoneAndStatusAndDueDateBefore(Timezone timezone, InvoiceStatus status, LocalDate date);
-
-    boolean existsByCompanyAndInvoiceNumber(Company company, String invoiceNumber);
 }
