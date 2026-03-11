@@ -40,7 +40,7 @@ spring:
 
 ---
 app:
-  base-url: http://20.194.25.99
+  base-url: http://www.zenybooks.com
 
 spring:
   config:
