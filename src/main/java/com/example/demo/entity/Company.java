@@ -7,6 +7,10 @@ import lombok.Setter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * 멀티테넌트 구조의 테넌트 루트 엔티티.
+ * Member, Invoice, Contact, Product 등 모든 데이터는 Company를 기준으로 격리된다.
+ */
 @Entity
 @Getter @Setter
 public class Company {
@@ -15,57 +19,52 @@ public class Company {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // --- 초기 가입 화면의 회사 정보 ---
+    // --- 기본 정보 (회원가입 시 입력) ---
     @Column(nullable = false)
-    private String businessName;
+    private String businessName;            // 회사명
 
-    @Column(unique = true) // ABN은 고유해야 함
-    private String abn;
+    @Column(unique = true)
+    private String abn;                     // 호주 사업자 등록 번호 (중복 불가, 입력하지 않으면 null)
 
-    // [추가] ABN API 연동 정보
-    private String entityName;      // API에서 받은 원본 Entity Name
-    private String entityTypeName;  // 예: Australian Private Company
-    private String abnStatus;       // 예: Active
-    private String addressPostcode; // 예: 2025
-    private String addressState;    // 예: NSW
-    private String gst;             // 예: 2000-07-01 (Null일 수 있음)
+    // --- ABN API 연동 정보 (호주 ABN Lookup API 응답값) ---
+    private String entityName;              // 등록된 법인명 (예: ABC Pty Ltd)
+    private String entityTypeName;          // 사업체 유형 (예: Australian Private Company)
+    private String abnStatus;              // ABN 상태 (예: Active)
+    private String addressPostcode;        // 사업장 우편번호 (예: 2025)
+    private String addressState;           // 사업장 주 (예: NSW)
+    private String gst;                    // GST 등록일 (미등록 시 null)
 
-    // --- Set your business 화면의 상세 정보 ---
-    private String industry;           // Business industry
-    private String country;            // Country
+    // --- 상세 설정 정보 (가입 후 설정 화면에서 입력) ---
+    private String industry;               // 업종
+    private String country;               // 국가
     @Enumerated(EnumType.STRING)
-    private Timezone timezone;         // Timezone
-    private String currency;           // Currency
+    private Timezone timezone;            // 시간대 (연체/반복 인보이스 스케줄러 기준 시각에 사용)
+    private String currency;              // 기본 통화 (예: AUD, USD)
 
-    // Financial Year (화면에 입력칸이 2개로 보임: 예: 01 / July)
-    private String financialYearDay;
-    private String financialYearMonth;
+    private String financialYearDay;      // 회계연도 종료일 (예: "30")
+    private String financialYearMonth;    // 회계연도 종료월 (예: "June")
 
-    private String website;            // Website
+    private String website;               // 회사 웹사이트
 
-    // --- 회사의 연락처 (직원 연락처와 구별됨) ---
-    private String companyEmail;       // Email (회사 대표)
-    private String companyPhoneCountryCode;
-    private String companyPhoneNumber; // Phone (회사 대표)
-    private String fax;                // Fax
+    // --- 회사 연락처 ---
+    private String companyEmail;              // 회사 대표 이메일
+    private String companyPhoneCountryCode;   // 회사 전화 국가 코드
+    private String companyPhoneNumber;        // 회사 대표 전화번호
+    private String fax;                       // 팩스 번호
 
     // --- 구독 및 결제 정보 ---
-    // 초기 생성 시에는 null (결제 안 함)
-    // 결제 후 LITE, BASIC, PRO 중 하나로 설정됨
     @Enumerated(EnumType.STRING)
-    private PlanType plan;
+    private PlanType plan;                // 구독 플랜 (결제 전 null, 결제 후 LITE / BASIC / PRO)
 
-    // PayPal 구독 ID (결제 전에는 null)
-    private String subscriptionId;
+    private String subscriptionId;        // PayPal 구독 ID (결제 전 null)
 
-    // 가입 날짜
-    private LocalDate joinedDate;
+    // --- 시스템 날짜 ---
+    private LocalDate joinedDate;         // 가입일 (@PrePersist로 자동 설정)
+    private LocalDateTime lastActiveDate; // 마지막 활동 시각 (로그인 및 데이터 변경 시 갱신)
 
-    // 엔티티가 처음 DB에 저장되기 직전에 실행됨
+    /** 최초 저장 시 가입일을 현재 날짜로 자동 설정 */
     @PrePersist
     public void prePersist() {
         this.joinedDate = LocalDate.now();
     }
-
-    private LocalDateTime lastActiveDate;
 }

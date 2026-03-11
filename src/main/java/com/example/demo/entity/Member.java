@@ -17,44 +17,41 @@ public class Member {
 
     // --- 로그인 정보 ---
     @Column(unique = true, nullable = false)
-    private String email;    // 개인 이메일 및 ID
+    private String email;               // 로그인 ID 겸 이메일 (중복 불가)
 
     @Column(nullable = false)
-    private String password; // 암호화된 비밀번호
+    private String password;            // BCrypt 암호화된 비밀번호
 
     // --- 개인 정보 ---
-    private String firstName;
-    private String lastName;
+    private String firstName;           // 이름
+    private String lastName;            // 성
 
-    private String phoneCountryCode;
-    private String phoneNumber;
+    private String phoneCountryCode;    // 전화 국가 코드
+    private String phoneNumber;         // 전화번호
 
-    private String country;
+    private String country;             // 거주 국가
 
-    // --- 약관 및 마케팅 동의 여부 ---
+    // --- 약관 동의 ---
     @Column(nullable = false)
-    private boolean agreeTerms;       // 이용약관 동의 (필수)
+    private boolean agreeTerms;         // 이용약관 동의 여부 (필수)
 
     @Column(nullable = false)
-    private boolean marketingConsent; // 마케팅 수신 동의 (선택)
+    private boolean marketingConsent;   // 마케팅 수신 동의 여부 (선택)
 
-    // --- 연관 관계 (N:1) ---
-    // 회원은 반드시 하나의 회사에 소속됨
+    // --- 권한 및 소속 ---
+    private String role;                // 권한 (USER / ADMIN / SUPER_ADMIN)
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "company_id")
-    private Company company;
+    private Company company;            // 소속 회사 (SUPER_ADMIN은 null)
 
-    // 권한 (USER, ADMIN 등 - 추후 확장용)
-    private String role;
+    // --- 시스템 날짜 ---
+    private LocalDate joinedDate;        // 가입일 (@PrePersist로 자동 설정)
+    private LocalDateTime lastLoginDate; // 마지막 로그인 시각
 
-    // 가입 날짜
-    private LocalDate joinedDate;
-
-    // 엔티티가 처음 DB에 저장되기 직전에 실행됨
+    /** 최초 저장 시 가입일을 현재 날짜로 자동 설정 */
     @PrePersist
     public void prePersist() {
         this.joinedDate = LocalDate.now();
     }
-
-    private LocalDateTime lastLoginDate;
 }
