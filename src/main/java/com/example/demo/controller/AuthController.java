@@ -29,7 +29,33 @@ public class AuthController {
     private final EmailService emailService;
     private final CompanyInvitationService invitationService;
 
-    // 회원가입 페이지 이동
+    // ===================================================================================
+    // 1. 로그인
+    // ===================================================================================
+
+    /**
+     * 로그인 폼 이동.
+     * 로그인 실패 후 리다이렉트된 경우 세션에 저장된 이메일을 꺼내 입력 필드에 미리 채워준다.
+     */
+    @GetMapping("/login")
+    public String loginForm(Model model, HttpSession session) {
+        String lastEmail = (String) session.getAttribute("lastEmail");
+
+        if (lastEmail != null) {
+            model.addAttribute("lastEmail", lastEmail);
+            session.removeAttribute("lastEmail");
+        }
+        return "login";
+    }
+
+    // ===================================================================================
+    // 2. 회원가입
+    // ===================================================================================
+
+    /**
+     * 회원가입 폼 이동.
+     * 초대 토큰이 있으면 DB에서 초대된 이메일을 조회하여 폼에 미리 채워준다.
+     */
     @GetMapping("/signup")
     public String signupForm(@RequestParam(defaultValue = "admin") String type,
                              @RequestParam(required = false) String token,
@@ -38,7 +64,7 @@ public class AuthController {
         form.setAccountType(type);
         form.setToken(token);
 
-        // 토큰이 있으면 이메일을 DB에서 가져와서 미리 폼에 채워줍니다.
+        // 초대 토큰이 있으면 DB에서 이메일을 가져와 폼에 미리 입력
         if (token != null) {
             String inviteeEmail = invitationService.getEmailByToken(token);
             if (inviteeEmail != null) {
@@ -53,23 +79,25 @@ public class AuthController {
         return "signup";
     }
 
-    // 회원가입 처리
+    /**
+     * 회원가입 처리.
+     * 가입 완료 즉시 자동 로그인(request.login)하고 대시보드로 이동한다.
+     * 초대 토큰이 있으면 가입과 동시에 해당 회사에 자동 연결된다.
+     */
     @PostMapping("/signup")
-    public String processSignup(@ModelAttribute SignupForm signupForm, Model model, HttpServletRequest request) { // request 추가
+    public String processSignup(@ModelAttribute SignupForm signupForm, Model model, HttpServletRequest request) {
         try {
-            // 1. 회원 가입 처리 (DB 저장)
             authService.processSignup(signupForm);
 
-            // 2. [추가] 토큰이 있다면 가입과 동시에 회사 연결 처리!
+            // 초대 토큰이 있으면 가입과 동시에 회사 연결 처리
             if (signupForm.getToken() != null && !signupForm.getToken().isEmpty()) {
                 invitationService.acceptInvitation(signupForm.getToken(), signupForm.getPersonalEmail());
             }
 
-            // 3. [추가] 가입 완료 즉시 자동 로그인 처리 (Spring Security)
+            // 가입 완료 즉시 자동 로그인 (Spring Security)
             request.login(signupForm.getPersonalEmail(), signupForm.getPassword());
             authService.updateLoginAndActivityDates(signupForm.getPersonalEmail());
 
-            // 4. [추가] 로그인 페이지를 거치지 않고 바로 대시보드로 이동!
             return "redirect:/invoices";
 
         } catch (IllegalArgumentException e) {
@@ -78,49 +106,29 @@ public class AuthController {
             model.addAttribute("months", Month.values());
             return "signup";
         } catch (Exception e) {
-            // request.login 실패 시 안전하게 로그인 페이지로 보냄
+            // request.login 실패 시 안전하게 로그인 페이지로 이동
             return "redirect:/login";
         }
     }
 
-    // [추가] ABN 조회 API 엔드포인트 (AJAX 요청용)
-    @GetMapping("/api/auth/abn-lookup")
-    @ResponseBody
-    public ResponseEntity<?> lookupAbn(@RequestParam String abn) { // [중요] 리턴 타입을 <?>로 변경
-        String cleanAbn = abn.replace(" ", "");
+    // ===================================================================================
+    // 3. 이메일 인증 API
+    // ===================================================================================
 
-        // 1. Service를 통해 중복 확인 (Username 로직과 패턴 통일)
-        boolean isAvailable = authService.isAbnAvailable(cleanAbn);
-
-        if (!isAvailable) {
-            // 중복이면 409 Conflict와 함께 문자열 메시지 반환
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("ABN already exists");
-        }
-
-        // 2. 사용 가능하면(DB에 없으면) 호주 정부 API 호출
-        AbnApiResponse result = abnLookupService.lookupAbn(cleanAbn);
-
-        if (result.getMessage() != null && !result.getMessage().isEmpty()) {
-            return ResponseEntity.badRequest().body(result);
-        }
-
-        // 성공 시 JSON 객체 반환
-        return ResponseEntity.ok(result);
-    }
-
-    // 1. 인증번호 발송 API
+    /**
+     * 이메일 인증 코드 발송 API.
+     * 6자리 랜덤 코드를 생성하여 세션에 저장하고(3분 만료), 브랜드 스타일 이메일로 발송한다.
+     */
     @PostMapping("/api/auth/send-verification")
     public ResponseEntity<?> sendVerification(@RequestParam String email, HttpSession session) {
-        // (1) 6자리 랜덤 코드 생성
+        // 6자리 랜덤 코드 생성
         String code = String.valueOf(new Random().nextInt(900000) + 100000);
 
-        // (2) 세션에 저장 (유효시간 검증용)
+        // 세션에 코드, 이메일, 만료 시간 저장 (현재 시각 + 3분)
         session.setAttribute("verifyCode", code);
         session.setAttribute("verifyEmail", email);
-        // 현재시간 + 3분(180초 * 1000ms)
         session.setAttribute("verifyExpiry", System.currentTimeMillis() + (3 * 60 * 1000));
 
-        // (3) 이메일 본문 생성 (HTML)
         String subject = "[ZeniBooks] Your email verification code";
         String content =
             "<div style='font-family: Arial, sans-serif; background-color: #f5f7fa; padding: 40px 20px;'>" +
@@ -143,41 +151,41 @@ public class AuthController {
             "  </div>" +
             "</div>";
 
-        // (4) 발송
         emailService.sendEmail(email, subject, content);
 
         return ResponseEntity.ok().body(Map.of("message", "Sent successfully"));
     }
 
-    // 2. 인증번호 확인 API
+    /**
+     * 이메일 인증 코드 확인 API.
+     * 세션의 코드·이메일·만료 시간을 순서대로 검증하며, 인증 성공 시 세션에서 코드를 삭제하여 재사용을 방지한다.
+     */
     @PostMapping("/api/auth/verify-code")
     public ResponseEntity<Boolean> verifyCode(@RequestParam String email,
                                               @RequestParam String code,
                                               HttpSession session) {
-
         String savedCode = (String) session.getAttribute("verifyCode");
         String savedEmail = (String) session.getAttribute("verifyEmail");
         Long expiryTime = (Long) session.getAttribute("verifyExpiry");
 
-        // (1) 세션에 정보가 없는 경우 (만료되었거나 발송 안 함)
+        // 세션에 정보가 없는 경우 (만료되었거나 발송 안 함)
         if (savedCode == null || expiryTime == null) {
             return ResponseEntity.ok(false);
         }
 
-        // (2) 이메일 불일치
+        // 이메일 불일치
         if (!email.equals(savedEmail)) {
             return ResponseEntity.ok(false);
         }
 
-        // (3) 시간 만료 확인 (현재시간이 만료시간보다 크면 실패)
+        // 만료 시간 초과
         if (System.currentTimeMillis() > expiryTime) {
-            session.removeAttribute("verifyCode"); // 만료된 코드 삭제
+            session.removeAttribute("verifyCode");
             return ResponseEntity.ok(false);
         }
 
-        // (4) 코드 일치 확인
+        // 코드 일치 확인 후 세션에서 삭제 (재사용 방지)
         if (savedCode.equals(code)) {
-            // 인증 성공! 세션에서 코드 삭제 (재사용 방지)
             session.removeAttribute("verifyCode");
             session.removeAttribute("verifyExpiry");
             return ResponseEntity.ok(true);
@@ -186,7 +194,7 @@ public class AuthController {
         return ResponseEntity.ok(false);
     }
 
-    // 이메일 중복 확인 API
+    /** 이메일 중복 확인 API. 사용 가능하면 true, 이미 존재하면 false를 반환한다. */
     @GetMapping("/api/auth/check-email")
     @ResponseBody
     public ResponseEntity<Boolean> checkEmail(@RequestParam String email) {
@@ -197,16 +205,32 @@ public class AuthController {
         return ResponseEntity.ok(isAvailable);
     }
 
-    // 로그인 페이지
-    @GetMapping("/login")
-    public String loginForm(Model model, HttpSession session) {
-        // 세션에서 실패했던 이메일 가져오기
-        String lastEmail = (String) session.getAttribute("lastEmail");
+    // ===================================================================================
+    // 4. ABN 조회 API
+    // ===================================================================================
 
-        if (lastEmail != null) {
-            model.addAttribute("lastEmail", lastEmail); // 뷰에서 th:value="${lastEmail}"로 사용
-            session.removeAttribute("lastEmail");
+    /**
+     * ABN 조회 API. 회원가입 폼에서 AJAX로 호출된다.
+     * DB 중복 여부를 먼저 확인하고, 중복이 아닌 경우 호주 정부 ABN Lookup API를 호출하여 사업자 정보를 반환한다.
+     */
+    @GetMapping("/api/auth/abn-lookup")
+    @ResponseBody
+    public ResponseEntity<?> lookupAbn(@RequestParam String abn) {
+        String cleanAbn = abn.replace(" ", "");
+
+        // 이미 등록된 ABN이면 409 Conflict 반환
+        boolean isAvailable = authService.isAbnAvailable(cleanAbn);
+        if (!isAvailable) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ABN already exists");
         }
-        return "login";
+
+        // 사용 가능한 ABN이면 호주 정부 API 호출
+        AbnApiResponse result = abnLookupService.lookupAbn(cleanAbn);
+
+        if (result.getMessage() != null && !result.getMessage().isEmpty()) {
+            return ResponseEntity.badRequest().body(result);
+        }
+
+        return ResponseEntity.ok(result);
     }
 }

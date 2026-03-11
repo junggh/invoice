@@ -25,15 +25,19 @@ public class AdminController {
     private final MemberRepository memberRepository;
     private final CompanyRepository companyRepository;
 
-    // 1. [개발자 전용] 전체 회사 목록 보기
+    // ===================================================================================
+    // 1. Super Admin (전체 회사 관리)
+    // ===================================================================================
+
+    /** 전체 회사 목록 조회. SUPER_ADMIN만 접근 가능하며, 각 회사의 요약 정보를 대시보드 형태로 표시한다. */
     @GetMapping("/super-admin/companies")
     public String viewAllCompanies(Model model) {
         List<CompanyDashboardDto> companies = adminDashboardService.getAllCompaniesSummary();
         model.addAttribute("companies", companies);
-        return "super-admin-companies"; // HTML 템플릿
+        return "super-admin-companies";
     }
 
-    // 2. [개발자 전용] 특정 회사 클릭 시 멤버 보기
+    /** 특정 회사의 멤버 목록 조회. SUPER_ADMIN이 회사 목록에서 특정 회사를 클릭할 때 호출된다. */
     @GetMapping("/super-admin/companies/{companyId}/users")
     public String viewCompanyUsersBySuperAdmin(@PathVariable Long companyId, Model model) {
         Company company = companyRepository.findById(companyId)
@@ -44,7 +48,14 @@ public class AdminController {
         return "super-admin-company-users";
     }
 
-    // 3. [회사 관리자용] 자기 회사 멤버 보기
+    // ===================================================================================
+    // 2. Company Admin (자기 회사 관리)
+    // ===================================================================================
+
+    /**
+     * 로그인한 ADMIN의 자기 회사 멤버 목록 조회.
+     * 로그인한 계정의 company_id를 기준으로 조회하므로 다른 회사 데이터에 접근할 수 없다.
+     */
     @GetMapping("/admin/users")
     public String viewMyCompanyUsers(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         Member admin = memberRepository.findByEmail(userDetails.getUsername())
@@ -54,9 +65,8 @@ public class AdminController {
             return "redirect:/?error=no_company";
         }
 
-        // 로그인한 관리자의 회사 ID를 가져와서 조회 (보안 상 매우 중요!)
         List<MemberManagementDto> users = adminDashboardService.getCompanyMembers(admin.getCompany().getId());
         model.addAttribute("users", users);
-        return "company-users"; // 공통 HTML 템플릿 사용
+        return "company-users";
     }
 }

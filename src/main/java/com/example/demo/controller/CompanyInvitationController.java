@@ -25,21 +25,25 @@ public class CompanyInvitationController {
     @Value("${app.base-url}")
     private String baseUrl;
 
-    // 1. 관리자가 초대 모달에서 'Send Invite' 버튼을 누를 때 호출됨
+    // ===================================================================================
+    // 1. 초대 생성
+    // ===================================================================================
+
+    /**
+     * 팀원 초대 API. 관리자가 초대 모달에서 'Send Invite' 버튼을 누를 때 호출된다.
+     * 초대 토큰을 생성하여 DB에 저장하고, 수락 링크가 포함된 브랜드 스타일 이메일을 발송한다.
+     */
     @PostMapping("/api/invitations")
     @ResponseBody
     public ResponseEntity<String> inviteUser(@RequestBody Map<String, String> request,
                                              @AuthenticationPrincipal UserDetails userDetails) {
         String inviteeEmail = request.get("email");
         try {
-            // 초대장 토큰 생성 및 DB 저장
             CompanyInvitation invitation = invitationService.createInvitation(userDetails.getUsername(), inviteeEmail);
 
             String inviteLink = baseUrl + "/invitations/accept?token=" + invitation.getToken();
-
             String companyName = invitation.getCompany().getBusinessName();
 
-            // 이메일 제목 및 본문(HTML) 구성
             String subject = "[ZeniBooks] You've been invited to join " + companyName + "!";
             String content =
                 "<div style='font-family: Arial, sans-serif; background-color: #f5f7fa; padding: 40px 20px;'>" +
@@ -67,7 +71,6 @@ public class CompanyInvitationController {
                 "  </div>" +
                 "</div>";
 
-            // EmailService를 호출하여 실제 비동기 메일 발송
             emailService.sendEmail(inviteeEmail, subject, content);
 
             return ResponseEntity.ok("Invitation email successfully sent.");
@@ -76,11 +79,19 @@ public class CompanyInvitationController {
         }
     }
 
-    // 2. 직원이 초대 링크를 클릭했을 때 들어오는 곳
+    // ===================================================================================
+    // 2. 초대 수락
+    // ===================================================================================
+
+    /**
+     * 초대 링크 수락 처리. 직원이 이메일의 초대 링크를 클릭했을 때 진입한다.
+     * 비로그인 상태면 토큰을 유지한 채 로그인 화면으로 이동하고,
+     * 로그인 상태면 토큰을 검증하여 해당 회사에 연결한 뒤 결과 알림과 함께 대시보드로 리다이렉트한다.
+     */
     @GetMapping("/invitations/accept")
     public String acceptInvitation(@RequestParam String token,
                                    @AuthenticationPrincipal UserDetails userDetails) {
-        // 비로그인 상태면 토큰을 들고 로그인 화면으로 보냄
+        // 비로그인 상태면 토큰을 들고 로그인 화면으로 이동
         if (userDetails == null) {
             return "redirect:/login?token=" + token;
         }
