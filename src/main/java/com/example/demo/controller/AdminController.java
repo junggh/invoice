@@ -8,14 +8,15 @@ import com.example.demo.repository.CompanyRepository;
 import com.example.demo.repository.MemberRepository;
 import com.example.demo.service.AdminDashboardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -67,6 +68,46 @@ public class AdminController {
 
         List<MemberManagementDto> users = adminDashboardService.getCompanyMembers(admin.getCompany().getId());
         model.addAttribute("users", users);
+        model.addAttribute("currentMemberId", admin.getId());
         return "company-users";
+    }
+
+    /** 멤버의 Role을 변경한다. 같은 회사 소속인 멤버만 변경할 수 있다. */
+    @PostMapping("/admin/users/{memberId}/role")
+    @ResponseBody
+    public ResponseEntity<String> changeUserRole(
+            @PathVariable Long memberId,
+            @RequestBody Map<String, String> request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Member admin = memberRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (admin.getCompany() == null) {
+            return ResponseEntity.badRequest().body("No company affiliation.");
+        }
+
+        Member target = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        // 자기 자신의 Role은 변경 불가 (세션 불일치 문제 방지)
+        if (admin.getId().equals(target.getId())) {
+            return ResponseEntity.badRequest().body("You cannot change your own role.");
+        }
+
+        // 같은 회사 소속인지 확인
+        if (target.getCompany() == null || !admin.getCompany().getId().equals(target.getCompany().getId())) {
+            return ResponseEntity.status(403).body("Access denied.");
+        }
+
+        String newRole = request.get("role");
+        if (!"ADMIN".equals(newRole) && !"USER".equals(newRole)) {
+            return ResponseEntity.badRequest().body("Invalid role.");
+        }
+
+        target.setRole(newRole);
+        memberRepository.save(target);
+
+        return ResponseEntity.ok("Role updated.");
     }
 }

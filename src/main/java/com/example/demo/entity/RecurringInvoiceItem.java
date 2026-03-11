@@ -19,7 +19,6 @@ public class RecurringInvoiceItem {
     private BigDecimal discount;        // 개별 할인 (금액 또는 비율)
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "VARCHAR(50) DEFAULT 'AMOUNT'")
     private DiscountType discountType = DiscountType.AMOUNT; // 할인 방식 (기본: 금액 할인)
 
     @Enumerated(EnumType.STRING)
