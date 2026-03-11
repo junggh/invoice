@@ -13,6 +13,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Spring Security 설정.
+ * 접근 권한 규칙, 로그인/로그아웃 처리, CSRF 설정, 403 예외 처리를 담당한다.
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -25,29 +29,31 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/super-admin/**").hasAuthority("SUPER_ADMIN") // 개발자 전용
+                        // SUPER_ADMIN 전용 경로
+                        .requestMatchers("/super-admin/**").hasAuthority("SUPER_ADMIN")
+                        // ADMIN 이상 접근 가능 경로
                         .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "SUPER_ADMIN")
-                        // 1. 누구나 접근 가능한 페이지 (로그인, 회원가입, 정적 리소스, API)
+                        // 인증 없이 접근 가능한 경로 (로그인, 회원가입, 정적 리소스, 공개 API)
                         .requestMatchers(
-                                "/login", "/signup",           // 페이지
-                                "/css/**", "/js/**", "/data/**", "/images/**", // 정적 리소스
-                                "/api/auth/**",                 // 회원가입용 API (중복체크, ABN 등)
-                                "/invitations/accept",          // 초대 링크 허용
-                                "/public/**"                    // 공개 인보이스 뷰
+                                "/login", "/signup",                                    // 인증 페이지
+                                "/css/**", "/js/**", "/data/**", "/images/**",          // 정적 리소스
+                                "/api/auth/**",                                          // 회원가입용 공개 API (중복 체크, ABN 등)
+                                "/invitations/accept",                                  // 초대 링크
+                                "/public/**"                                            // 공개 인보이스 뷰
                         ).permitAll()
-                        // 2. 그 외 모든 페이지는 로그인 필요
+                        // 그 외 모든 경로는 로그인 필요
                         .anyRequest().authenticated()
                 )
                 .formLogin(login -> login
-                        .loginPage("/login")             // 우리가 만든 로그인 페이지 경로
-                        .loginProcessingUrl("/login")    // HTML Form의 action 경로 (스프링이 알아서 처리함)
-                        .usernameParameter("email")     // 로그인 폼의 name="email"을 아이디로 인식
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .usernameParameter("email")         // 로그인 폼의 name="email"을 아이디로 인식
                         .successHandler((request, response, authentication) -> {
                             String email = authentication.getName();
-                            // [수정된 부분] 트랜잭션이 보장되는 서비스 메서드 호출!
+                            // 마지막 로그인 시각 및 회사 활동 시각 업데이트 (트랜잭션 보장)
                             authService.updateLoginAndActivityDates(email);
 
-                            // 폼에서 넘어온 토큰이 있다면 즉시 초대 수락(회사 연결) 처리
+                            // 로그인 폼에 초대 토큰이 포함된 경우 즉시 초대 수락 처리
                             String tokenParam = null;
                             String tokenParamKey = null;
                             String token = request.getParameter("token");
@@ -62,6 +68,7 @@ public class SecurityConfig {
                                 }
                             }
 
+                            // SUPER_ADMIN은 회사 목록 페이지로, 그 외는 인보이스 목록으로 리다이렉트
                             boolean isSuperAdmin = authentication.getAuthorities().stream()
                                     .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("SUPER_ADMIN"));
 
@@ -73,9 +80,8 @@ public class SecurityConfig {
                         })
                         .failureHandler((request, response, exception) -> {
                             String email = request.getParameter("email");
-                            // 세션에 입력했던 아이디를 잠시 저장 ('lastUsername' 이라는 이름으로)
+                            // 로그인 실패 시 입력했던 이메일을 세션에 저장하여 폼에 재표시
                             request.getSession().setAttribute("lastEmail", email);
-                            // 에러 파라미터와 함께 리다이렉트
                             response.sendRedirect("/login?error");
                         })
                         .permitAll()
@@ -85,8 +91,10 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/auth/**")) // /api/auth/**는 비인증 공개 API라 CSRF 제외
+                // /api/auth/**는 비인증 공개 API이므로 CSRF 검사에서 제외
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/auth/**"))
                 .exceptionHandling(ex -> ex
+                        // 403 접근 거부 시 에러 페이지 대신 이전 페이지로 리다이렉트
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             String referer = request.getHeader("Referer");
                             String redirectUrl = (referer != null && !referer.isEmpty()) ? referer : "/invoices";
@@ -97,9 +105,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-//
-//    @Bean
-//    public PasswordEncoder passwordEncoder() {
-//        return new BCryptPasswordEncoder(); // 강력한 암호화 방식
-//    }
 }
